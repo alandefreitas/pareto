@@ -1,0 +1,2 @@
+add_executable(pareto_example main.cpp)
+target_link_libraries(pareto_example pareto_front)
