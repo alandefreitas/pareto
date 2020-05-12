@@ -1,6 +1,6 @@
 # Pareto Front Container
 
-A container to maintain and query multi-dimensional pareto fronts. Whenever a point dominates the other, the dominated point is automatically removed.
+A container to maintain and query multi-dimensional pareto fronts with its most expensive operations in O(n log n) time. Whenever a point dominates the other, the dominated point is automatically removed.
 
 Besides the usual container functions, it includes the functions:
 
@@ -127,3 +127,17 @@ CPMAddPackage(
 # ...
 target_link_libraries(my_target PUBLIC pareto_front)
 ```
+
+## Other systems
+
+In any other system where you have access to boost, just use the header file in the sources directory.
+
+# Dependencies
+
+This code depends on the boost geometry package. This is a header only package. The cmake script will automatically download and link it.
+
+# To-do
+
+[ ] Algorithms in log-linear time   
+[ ] More indicators   
+[ ] Python bindings
