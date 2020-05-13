@@ -3,13 +3,12 @@
 #include <chrono>
 #include <pareto_front.h>
 
-int main() {
-    std::mt19937 g((std::random_device()()) | std::chrono::high_resolution_clock::now().time_since_epoch().count());
-    std::normal_distribution nd;
-    auto randn = [&]() { return nd(g); };
-    std::uniform_int_distribution<unsigned> ud(0, 40);
-    auto randi = [&]() { return ud(g); };
+// Random integers
+unsigned randi();
+// Random doubles
+double randn();
 
+int main() {
     using namespace pareto_front;
 
     // Create a 2 dimensional pareto front with two elements
@@ -84,4 +83,19 @@ int main() {
     std::cout << "Closest is now: [" << it->first.get<0>() << ", " << it->first.get<1>() << "] -> " << it->second << std::endl;
 
     return 0;
+}
+
+std::mt19937& generator() {
+    static std::mt19937 g((std::random_device()()) | std::chrono::high_resolution_clock::now().time_since_epoch().count());
+    return g;
+}
+
+unsigned randi() {
+    static std::uniform_int_distribution<unsigned> ud(0, 40);
+    return ud(generator());;
+}
+
+double randn() {
+    static std::normal_distribution nd;
+    return nd(generator());
 }

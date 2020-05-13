@@ -18,6 +18,7 @@ namespace pareto_front {
         static constexpr size_t dimensions = NUMBER_OF_DIMENSIONS;
         using point_type = geometry::model::point<number_type, dimensions, geometry::cs::cartesian>;
         using box_type = geometry::model::box<point_type>;
+        using self_type = pareto_front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE>;
 
         using key_type = point_type;
         using mapped_type = ELEMENT_TYPE;
@@ -34,7 +35,7 @@ namespace pareto_front {
 
         template<class InputIterator>
         pareto_front(InputIterator first, InputIterator last)
-                : rtree_(first,last) {}
+                : rtree_(first, last) {}
 
         pareto_front(const pareto_front &m) {
             rtree_ = m.rtree_;
@@ -45,11 +46,14 @@ namespace pareto_front {
         }
 
         pareto_front(std::initializer_list<value_type> il)
-        : rtree_(il.begin(),il.end()) {}
+                : rtree_(il.begin(), il.end()) {}
+
+        pareto_front(std::vector<value_type> il)
+                : rtree_(il.begin(), il.end()) {}
 
     public /* iterators */:
         const_iterator begin() const noexcept {
-            return rtree_.qbegin(geometry::index::satisfies([](auto const& x){return true;}));
+            return rtree_.qbegin(geometry::index::satisfies([](auto const &x) { return true; }));
         }
 
         const_iterator end() const noexcept {
@@ -65,17 +69,21 @@ namespace pareto_front {
             return rtree_.size();
         }
 
-        size_type max_size() const noexcept {
-            return rtree_.max_size();
-        }
-
     public /* modifiers */:
         template<class... Args>
         std::pair<const_iterator, bool> emplace(Args &&... args) {
             auto v = value_type(args...);
-            rtree_.insert(v);
             clear_dominated(v.first);
+            rtree_.insert(v);
             return {find_nearest(v.first), true};
+        }
+
+        template<class InputIterator>
+        void emplace(InputIterator first, InputIterator last) {
+            rtree_.insert(first, last);
+            for (auto it = first; it != last; ++it) {
+                clear_dominated(it->first);
+            }
         }
 
         std::pair<const_iterator, bool> insert(const value_type &v) {
@@ -97,20 +105,26 @@ namespace pareto_front {
             return {find_nearest(p.first), true};
         }
 
-        const_iterator insert(point_type position, const value_type &v) {
+        std::pair<const_iterator, bool> insert(point_type position, const mapped_type &v) {
             rtree_.insert(std::make_pair(position, v));
             clear_dominated(position);
-            return {find_nearest(v.first), true};
+            return {find_nearest(position), true};
         }
 
-        const_iterator insert(point_type position, value_type &&v) {
+        bool insert(const std::vector<number_type> &position, const mapped_type &v) {
+            rtree_.insert(std::make_pair(to_point(position), v));
+            clear_dominated(to_point(position));
+            return true;
+        }
+
+        std::pair<const_iterator, bool> insert(point_type position, mapped_type &&v) {
             rtree_.insert(std::make_pair(position, std::move(v)));
             clear_dominated(position);
-            return {find_nearest(v.first), true};
+            return {find_nearest(position), true};
         }
 
         template<class P>
-        const_iterator insert(point_type position, P &&p) {
+        std::pair<const_iterator, bool> insert(point_type position, P &&p) {
             insert(position, mapped_type(p));
             clear_dominated(position);
             return {find_nearest(position), true};
@@ -131,18 +145,22 @@ namespace pareto_front {
             }
         }
 
-        void erase(const value_type& v) {
+        void erase(const value_type &v) {
             rtree_.remove(v);
         }
 
-        size_type erase(const key_type& v) {
-            value_type val = find_nearest(v);
-            if (to_vector(val.first) == to_vector(v)) {
-                rtree_.remove(val);
+        size_type erase(const key_type &v) {
+            auto val = find_nearest(v);
+            if (to_vector(val->first) == to_vector(v)) {
+                rtree_.remove(*val);
                 return 1;
             } else {
                 return 0;
             }
+        }
+
+        size_type erase(const std::vector<number_type> &v) {
+            return erase(to_point(v));
         }
 
         // const_iterator
@@ -152,41 +170,41 @@ namespace pareto_front {
 
         //const_iterator
         size_t erase(const_iterator first, const_iterator last) {
-            return rtree_.remove(first,last);
+            return rtree_.remove(first, last);
         }
 
         void clear() noexcept {
             rtree_.clear();
         }
 
-        void merge(pareto_front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE> &source) {
+        void merge(self_type &source) {
             insert(source.begin(), source.end());
         }
 
-        void merge(pareto_front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE> &&source) {
+        void merge(self_type &&source) {
             insert(source.begin(), source.end());
             source.clear();
         }
 
-        void swap(pareto_front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE> &m) {
+        void swap(self_type &m) {
             m.rtree_.swap(rtree_);
         }
 
     public /* pareto operations */:
-        const_iterator find_intersection(point_type min_corner, point_type max_corner) {
+        const_iterator find_intersection(point_type min_corner, point_type max_corner) const {
             box_type query_box(min_corner, max_corner);
             return rtree_.qbegin(geometry::index::intersects(query_box));
         }
 
-        const_iterator find_nearest(point_type p) {
+        const_iterator find_nearest(point_type p) const {
             return rtree_.qbegin(geometry::index::nearest(p, 1));
         }
 
-        const_iterator find_nearest(point_type p, size_t k) {
+        const_iterator find_nearest(point_type p, size_t k) const {
             return rtree_.qbegin(geometry::index::nearest(p, k));
         }
 
-        number_type hypervolume(point_type reference_point) {
+        number_type hypervolume(point_type reference_point) const {
             double hv_upper_limit = 1;
             auto m = to_vector(ideal());
             auto r = to_vector(reference_point);
@@ -200,7 +218,7 @@ namespace pareto_front {
             for (size_t i = 0; i < max_monte_carlo_iter; ++i) {
                 std::vector<number_type> rand(dimensions);
                 for (size_t j = 0; j < dimensions; ++j) {
-                    std::uniform_real_distribution<number_type> d(m[j],r[j]);
+                    std::uniform_real_distribution<number_type> d(m[j], r[j]);
                     rand[j] = d(generator());
                 }
                 if (dominates(to_point(rand))) {
@@ -210,15 +228,19 @@ namespace pareto_front {
                 }
             }
 
-            return hv_upper_limit * hit / (hit+miss);
+            return hv_upper_limit * hit / (hit + miss);
         }
 
-        number_type hypervolume() {
+        number_type hypervolume() const {
             return hypervolume(nadir());
         }
 
-        bool dominates(point_type p) {
-            return find_intersection(ideal(),p) != end();
+        bool dominates(point_type p) const {
+            return find_intersection(ideal(), p) != end();
+        }
+
+        bool dominates(const std::vector<number_type> &p) const {
+            return find_intersection(ideal(), to_point(p)) != end();
         }
 
         point_type ideal() const {
@@ -273,83 +295,86 @@ namespace pareto_front {
 
         const_iterator find(const key_type &k) const {
             auto it = find_nearest(k);
-            return (k == it->first) ? it : end();
+            return it != end() && point_equal(k, it->first) ? it : end();
         }
 
         template<typename K>
         const_iterator find(const K &x) const {
             auto it = find_nearest(x);
-            return (x == it->first) ? it : end();
+            return it != end() && point_equal(x, it->first)  ? it : end();
         }
 
-    private /* functions */:
-        static std::vector<number_type> to_vector(const key_type& v) {
+        static std::vector<number_type> to_vector(const key_type &v) {
             std::vector<number_type> result;
-            visit_point(v,[&](number_type p) {
+            visit_point(v, [&](number_type p) {
                 result.emplace_back(p);
             });
             return result;
         }
 
-        static point_type to_point(const std::vector<number_type>& v) {
+        static point_type to_point(const std::vector<number_type> &v) {
             point_type result;
             int i = 0;
-            visit_point(result,[&](number_type& p) {
+            visit_point(result, [&](number_type &p) {
                 p = v[i];
                 i++;
             });
             return result;
         }
 
+    private /* functions */:
 
-        template <size_t idx = 0, typename FUNCTION_T>
+        template<size_t idx = 0, typename FUNCTION_T>
         static
-        std::enable_if_t<idx < dimensions,void>
-        visit_point(const key_type& k, FUNCTION_T fn) {
+        std::enable_if_t<idx < dimensions, void>
+        visit_point(const key_type &k, FUNCTION_T fn) {
             fn(k.template get<idx>());
-            visit_point<idx+1>(k,fn);
+            visit_point<idx + 1>(k, fn);
         }
 
-        template <size_t idx, typename FUNCTION_T>
+        template<size_t idx, typename FUNCTION_T>
         static
-        std::enable_if_t<idx == dimensions,void>
-        visit_point(const key_type& k, FUNCTION_T fn) {}
+        std::enable_if_t<idx == dimensions, void>
+        visit_point(const key_type &k, FUNCTION_T fn) {}
 
-        template <size_t idx = 0, typename FUNCTION_T>
+        template<size_t idx = 0, typename FUNCTION_T>
         static
-        std::enable_if_t<idx < dimensions,void>
-        visit_point(key_type& k, FUNCTION_T fn) {
+        std::enable_if_t<idx < dimensions, void>
+        visit_point(key_type &k, FUNCTION_T fn) {
             number_type tmp = k.template get<idx>();
             fn(tmp);
             k.template set<idx>(tmp);
-            visit_point<idx+1>(k,fn);
+            visit_point<idx + 1>(k, fn);
         }
 
-        template <size_t idx, typename FUNCTION_T>
+        template<size_t idx, typename FUNCTION_T>
         static
-        std::enable_if_t<idx == dimensions,void>
-        visit_point(key_type& k, FUNCTION_T fn) {}
+        std::enable_if_t<idx == dimensions, void>
+        visit_point(key_type &k, FUNCTION_T fn) {}
 
-        static bool point_equal(const point_type& a, const point_type& b) {
+        static bool point_equal(const point_type &a, const point_type &b) {
             return (to_vector(a) == to_vector(b));
         }
 
         void clear_dominated(point_type v) {
-            for (auto it = find_intersection(v,worst()); it != end(); ++it) {
-                if (point_equal(it->first,v)) {
-                    erase(it);
+            if (!empty()) {
+                for (auto it = find_intersection(v, worst()); it != end(); ++it) {
+                    if (point_equal(it->first, v)) {
+                        erase(it);
+                    }
                 }
             }
         }
 
         void clear_dominated() {
-            for (const auto& p: rtree_) {
+            for (const auto &p: rtree_) {
                 clear_dominated(p);
             }
         }
 
-        static std::mt19937& generator() {
-            static std::mt19937 g((std::random_device()()) | std::chrono::high_resolution_clock::now().time_since_epoch().count());
+        static std::mt19937 &generator() {
+            static std::mt19937 g(
+                    (std::random_device()()) | std::chrono::high_resolution_clock::now().time_since_epoch().count());
             return g;
         }
 
