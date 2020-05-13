@@ -1,7 +1,8 @@
 import pyfront
 from pyfront import randn, randi
 
-pf = pyfront.front2d([[[0.2, 0.5], 7], [[-0.5, 2.5], 8]])
+# Creating pareto front
+pf = pyfront.front2d([[[0.2, 0.5], 7], [[-0.5, 2.5], 8]])  # or: pyfront.front(2)
 
 # Insert some more points
 for i in range(0, 40):

@@ -17,6 +17,7 @@ double randn();
 template<class point_type>
 using point_number = std::decay_t<decltype(point_type().template get<0>())>;
 
+constexpr size_t max_num_dimensions = 20;
 
 template<size_t idx = 0, class point_type, typename FUNCTION_T>
 std::enable_if_t<idx < boost::geometry::traits::dimension<point_type>(), void>
@@ -63,13 +64,13 @@ point_type vector_to_point(const std::vector<point_number<point_type>> &v) {
     return result;
 }
 
-template <size_t N = 2, class module_t>
+template<size_t N = 2, class module_t>
 void binding_for_N_dimensional(module_t &m) {
     using namespace py::literals;
     using namespace pareto_front;
 
     // types
-    using pareto_front_t = pareto_front<double, N, unsigned>;
+    using pareto_front_t = pareto_front<double, N, py::object>;
     using number_t = typename pareto_front_t::number_type;
     using point_t = typename pareto_front_t::point_type;
     using key_t = typename pareto_front_t::key_type;
@@ -345,33 +346,56 @@ void binding_for_N_dimensional(module_t &m) {
     });
     pf.def("__setitem__", [](pareto_front_t &s, point_t p, mapped_t v) {
         s.erase(p);
-        s.insert(p,v);
+        s.insert(p, v);
     });
     pf.def("__setitem__", [](pareto_front_t &s, std::vector<number_t> p, mapped_t v) {
         s.erase(vector_to_point<point_t>(p));
-        s.insert(p,v);
+        s.insert(p, v);
     });
     pf.def("__contains__", [](const pareto_front_t &s, point_t p) { return s.find(p) != s.end(); });
     pf.def("__repr__",
            [](const pareto_front_t &a) {
                std::stringstream ss;
-               ss << "< Pareto front - " << a.size() << " points >";
+               ss << "< Pareto front - " << a.size() << " points - " << N << " dimensions >";
                return ss.str();
            }
     );
 }
 
-template <size_t n = 200, class module_t>
+template<size_t n = max_num_dimensions, class module_t>
 std::enable_if_t<2 == n, void>
-binding_for_all_dimensions(module_t& m) {
+binding_for_all_dimensions(module_t &m) {
     binding_for_N_dimensional<n>(m);
 }
 
-template <size_t n = 200, class module_t>
+template<size_t n = max_num_dimensions, class module_t>
 std::enable_if_t<2 < n, void>
-binding_for_all_dimensions(module_t& m) {
+binding_for_all_dimensions(module_t &m) {
     binding_for_N_dimensional<n>(m);
-    binding_for_all_dimensions<n-1>(m);
+    binding_for_all_dimensions<n - 1>(m);
+}
+
+
+template<size_t n>
+std::enable_if_t<2 == n, py::object>
+cast_for_dimension(size_t d) {
+    if (d == n) {
+        py::object obj = py::cast(pareto_front::pareto_front<double, n, py::object>());
+        return obj;
+    } else {
+        throw std::invalid_argument("There is no pareto front with " + std::to_string(d) + " dimensions");
+    }
+}
+
+template<size_t n = max_num_dimensions>
+std::enable_if_t<2 < n, py::object>
+cast_for_dimension(size_t d) {
+    if (d == n) {
+        py::object obj = py::cast(pareto_front::pareto_front<double, n, py::object>());
+        return obj;
+    } else {
+        return cast_for_dimension<n-1>(d);
+    }
 }
 
 PYBIND11_MODULE(pyfront, m) {
@@ -383,7 +407,11 @@ PYBIND11_MODULE(pyfront, m) {
     m.def("randn", &randn, "Get a double from a normal distribution (for tests only)");
     m.def("randi", &randi, "Get an integer from a uniform distribution (for tests only)");
 
-    binding_for_all_dimensions<20>(m);
+    binding_for_all_dimensions<max_num_dimensions>(m);
+
+    m.def("front", [](size_t dimensions) {
+        return cast_for_dimension<max_num_dimensions>(dimensions);
+    });
 }
 
 std::mt19937 &generator() {
