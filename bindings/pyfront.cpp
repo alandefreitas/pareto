@@ -63,58 +63,56 @@ point_type vector_to_point(const std::vector<point_number<point_type>> &v) {
     return result;
 }
 
-PYBIND11_MODULE(pyfront, mymodule) {
-    using namespace py::literals; // for _a literal to define arguments
-    using namespace pareto_front; // for _a literal to define arguments
-    mymodule.doc() = "example module to export code";
-
-    // random functions for tests
-    mymodule.def("randn", &randn, "Get a double from a normal distribution");
-    mymodule.def("randi", &randi, "Get an integer from a uniform distribution");
+template <size_t N = 2, class module_t>
+void binding_for_N_dimensional(module_t &m) {
+    using namespace py::literals;
+    using namespace pareto_front;
 
     // types
-    using pareto_front_t = pareto_front<double, 2, unsigned>;
-    using number_t = pareto_front_t::number_type;
-    using point_t = pareto_front_t::point_type;
-    using key_t = pareto_front_t::key_type;
-    using mapped_t = pareto_front_t::mapped_type;
-    using value_t = pareto_front_t::value_type;
+    using pareto_front_t = pareto_front<double, N, unsigned>;
+    using number_t = typename pareto_front_t::number_type;
+    using point_t = typename pareto_front_t::point_type;
+    using key_t = typename pareto_front_t::key_type;
+    using mapped_t = typename pareto_front_t::mapped_type;
+    using value_t = typename pareto_front_t::value_type;
 
     // point object
-    py::class_<pareto_front_t::point_type> p(mymodule, "point2d");
+    std::string class_name = "point" + std::to_string(N) + "d";
+    py::class_<typename pareto_front_t::point_type> p(m, class_name.c_str());
     p.def(py::init<>());
     p.def(py::init<number_t const &>());
     p.def(py::init<number_t const &, number_t const &>());
     p.def(py::init<number_t const &, number_t const &, number_t const &>());
     p.def(py::init([](const std::vector<number_t> &s) {
-        return new pareto_front_t::point_type(vector_to_point<point_t>(s));
+        return new typename pareto_front_t::point_type(vector_to_point<point_t>(s));
     }));
     p.def_property("x",
-                   [](const pareto_front_t::point_type &a) {
-                       return a.get<0>();
+                   [](const typename pareto_front_t::point_type &a) {
+                       return a.template get<0>();
                    },
-                   [](pareto_front_t::point_type &a, double v) {
-                       a.set<0>(v);
+                   [](typename pareto_front_t::point_type &a, double v) {
+                       a.template set<0>(v);
                    }
     );
     p.def_property("y",
-                   [](const pareto_front_t::point_type &a) {
-                       return a.get<1>();
+                   [](const typename pareto_front_t::point_type &a) {
+                       return a.template get<1>();
                    },
-                   [](pareto_front_t::point_type &a, double v) {
-                       a.set<1>(v);
+                   [](typename pareto_front_t::point_type &a, double v) {
+                       a.template set<1>(v);
                    }
     );
     p.def("__repr__",
-          [](const pareto_front_t::point_type &a) {
+          [](const typename pareto_front_t::point_type &a) {
               std::stringstream ss;
-              ss << "(" << a.get<0>() << ", " << a.get<1>() << ")";
+              ss << "(" << a.template get<0>() << ", " << a.template get<1>() << ")";
               return ss.str();
           }
     );
 
     // pareto_front object
-    py::class_<pareto_front_t> pf(mymodule, "front2d");
+    std::string class_name2 = "front" + std::to_string(N) + "d";
+    py::class_<pareto_front_t> pf(m, class_name2.c_str());
     pf.def(py::init<>());
     pf.def(py::init([](const std::vector<point_t> &v) {
         std::vector<value_t> v2;
@@ -136,7 +134,7 @@ PYBIND11_MODULE(pyfront, mymodule) {
         return new pareto_front_t(v2);
     }));
     pf.def(py::init([](const std::vector<std::pair<std::vector<number_t>, mapped_t>> &v) {
-        std::vector<value_t> v2;
+        std::vector<value_t> v2(0);
         v2.reserve(v.size());
         for (const auto &[key, value] : v) {
             v2.emplace_back(std::make_pair(vector_to_point<point_t>(key), value));
@@ -361,6 +359,31 @@ PYBIND11_MODULE(pyfront, mymodule) {
                return ss.str();
            }
     );
+}
+
+template <size_t n = 200, class module_t>
+std::enable_if_t<2 == n, void>
+binding_for_all_dimensions(module_t& m) {
+    binding_for_N_dimensional<n>(m);
+}
+
+template <size_t n = 200, class module_t>
+std::enable_if_t<2 < n, void>
+binding_for_all_dimensions(module_t& m) {
+    binding_for_N_dimensional<n>(m);
+    binding_for_all_dimensions<n-1>(m);
+}
+
+PYBIND11_MODULE(pyfront, m) {
+    using namespace py::literals;
+    using namespace pareto_front;
+    m.doc() = "A container to maintain and query multi-dimensional Pareto fronts efficiently";
+
+    // random functions for tests
+    m.def("randn", &randn, "Get a double from a normal distribution (for tests only)");
+    m.def("randi", &randi, "Get an integer from a uniform distribution (for tests only)");
+
+    binding_for_all_dimensions<20>(m);
 }
 
 std::mt19937 &generator() {
