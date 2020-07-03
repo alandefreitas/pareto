@@ -85,7 +85,7 @@ Assuming the well-known $O(m \log n)$ average time complexity for search, insert
 
 ## Examples
 
-For very quick complete examples, see the directory [./examples/].
+For very quick complete examples, see the directory [examples](./examples/).
 
 ### Constructing fronts
 
@@ -535,7 +535,7 @@ The object will choose an appropriate data structure according the the parameter
 
 One limitation of the library interface is that the most efficient data structures have their dimension defined at compile-time. This is not an inconvenience to C++ users but it makes it impossible to have Python bindings for all front dimensions in compile-time. 
 
-Our solution was to include the fronts with m=1,...,10 dimensions set at compile-time in our Python bindings. For each data structure described in Section [4][11], we provide a subsidiary implementation that has its dimension determined at runtime. The Python bindings fallback to this special implementation whenever m>10. 
+Our solution was to include the fronts with m=1,...,10 dimensions set at compile-time in our Python bindings. For each data structure, we provide a subsidiary implementation that has its dimension determined at runtime. The Python bindings fallback to this special implementation whenever m>10. 
 
 This value can be altered when compiling the library. Change the value of `max_num_dimensions` in [pyfront.cpp](bindings/pyfront.cpp) if you want to change that. The higher this value, the larger the final binary.
 
@@ -767,8 +767,7 @@ multiobjective EAs: The NSGA-II and other algorithms, Jensen,
 Mikkel T, IEEE Transactions on Evolutionary Computation,
 7, 5, 503--515, 2003, IEEE
 
-* 
-An efficient approach to
+* An efficient approach to
 nondominated sorting for evolutionary multiobjective optimization,
 Zhang, Xingyi and Tian, Ye and Cheng, Ran and Jin, Yaochu,
 IEEE Transactions on Evolutionary Computation, 19,
@@ -840,13 +839,11 @@ multi-objective optimisation, Everson, Richard M and Fieldsend,
 Jonathan E and Singh, Sameer, Adaptive Computing in Design
 and Manufacture V, 343--354, 2002, Springer
 
-* 
-Priority search trees,
+* Priority search trees,
 McCreight, Edward M, SIAM Journal on Computing,
 14, 2, 257--276, 1985, SIAM
 
-* 
-Data structures for range searching,
+* Data structures for range searching,
 Bentley, Jon Louis and Friedman, Jerome H, ACM
 Computing Surveys (CSUR), 11, 4, 397--409,
 1979, ACM New York, NY, USA 
@@ -921,8 +918,7 @@ quadtree, Zhou, Keren and Tan, Guangming and Zhou, Wei,
 IEEE Transactions on Parallel and Distributed Systems,
 29, 3, 673--686, 2017, IEEE
 
-* 
-Distance browsing in spatial
+* Distance browsing in spatial
 databases, Hjaltason, Gi=texsli R and Samet, Hanan,
 ACM Transactions on Database Systems (TODS), 24,
 2, 265--318, 1999, ACM New York, NY,
