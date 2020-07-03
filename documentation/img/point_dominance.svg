@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<svg width="580" height="400" xmlns="http://www.w3.org/2000/svg">
+ <!-- Created with Method Draw - http://github.com/duopixel/Method-Draw/ -->
+
+ <g>
+  <title>background</title>
+  <rect fill="#fff" id="canvas_background" height="402" width="582" y="-1" x="-1"/>
+  <g display="none" id="canvasGrid">
+   <rect fill="url(#gridpattern)" stroke-width="0" y="0" x="0" height="100%" width="100%" id="svg_5"/>
+  </g>
+ </g>
+ <g>
+  <title>Layer 1</title>
+  <rect stroke="#000" id="svg_20" height="195.333326" width="319.33336" y="-4" x="272.666667" stroke-opacity="null" stroke-width="0" fill="#65f2a9"/>
+  <rect stroke="#000" id="svg_23" height="217.333339" width="316.66668" y="188.333449" x="-47.000002" stroke-opacity="null" stroke-width="0" fill="#ffaaaa"/>
+  <rect stroke="#000" id="svg_22" height="217.333339" width="316.66668" y="189.33333" x="269.917925" stroke-opacity="null" stroke-width="0" fill="#e5e5e5"/>
+  <rect stroke="#000" id="svg_18" height="217.333339" width="318.666692" y="-28.548238" x="-47.000002" stroke-opacity="null" stroke-width="0" fill="#e5e5e5"/>
+  <text stroke="#000" transform="matrix(0.490699 0 0 0.490699 172.311 37.3409)" xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_16" y="145.450091" x="320.671473" stroke-width="0" fill="#000000">Strongly Dominates</text>
+  <text stroke="#000" transform="matrix(0.490699 0 0 0.490699 172.311 27.3409)" xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="20" id="svg_6" y="315.275854" x="650.812746" stroke-width="0" fill="#000000">Weakly Dominates</text>
+  <text stroke="#000" transform="rotate(90 281.893 45.2295) matrix(0.490699 0 0 0.490699 172.311 27.3409)" xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="20" id="svg_17" y="41.209717" x="140.377334" stroke-width="0" fill="#000000">Weakly Dominates</text>
+  <text stroke="#000" transform="rotate(90 270.353 -89.1486) matrix(0.490699 0 0 0.490699 182.311 37.3409)" xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="20" id="svg_26" y="52.385581" x="-159.595749" stroke-width="0" fill="#000000">Weakly Dominates</text>
+  <text stroke="#000" transform="matrix(0.490699 0 0 0.490699 173.811 54.8388)" xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="20" id="svg_4" y="297.613987" x="209.265798" stroke-width="0" fill="#000000">Is Equal</text>
+  <text stroke="#000" transform="matrix(0.490699 0 0 0.490699 172.311 37.3409)" xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_7" y="464.722751" x="334.222706" stroke-width="0" fill="#000000">Non dominates</text>
+  <text stroke="#000" transform="matrix(0.490699 0 0 0.490699 172.311 37.3409)" xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_9" y="144.091476" x="-95.097147" stroke-width="0" fill="#000000">Non Dominates</text>
+  <text stroke="#000" transform="matrix(0.490699 0 0 0.490699 172.311 41.3409)" xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_3" y="460.69278" x="-84.228297" stroke-width="0" fill="#000000">Dominated</text>
+  <line stroke-linecap="undefined" stroke-linejoin="undefined" id="svg_10" y2="188.032805" x2="271" y1="-17.333325" x1="271" stroke-width="4" fill="none" stroke="#000">Strongly Dominates</line>
+  <line stroke-linecap="undefined" stroke-linejoin="undefined" id="svg_11" y2="188.666667" x2="270.982854" y1="188.666667" x1="593.333323" stroke-width="4" fill="none" stroke="#000">Strongly Dominates</line>
+  <line stroke-linecap="undefined" stroke-linejoin="undefined" id="svg_12" y2="407.000064" x2="52.333333" y1="-3.665114" x1="52.333333" fill-opacity="null" stroke-opacity="null" stroke-width="1.5" fill="none" stroke="#000">Strongly Dominates</line>
+  <line stroke-linecap="undefined" stroke-linejoin="undefined" id="svg_13" y2="363.333333" x2="593.830439" y1="363.333333" x1="-21.161972" fill-opacity="null" stroke-opacity="null" stroke-width="1.5" fill="none" stroke="#000">Strongly Dominates</line>
+  <text style="cursor: move;" xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_15" y="33.333334" x="17" fill-opacity="null" stroke-opacity="null" stroke-width="0" stroke="#000" fill="#000000"><tspan font-style="italic">f</tspan><tspan baseline-shift="sub" font-size="small">2</tspan></text>
+  <text style="cursor: move;" xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_14" y="388" x="539.666687" fill-opacity="null" stroke-opacity="null" stroke-width="0" stroke="#000" fill="#000000"><tspan font-style="italic">f</tspan><tspan baseline-shift="sub" font-size="small">1</tspan></text>
+  <ellipse ry="8" rx="8" id="svg_25" cy="188.666667" cx="271" stroke-opacity="null" stroke-width="0" stroke="#000" fill="#000000"/>
+ </g>
+</svg>

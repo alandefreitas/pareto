@@ -1,0 +1,20 @@
+------------------------
+Adding new compilers
+------------------------
+
+If you want or need to add a new compiler / architecture combination
+to the build system you will need to create a file named
+
+  $(uname -s)_$(uname -m)_<compiler>.mk
+
+At a minimum it needs to set the OPT_CFLAGS and ARCH variables. If all
+you want to do is use GCC on a new platform you can usually simple
+include gcc.mk. In general this should only be necessary if you are
+cross-compiling or want to add additional flags after the general gcc
+detection logic.
+
+If your compiler is unknown, the build system will attempt to auto
+detect if it is a gcc variant and then use mk/gcc.mk.
+
+If you have new platform or compiler support files, please submit them
+to manuel.lopez-ibanezulb.ac.be.

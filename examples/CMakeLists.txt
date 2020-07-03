@@ -1,2 +1,11 @@
-add_executable(pareto_example main.cpp)
-target_link_libraries(pareto_example pareto_front)
+add_executable(example_front2d front2d.cpp)
+target_link_libraries(example_front2d pareto_front)
+
+add_executable(example_archive2d archive2d.cpp)
+target_link_libraries(example_archive2d pareto_front)
+
+add_executable(example_front3d front3d.cpp)
+target_link_libraries(example_front3d pareto_front)
+
+add_executable(example_archive3d archive3d.cpp)
+target_link_libraries(example_archive3d pareto_front)
