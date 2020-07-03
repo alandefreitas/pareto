@@ -1,4 +1,4 @@
-# Pareto Fronts and Archives / C++ and Python
+# 🦎 Pareto Fronts and Archives / C++ and Python 📉🤔
 
 This is container representing a data structure to cache and query multi-dimensional pareto fronts and archives with its most expensive operations in O(n log n) time. Pareto fronts can be used to cache objects in any situation where there is a trade-off between the quality of multiple objectives. Whenever the front pushes an element better than the other in all dimensions, the dominated points are automatically removed from the set. In Pareto archive, whenever the front pushes an element better than the other in all dimensions, the dominated points are moved to higher fronts in the archive.
 
