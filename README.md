@@ -2,6 +2,38 @@
 
 This is container representing a data structure to cache and query multi-dimensional pareto fronts and archives with its most expensive operations in O(n log n) time. Pareto fronts can be used to cache objects in any situation where there is a trade-off between the quality of multiple objectives. Whenever the front pushes an element better than the other in all dimensions, the dominated points are automatically removed from the set. In Pareto archive, whenever the front pushes an element better than the other in all dimensions, the dominated points are moved to higher fronts in the archive.
 
+* [Functions](#functions)
+* [Design goals](#design-goals)
+* [Examples](#examples)
+    * [Constructing fronts](#constructing-fronts)
+    * [Insertion](#insertion)
+    * [Reference points](#reference-points)
+    * [Iterators](#iterators)
+    * [Queries](#queries)
+    * [Dominance](#dominance)
+    * [Indicators](#indicators)
+    * [Archives](#archives)
+* [Benchmarks](#benchmarks)
+    * [Constructor](#constructor)
+    * [Insert](#insert)
+    * [Delete](#delete)
+    * [Test dominance](#test-dominance)
+    * [Query and iterate](#query-and-iterate)
+    * [Nearest points](#nearest-points)
+    * [IGD indicator](#igd-indicator)
+    * [Hypervolume](#hypervolume)
+    * [Operations](#operations)
+    * [Data structures](#data-structures)
+* [Limitations](#limitations)
+* [Integration](#integration)
+    * [Python](#python)
+    * [C++](#c++)
+    * [CMake (manual download)](#cmake-manual-download)
+    * [CMake (automatic download)](#cmake-automatic-download)
+    * [Other build systems](#other-build-systems)
+* [Thanks](#thanks)
+* [References](#references)
+
 ## Functions
 
 Besides the usual container functions (`size()`, `empty()`, `clear()`, `begin()`, `end()`, etc), it includes the functions and extra objects for:
