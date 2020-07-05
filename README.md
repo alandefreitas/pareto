@@ -135,11 +135,11 @@ C++, assuming we are in the `pareto_front` namespace:
 front<double, 2, unsigned> pf;
 ```
 
-This is 2-dimensional front with including a few elements:
+This is a 2-dimensional front with a few elements:
 
 ![2-dimensional front](documentation/img/front2d_b.svg)
 
-Note that the dimension is defined at compile-time. The default constructor will choose an appropriate spatial index to represent the front. Also, each point in space is associated to an object. In your application, `unsigned` will probably be replaced by a pointer to an object that has the `double` attributes. 
+Note that the dimension is defined at compile-time. The default constructor will choose an appropriate spatial index to represent the front. Also, each point in space is associated with an object. In your application, `unsigned` will probably be replaced by a pointer to an object that has the `double` attributes. 
 
 If the dimensions are not supposed to be minimized, we can define one optimization direction for each dimension:
 
