@@ -1,6 +1,6 @@
-# Pareto Fronts and Archives / C++ and Python
+# 🦎 Pareto Fronts and Archives / C++ and Python 📉🤔
 
-This is a container representing a data structure to cache and query multi-dimensional pareto fronts and archives with its most expensive operations in O(n log n) time. Pareto fronts can be used to cache objects in any situation where there is a trade-off between the quality of multiple objectives. Whenever the front pushes an element better than the other in all dimensions, the dominated points are automatically removed from the set. In Pareto archive, whenever the front pushes an element better than the other in all dimensions, the dominated points are moved to higher fronts in the archive.
+This is a container representing a data structure to cache and query multi-dimensional Pareto fronts and archives with its most expensive operations in O(n log n) time. Pareto fronts can be used to cache objects in any situation where there is a trade-off between the quality of multiple objectives. Whenever the front pushes an element better than the other in all dimensions, the dominated points are automatically removed from the set. In a Pareto archive, whenever the front pushes an element better than the other in all dimensions, the dominated points are moved to higher fronts in the archive.
 
 * [Functions](#functions)
 * [Design goals](#design-goals)
@@ -135,11 +135,11 @@ C++, assuming we are in the `pareto_front` namespace:
 front<double, 2, unsigned> pf;
 ```
 
-This is 2-dimensional front with including a few elements:
+This is a 2-dimensional front with a few elements:
 
 ![2-dimensional front](documentation/img/front2d_b.svg)
 
-Note that the dimension is defined at compile-time. The default constructor will choose an appropriate spatial index to represent the front. Also, each point in space is associated to an object. In your application, `unsigned` will probably be replaced by a pointer to an object that has the `double` attributes. 
+Note that the dimension is defined at compile-time. The default constructor will choose an appropriate spatial index to represent the front. Also, each point in space is associated with an object. In your application, `unsigned` will probably be replaced by a pointer to an object that has the `double` attributes. 
 
 If the dimensions are not supposed to be minimized, we can define one optimization direction for each dimension:
 
@@ -169,7 +169,7 @@ cout << "Dimension 0 is " << (pf.is_minimization(0) ? "minimization" : "not mini
 cout << "Dimension 1 is " << (pf.is_maximization(1) ? "maximization" : "not maximization") << endl;
 ```
 
-This is a 2-dimensional front where we set all directions to `maximization`: 
+This is a 2-dimensional front if we set all directions to `maximization`: 
 
 ![2-dimensional front](documentation/img/front2d.svg)
 
