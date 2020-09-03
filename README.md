@@ -2,6 +2,10 @@
 
 This is a container representing a data structure to cache and query multi-dimensional Pareto fronts and archives with its most expensive operations in O(n log n) time. Pareto fronts can be used to cache objects in any situation where there is a trade-off between the quality of multiple objectives. Whenever the front pushes an element better than the other in all dimensions, the dominated points are automatically removed from the set. In a Pareto archive, whenever the front pushes an element better than the other in all dimensions, the dominated points are moved to higher fronts in the archive.
 
+<div style="text-align:center">
+<img src="documentation/img/front2d_b.svg" alt="" data-canonical-src="2-dimensional front" width="800" height="200" />
+</div>
+
 * [Functions](#functions)
 * [Design goals](#design-goals)
 * [Examples](#examples)
@@ -38,28 +42,17 @@ This is a container representing a data structure to cache and query multi-dimen
 
 Besides the usual container functions (`size()`, `empty()`, `clear()`, `begin()`, `end()`, etc), it includes the functions and extra objects for:
 
-- Data structures
-    - Pareto Front
-    - Pareto Archive
-    - Linear lists
-    - Quadtrees
-    - kd-trees
-    - R-trees
-    - R*-trees
-- Queries
-    - Hyperbox interesection
-    - Hyperbox disjunction
-    - Points within hyperboxes
-    - Nearest points
-- Reference points
-    - Ideal point
-    - Nadir point
-    - Worst point
-- Dominance
-    - Dominance between points and points
-    - Dominance between fronts and fronts
-    - Dominance between fronts and points  
-- Indicators
+| Data Structures | Queries       | Reference Points | Dominance   | Indicators   | Bindings |
+|-----------------|---------------|------------------|-------------|--------------|----------|
+| Pareto Front    | Intersection  | Ideal            | Point/point | Convergence  | C++      |
+| Pareto Archive  | Disjunction   | Nadir            | Front/point | Distribution | Python   |
+| Linear Lists    | k-nearest     | Worst            | Front/front | Cardinality  |          |
+| Quadtrees       | Points within |                  |             | Spread       |          |
+| kd-trees        |               |                  |             | Correlation  |          |
+| R-trees         |               |                  |             |              |          |
+| R*-trees        |               |                  |             |              |          |
+
+- List of Indicators
     - Convergence and Distribution
         - Exact Hypervolume
         - Monte-Carlo Hypervolume Approximation
@@ -83,7 +76,6 @@ Besides the usual container functions (`size()`, `empty()`, `clear()`, `begin()`
         - Direct Conflict
         - Maxmin Conflict
         - Non-parametric Conflict
-- Bindings for Python and C++
 
 Assuming the well-known $O(m \log n)$ average time complexity for search, insertion, and delete in trees, the following table presents the time complexity for these operations.
 
