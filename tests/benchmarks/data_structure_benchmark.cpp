@@ -202,7 +202,7 @@ void calculate_igd(benchmark::State &state) {
         pareto_front_t reference_set(dimensions);
         for (auto &[k, v] : v) {
             auto k2 = k - 2.0;
-            reference_set.insert(k2,v);
+            reference_set.insert({k2,v});
         }
         size_t c = 0;
         state.ResumeTiming();

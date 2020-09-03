@@ -2,6 +2,7 @@ CPMAddPackage(
     NAME pybind11
     GIT_REPOSITORY https://github.com/pybind/pybind11/
     VERSION 2.5.0
+    OPTIONS "PYBIND11_TEST OFF" "PYBIND11_INSTALL OFF"
 )
 
 pybind11_add_module(pyfront pyfront.cpp)
