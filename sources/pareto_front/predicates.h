@@ -5,6 +5,7 @@
 #ifndef PARETO_FRONT_PREDICATES_H
 #define PARETO_FRONT_PREDICATES_H
 
+#include <variant>
 #include <pareto_front/point.h>
 #include <pareto_front/query_box.h>
 

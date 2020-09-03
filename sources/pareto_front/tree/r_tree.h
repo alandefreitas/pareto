@@ -247,8 +247,10 @@ namespace pareto_front {
             branches_array branches_;
         };
 
+      public:
         using node_allocator_type = allocator_type<rtree_node>;
 
+      private:
         /// Check if using the fast allocator
         constexpr static bool is_using_default_fast_allocator() {
             return std::is_same_v<node_allocator_type, default_fast_memory_pool<rtree_node>>;

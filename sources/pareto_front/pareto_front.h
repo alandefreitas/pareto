@@ -15,7 +15,9 @@
 #include <pareto_front/tree/vector_tree.h>
 #include <pareto_front/tree/quad_tree.h>
 #include <pareto_front/tree/kd_tree.h>
+#ifdef BUILD_BOOST_TREE
 #include <pareto_front/tree/boost_tree.h>
+#endif
 #include <pareto_front/tree/r_tree.h>
 #include <pareto_front/tree/r_star_tree.h>
 
@@ -26,6 +28,14 @@ namespace pareto_front {
     struct boost_tree_tag {};
     struct r_tree_tag {};
     struct r_star_tree_tag {};
+
+#ifdef BUILD_BOOST_TREE
+  template <class nt, size_t ncd, class mt>
+  using default_type_for_boost_tree_tag = boost_tree<nt,ncd,mt>;
+#else
+  template <class nt, size_t ncd, class mt>
+  using default_type_for_boost_tree_tag = r_tree<nt,ncd,mt>;
+#endif
 
     constexpr bool minimization = true;
     constexpr bool min = true;
@@ -72,7 +82,7 @@ namespace pareto_front {
                                 std::is_same_v<TAG, boost_tree_tag>,
                                 std::conditional_t<number_of_compile_dimensions == 0,
                                     r_tree<number_type, number_of_compile_dimensions, mapped_type>,
-                                    boost_tree<number_type, number_of_compile_dimensions, mapped_type>
+                                    default_type_for_boost_tree_tag<number_type, number_of_compile_dimensions, mapped_type>
                                 >,
                                 std::conditional_t<
                                     std::is_same_v<TAG, r_tree_tag>,
@@ -1460,29 +1470,37 @@ namespace pareto_front {
 
 
         double distance(const point_type& p1, const point_type& p2) const {
+#ifdef BUILD_BOOST_TREE
             if constexpr (number_of_compile_dimensions > 0) {
                 return boost::geometry::distance(p1, p2);
             } else {
+#endif
                 double dist = 0.;
                 for (size_t i = 0; i < dimensions(); ++i) {
                     dist += pow(p1[i] - p2[i], 2);
                 }
                 return sqrt(dist);
+#ifdef BUILD_BOOST_TREE
             }
+#endif
         }
 
         double distance(const point_type& p, const box_type& b) const {
+#ifdef BUILD_BOOST_TREE
             if constexpr (number_of_compile_dimensions > 0) {
                 boost::geometry::model::box<point_type> boost_box(b.first(), b.second());
                 return boost::geometry::distance(p, boost_box);
             } else {
+#endif
                 double dist = 0.0;
                 for (size_t i = 0; i < dimensions(); ++i) {
                     double di = std::max(std::max(b.first()[i] - p[i], p[i] - b.second()[i]), 0.0);
                     dist += di * di;
                 }
                 return sqrt(dist);
+#ifdef BUILD_BOOST_TREE
             }
+#endif
         }
 
         static std::mt19937 &generator() {

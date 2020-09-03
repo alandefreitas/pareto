@@ -11,9 +11,17 @@
 #include <numeric>
 #include <ostream>
 #include <pareto_front/common.h>
-#include <pareto_front/geometry/geometry.hpp>
+#ifdef BUILD_BOOST_TREE
+#include <boost/geometry/geometry.hpp>
+#endif
 
 namespace pareto_front {
+
+#ifdef BUILD_BOOST_TREE
+using default_coordinate_system_for_points = boost::geometry::cs::cartesian;
+#else
+using default_coordinate_system_for_points = void;
+#endif
 
     /// We need an special structure for point types because
     ///    the other point type was very limited for our purposes.
@@ -23,7 +31,8 @@ namespace pareto_front {
     /// \tparam NUMBER_T
     /// \tparam DimensionCount
     /// \tparam CoordinateSystem
-    template <typename NUMBER_T, std::size_t DimensionCount = 0, typename CoordinateSystem = boost::geometry::cs::cartesian>
+
+    template <typename NUMBER_T, std::size_t DimensionCount = 0, typename CoordinateSystem = default_coordinate_system_for_points>
     class point {
     public:
         using number_type = NUMBER_T;
@@ -469,6 +478,7 @@ namespace pareto_front {
 
 }
 
+#ifdef BUILD_BOOST_TREE
 /// Define traits for boost geometry to understand out point type
 /// This is for our preliminary experiments comparing our r-tree with boost r-tree
 namespace boost {
@@ -508,5 +518,6 @@ namespace boost {
         }
     }
 }
+#endif
 
 #endif //PARETO_FRONT_POINT_H

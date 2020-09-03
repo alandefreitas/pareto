@@ -1,7 +1,7 @@
 #ifndef PARETO_FRONTS_PREDICATE_TREE_H
 #define PARETO_FRONTS_PREDICATE_TREE_H
 
-#include <pareto_front/geometry/geometry.hpp>
+#include <boost/geometry/geometry.hpp>
 #include <pareto_front/point.h>
 #include <pareto_front/query_box.h>
 

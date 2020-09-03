@@ -8,7 +8,9 @@
 #include <pareto_front/memory_pool.h>
 #include <pareto_front/point.h>
 #include <pareto_front/tree/r_tree.h>
+#ifdef BUILD_BOOST_TREE
 #include <pareto_front/tree/boost_tree.h>
+#endif
 #include "monotonic_resource.h"
 
 uint64_t seed() {
@@ -370,6 +372,7 @@ void create_rtree_runtime_std_allocator(benchmark::State &state) {
     }
 }
 
+#ifdef BUILD_BOOST_TREE
 void create_rtree_boost(benchmark::State &state) {
     using tree_type = pareto_front::boost_tree<double, 3, unsigned>;
     tree_type s;
@@ -383,6 +386,7 @@ void create_rtree_boost(benchmark::State &state) {
         state.ResumeTiming();
     }
 }
+#endif
 
 constexpr size_t max_container_size = 5000000;
 template <size_t MAX_SIZE = max_container_size>
@@ -397,7 +401,9 @@ BENCHMARK(create_rtree_fast_pool)->Apply(container_sizes<500000>);
 BENCHMARK(create_rtree_std_allocator)->Apply(container_sizes<500000>);
 BENCHMARK(create_rtree_runtime_fast_pool)->Apply(container_sizes<500000>);
 BENCHMARK(create_rtree_runtime_std_allocator)->Apply(container_sizes<500000>);
+#ifdef BUILD_BOOST_TREE
 BENCHMARK(create_rtree_boost)->Apply(container_sizes<500000>);
+#endif
 
 //// Sets: fast > free > new > monotonic > contiguous
 //BENCHMARK(create_set_fast_pool)->Apply(container_sizes);

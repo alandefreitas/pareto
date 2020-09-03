@@ -21,7 +21,16 @@ CPMAddPackage(
 add_library(hv pareto_front/hv-2.0rc2/hv.h pareto_front/hv-2.0rc2/hv.c)
 add_compile_definitions(hv VARIANT=4)
 
+if (BUILD_BOOST_TREE)
+    find_package(Boost REQUIRED)
+endif()
+
 # Pareto front container
 add_library(pareto_front INTERFACE)
 target_include_directories(pareto_front INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(pareto_front INTERFACE hv trase)
+
+if (BUILD_BOOST_TREE)
+    target_include_directories(pareto_front INTERFACE ${Boost_INCLUDE_DIR})
+    target_compile_definitions(pareto_front INTERFACE BUILD_BOOST_TREE)
+endif()
