@@ -25,10 +25,12 @@ if (BUILD_BOOST_TREE)
     find_package(Boost REQUIRED)
 endif()
 
+find_package(Threads)
+
 # Pareto front container
 add_library(pareto_front INTERFACE)
 target_include_directories(pareto_front INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(pareto_front INTERFACE hv trase)
+target_link_libraries(pareto_front INTERFACE hv trase ${CMAKE_THREAD_LIBS_INIT})
 
 if (BUILD_BOOST_TREE)
     target_include_directories(pareto_front INTERFACE ${Boost_INCLUDE_DIR})
