@@ -123,7 +123,7 @@ pf = pyfront.front(2)
 C++, assuming we are in the `pareto_front` namespace:
 
 ```cpp
-#include <pareto_front/pareto_front.h>
+#include <pareto_front/front.h>
 front<double, 2, unsigned> pf;
 ```
 
@@ -149,7 +149,7 @@ print('Dimension 1 is', 'maximization' if pf.is_maximization(1) else 'not maximi
 In C++, the examples assume `std::cout` and `std::endl` are visible in the current namespace:
 
 ```cpp
-pareto_front<double, 2, unsigned> pf({minimization, maximization});
+front<double, 2, unsigned> pf({minimization, maximization});
 cout << pf << endl;
 cout << pf.size() << " elements in the front" << endl;
 if (!pf.empty()) {
@@ -310,8 +310,8 @@ print('p1 non-dominates p2' if p1.non_dominates(p2) else 'p1 does not non-domina
 ```
 
 ```cpp
-pareto_front<double, 2, unsigned>::point_type p1({0, 0});
-pareto_front<double, 2, unsigned>::point_type p2({1, 1});
+front<double, 2, unsigned>::point_type p1({0, 0});
+front<double, 2, unsigned>::point_type p2({1, 1});
 cout << (p1.dominates(p2) ? "p1 dominates p2" : "p1 does not dominate p2") << endl;
 cout << (p1.strongly_dominates(p2) ? "p1 strongly dominates p2" : "p1 does not strongly dominate p2") << endl;
 cout << (p1.non_dominates(p2) ? "p1 non-dominates p2" : "p1 does not non-dominate p2") << endl;
@@ -616,7 +616,7 @@ target_link_libraries(my_target PUBLIC pareto_front)
 Add this header to your source files:
 
 ```cpp
-#include <pareto_front/pareto_front.h>
+#include <pareto_front/front.h>
 ```   
 
 ### CMake (automatic download)
