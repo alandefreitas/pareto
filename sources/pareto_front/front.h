@@ -5,6 +5,8 @@
 #include <map>
 #include <initializer_list>
 #include <ostream>
+#include <thread>
+#include <optional>
 
 #include <trase.hpp>
 #include <pareto_front/hv-2.0rc2/hv.h>

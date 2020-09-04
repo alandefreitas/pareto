@@ -11,12 +11,6 @@ jobs:
       matrix:
         config:
           - {
-              name: "Windows/Static/X86/Release",
-              os: windows-latest,
-              config: Release,
-              args: -G "Visual Studio 16 2019" -A Win32,
-            }
-          - {
               name: "Windows/Static/X64/Release",
               os: windows-latest,
               config: Release,
