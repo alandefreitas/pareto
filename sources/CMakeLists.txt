@@ -1,12 +1,6 @@
-# Pareto front has 3 dependencies:
-# - Geometry package
-#       This is a boost library. We include a subset of Boost with
-#       only with libraries we need.
 # - Trase library
-#       This package will be downloaded automatically.
-# - hv-2.0rc2/hv.h for calculating hyper-volumes
-#       This is included because it's not on a git repository.
-
+# This is a package for svg plots
+# It will later be replaced by matplotplusplus
 CPMAddPackage(
         NAME trase
         GITHUB_REPOSITORY trase-cpp/trase
@@ -18,10 +12,14 @@ CPMAddPackage(
 
 # Hypervolume computation in C
 # http://lopez-ibanez.eu/hypervolume
+# This is included because it's not on a git repository.
+# It could go offline at anytime.
 add_library(hv pareto_front/hv-2.0rc2/hv.h pareto_front/hv-2.0rc2/hv.c)
 add_compile_definitions(hv VARIANT=4)
 
 if (BUILD_BOOST_TREE)
+    # - Geometry package
+    # This is a boost library we only use for the benchmarks
     find_package(Boost REQUIRED)
 endif()
 
@@ -30,7 +28,7 @@ find_package(Threads)
 # Pareto front container
 add_library(pareto_front INTERFACE)
 target_include_directories(pareto_front INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(pareto_front INTERFACE hv trase ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(pareto_front INTERFACE hv trase Threads::Threads)
 
 if (BUILD_BOOST_TREE)
     target_include_directories(pareto_front INTERFACE ${Boost_INCLUDE_DIR})
