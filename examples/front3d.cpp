@@ -1,13 +1,13 @@
-#include <iostream>
-#include <random>
 #include <chrono>
+#include <iostream>
 #include <map>
-#include <pareto_front/pareto_front.h>
+#include <pareto_front/front.h>
+#include <random>
 
 int main() {
     using std::cout;
     using std::endl;
-    using namespace pareto_front;
+    using namespace pareto;
     front<double, 3, unsigned> pf({minimization, maximization, minimization});
 
     pf(-2.57664, -1.52034, 0.600798) = 17;
@@ -77,8 +77,8 @@ int main() {
     auto it = pf.find_nearest({2.5, 2.5, 2.5});
     cout << it->first << " -> " << it->second << endl;
 
-    pareto_front<double, 3, unsigned>::point_type p1({0, 0});
-    pareto_front<double, 3, unsigned>::point_type p2({1, 1});
+    front<double, 3, unsigned>::point_type p1({0, 0});
+    front<double, 3, unsigned>::point_type p2({1, 1});
     cout << (p1.dominates(p2) ? "p1 dominates p2" : "p1 does not dominate p2") << endl;
     cout << (p1.strongly_dominates(p2) ? "p1 strongly dominates p2" : "p1 does not strongly dominate p2") << endl;
     cout << (p1.non_dominates(p2) ? "p1 non-dominates p2" : "p1 does not non-dominate p2") << endl;

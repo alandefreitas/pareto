@@ -16,9 +16,9 @@
 #include <pareto_front/predicates.h>
 #include <pareto_front/memory_pool.h>
 
-namespace pareto_front {
+namespace pareto {
     template<typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename TAG>
-    class pareto_front;
+    class front;
     struct r_tree_tag;
 
     /// \class r_tree
@@ -57,7 +57,7 @@ namespace pareto_front {
     template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR = default_fast_memory_pool>
     class r_tree {
     public:
-        friend pareto_front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, r_tree_tag>;
+        friend front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, r_tree_tag>;
         using self_type = r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>;
         using number_type = NUMBER_TYPE;
         static constexpr size_t number_of_compile_dimensions_ = NUMBER_OF_DIMENSIONS;

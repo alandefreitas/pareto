@@ -8,7 +8,7 @@
 #include <climits>
 #include <cstddef>
 
-namespace pareto_front {
+namespace pareto {
 
     /// \class Interleaved memory pool allocator
     ///

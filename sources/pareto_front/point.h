@@ -15,7 +15,7 @@
 #include <boost/geometry/geometry.hpp>
 #endif
 
-namespace pareto_front {
+namespace pareto {
 
 #ifdef BUILD_BOOST_TREE
 using default_coordinate_system_for_points = boost::geometry::cs::cartesian;

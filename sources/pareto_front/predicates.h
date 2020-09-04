@@ -9,7 +9,7 @@
 #include <pareto_front/point.h>
 #include <pareto_front/query_box.h>
 
-namespace pareto_front {
+namespace pareto {
 
     template <typename NUMBER_T, std::size_t DimensionCount>
     class intersects {

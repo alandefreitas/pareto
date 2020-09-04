@@ -1,10 +1,10 @@
-#include <benchmark/benchmark.h>
-#include <pareto_front/pareto_front.h>
-#include <thread>
-#include <iostream>
-#include <vector>
 #include <algorithm>
+#include <benchmark/benchmark.h>
+#include <iostream>
+#include <pareto_front/front.h>
 #include <random>
+#include <thread>
+#include <vector>
 
 std::mt19937 &generator() {
     static std::mt19937 g(

@@ -3,10 +3,10 @@
 #include <algorithm>
 #include <random>
 
-#include <benchmark/benchmark.h>
-#include <pareto_front/pareto_front.h>
-#include <pareto_front/memory_pool.h>
 #include "monotonic_resource.h"
+#include <benchmark/benchmark.h>
+#include <pareto_front/front.h>
+#include <pareto_front/memory_pool.h>
 
 // Rationale
 // The "unsynchronized_pool_resource" should give us performance
@@ -24,7 +24,7 @@
 // https://github.com/llvm-mirror/libcxx/blob/78d6a7767ed57b50122a161b91f59f19c9bd0d19/include/experimental/memory_resource#L57
 
 void create_set_fast_pool(benchmark::State &state) {
-    std::set<std::array<double,3>, std::less<std::array<double,3>>, pareto_front::fast_memory_pool<std::array<double,3>>> s;
+    std::set<std::array<double,3>, std::less<std::array<double,3>>, pareto::fast_memory_pool<std::array<double,3>>> s;
     for (auto _ : state) {
         for (size_t i = 0; i < state.range(0); ++i) {
             s.emplace();
@@ -34,7 +34,7 @@ void create_set_fast_pool(benchmark::State &state) {
 }
 
 void create_set_free_pool(benchmark::State &state) {
-    std::set<std::array<double,3>, std::less<std::array<double,3>>, pareto_front::free_memory_pool<std::array<double,3>>> s;
+    std::set<std::array<double,3>, std::less<std::array<double,3>>, pareto::free_memory_pool<std::array<double,3>>> s;
     for (auto _ : state) {
         for (size_t i = 0; i < state.range(0); ++i) {
             s.emplace();
@@ -66,7 +66,7 @@ void create_set_monotonic(benchmark::State &state) {
 }
 
 void create_set_contiguous_pool(benchmark::State &state) {
-    std::set<std::array<double,3>, std::less<std::array<double,3>>, pareto_front::contiguous_memory_pool<std::array<double,3>>> s;
+    std::set<std::array<double,3>, std::less<std::array<double,3>>, pareto::contiguous_memory_pool<std::array<double,3>>> s;
     for (auto _ : state) {
         for (size_t i = 0; i < state.range(0); ++i) {
             s.emplace();
@@ -76,8 +76,8 @@ void create_set_contiguous_pool(benchmark::State &state) {
 }
 
 void create_small_vector_contiguous_pool(benchmark::State &state) {
-    pareto_front::contiguous_memory_pool<double> alloc;
-    using small_vector_type = std::vector<double, pareto_front::contiguous_memory_pool<double>>;
+    pareto::contiguous_memory_pool<double> alloc;
+    using small_vector_type = std::vector<double, pareto::contiguous_memory_pool<double>>;
     std::vector<small_vector_type> v;
     for (auto _ : state) {
         for (size_t i = 0; i < state.range(0); ++i) {
@@ -92,7 +92,7 @@ void create_small_vector_contiguous_pool(benchmark::State &state) {
 }
 
 void create_small_vector_fast_pool_shared_ptr(benchmark::State &state) {
-    pareto_front::fast_memory_pool<std::array<double,3>> alloc;
+    pareto::fast_memory_pool<std::array<double,3>> alloc;
     std::vector<std::shared_ptr<std::array<double,3>>> v;
     v.reserve(state.range(0));
     for (auto _ : state) {
@@ -107,7 +107,7 @@ void create_small_vector_fast_pool_shared_ptr(benchmark::State &state) {
 }
 
 void create_small_vector_fast_pool_new(benchmark::State &state) {
-    pareto_front::fast_memory_pool<std::array<double,3>> alloc;
+    pareto::fast_memory_pool<std::array<double,3>> alloc;
     std::vector<std::shared_ptr<std::array<double,3>>> v;
     v.reserve(state.range(0));
     for (auto _ : state) {
@@ -122,8 +122,8 @@ void create_small_vector_fast_pool_new(benchmark::State &state) {
 }
 
 void create_small_vector_free_pool(benchmark::State &state) {
-    pareto_front::free_memory_pool<double> alloc;
-    using small_vector_type = std::vector<double, pareto_front::free_memory_pool<double>>;
+    pareto::free_memory_pool<double> alloc;
+    using small_vector_type = std::vector<double, pareto::free_memory_pool<double>>;
     std::vector<small_vector_type> v;
     for (auto _ : state) {
         for (size_t i = 0; i < state.range(0); ++i) {
@@ -172,7 +172,7 @@ void create_small_vector_monotonic(benchmark::State &state) {
 }
 
 void create_large_vector_contiguous_interleaved_pool(benchmark::State &state) {
-    std::vector<double, pareto_front::contiguous_memory_pool<double>> s;
+    std::vector<double, pareto::contiguous_memory_pool<double>> s;
     for (auto _ : state) {
         for (size_t i = 0; i < state.range(0); ++i) {
             s.emplace_back(i);
@@ -182,7 +182,7 @@ void create_large_vector_contiguous_interleaved_pool(benchmark::State &state) {
 }
 
 void create_large_vector_free_pool(benchmark::State &state) {
-    std::vector<double, pareto_front::free_memory_pool<double>> s;
+    std::vector<double, pareto::free_memory_pool<double>> s;
     for (auto _ : state) {
         for (size_t i = 0; i < state.range(0); ++i) {
             s.emplace_back(i);

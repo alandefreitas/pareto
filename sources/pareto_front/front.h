@@ -21,7 +21,7 @@
 #include <pareto_front/tree/r_tree.h>
 #include <pareto_front/tree/r_star_tree.h>
 
-namespace pareto_front {
+namespace pareto {
     struct vector_tree_tag {};
     struct quad_tree_tag {};
     struct kd_tree_tag {};
@@ -49,10 +49,11 @@ namespace pareto_front {
     class archive;
 
     template<typename NUMBER_TYPE = double, size_t NUMBER_OF_DIMENSIONS = 2, typename ELEMENT_TYPE = unsigned, typename TAG = default_tag<NUMBER_OF_DIMENSIONS>>
-    class pareto_front {
+    class front {
     public:
         friend archive<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, TAG>;
-        using self_type = pareto_front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, TAG>;
+        using self_type =
+            front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, TAG>;
         using number_type = NUMBER_TYPE;
         static constexpr size_t number_of_compile_dimensions = NUMBER_OF_DIMENSIONS;
 
@@ -114,17 +115,17 @@ namespace pareto_front {
 
     public /* constructors */:
         /// \brief Create an empty pareto set / minimization
-        pareto_front()
-        : pareto_front(true) {}
+      front()
+        : front(true) {}
 
         /// \brief Create an empty pareto set and determine whether it is minimization
         /// Create an array indicating minimization/maximization for each dimension
         /// or, if number_of_compile_dimensions == 0, create a vector of size 1 with direction
-        explicit pareto_front(bool is_minimization)
-            : pareto_front(std::vector<uint8_t>(std::max(number_of_compile_dimensions,size_t(1)), is_minimization)) {}
+        explicit front(bool is_minimization)
+            : front(std::vector<uint8_t>(std::max(number_of_compile_dimensions,size_t(1)), is_minimization)) {}
 
         /// \brief Create an empty pareto set and determine whether each dimension is minimization
-        explicit pareto_front(std::initializer_list<bool> is_minimization) {
+        explicit front(std::initializer_list<bool> is_minimization) {
             if constexpr (number_of_compile_dimensions > 0) {
                 if (number_of_compile_dimensions != is_minimization_.size()) {
                     throw std::invalid_argument("Number of minimization directions should match the dimension defined for the object");
@@ -135,7 +136,7 @@ namespace pareto_front {
         }
 
         /// \brief Create an empty pareto set and determine whether each dimension is minimization
-        explicit pareto_front(const std::vector<uint8_t>& is_minimization) {
+        explicit front(const std::vector<uint8_t>& is_minimization) {
             if (number_of_compile_dimensions > 0) {
                 if (number_of_compile_dimensions != is_minimization_.size()) {
                     throw std::invalid_argument("Number of minimization directions should match the dimension");
@@ -146,7 +147,7 @@ namespace pareto_front {
         }
 
         /// \brief Create an empty pareto set and determine whether each dimension is minimization
-        explicit pareto_front(const std::array<uint8_t, number_of_compile_dimensions>& is_minimization) {
+        explicit front(const std::array<uint8_t, number_of_compile_dimensions>& is_minimization) {
             if (number_of_compile_dimensions > 0) {
                 if (number_of_compile_dimensions != is_minimization_.size()) {
                     throw std::invalid_argument("Number of minimization directions should match the dimension");
@@ -159,7 +160,7 @@ namespace pareto_front {
         /// \brief Private constructor using an external allocator
         /// Only archives should use this constructor to avoid one allocator
         /// per front because our fast allocator is not stateless.
-        pareto_front(const internal_minimization_type& is_minimization, std::shared_ptr<node_allocator_type>& external_allocator)
+        front(const internal_minimization_type& is_minimization, std::shared_ptr<node_allocator_type>& external_allocator)
                 : data_(external_allocator) {
             if (number_of_compile_dimensions > 0) {
                 if (number_of_compile_dimensions != is_minimization_.size()) {
@@ -171,26 +172,26 @@ namespace pareto_front {
         }
 
         /// \brief Copy constructor
-        pareto_front(const pareto_front &m) {
+        front(const front &m) {
             data_ = m.data_;
             is_minimization_ = m.is_minimization_;
         }
 
         /// \brief Assignment
-        pareto_front& operator=(const pareto_front &rhs) {
+        front & operator=(const front &rhs) {
             data_ = rhs.data_;
             is_minimization_ = rhs.is_minimization_;
             return *this;
         }
 
         /// \brief Move constructor
-        pareto_front(pareto_front &&m) noexcept {
+        front(front &&m) noexcept {
             data_ = std::move(m.data_);
             is_minimization_ = std::move(m.is_minimization_);
         }
 
         /// \brief Move assignment
-        pareto_front& operator=(pareto_front &&rhs) {
+        front & operator=(front &&rhs) {
             data_ = std::move(rhs.data_);
             is_minimization_ = std::move(rhs.is_minimization_);
             return *this;
@@ -198,50 +199,50 @@ namespace pareto_front {
 
         /// \brief Create a pareto set from a list of value pairs
         /// Each pair has a point and a value
-        explicit pareto_front(std::initializer_list<value_type> il)
-                : pareto_front(il.begin(), il.end()) {}
+        explicit front(std::initializer_list<value_type> il)
+                : front(il.begin(), il.end()) {}
 
         /// \brief Create a pareto set from a list of value pairs and determine whether dimensions are minimization
-        pareto_front(std::initializer_list<value_type> il, bool is_minimization)
-                : pareto_front(il.begin(), il.end(), is_minimization) {}
+        front(std::initializer_list<value_type> il, bool is_minimization)
+                : front(il.begin(), il.end(), is_minimization) {}
 
         /// \brief Create a pareto set from a list of value pairs and determine whether each dimension is minimization
-        pareto_front(std::initializer_list<value_type> il, std::vector<uint8_t> is_minimization)
-                : pareto_front(il.begin(), il.end(), is_minimization) {}
+        front(std::initializer_list<value_type> il, std::vector<uint8_t> is_minimization)
+                : front(il.begin(), il.end(), is_minimization) {}
 
         /// \brief Create a pareto set from a list of value pairs and determine whether each dimension is minimization
-        pareto_front(std::initializer_list<value_type> il, std::initializer_list<bool> is_minimization)
-        : pareto_front(il.begin(), il.end(), init_list_to_vector(is_minimization)) {}
+        front(std::initializer_list<value_type> il, std::initializer_list<bool> is_minimization)
+        : front(il.begin(), il.end(), init_list_to_vector(is_minimization)) {}
 
         /// \brief Create a pareto set from a list of value pairs
-        pareto_front(const std::vector<value_type>& v)
-                : pareto_front(v.begin(), v.end()) {}
+        front(const std::vector<value_type>& v)
+                : front(v.begin(), v.end()) {}
 
         /// \brief Create a pareto set from a list of value pairs and determine whether dimensions are minimization
-        pareto_front(const std::vector<value_type>& v, bool is_minimization)
-                : pareto_front(v.begin(), v.end(), is_minimization) {}
+        front(const std::vector<value_type>& v, bool is_minimization)
+                : front(v.begin(), v.end(), is_minimization) {}
 
         /// \brief Create a pareto set from a list of value pairs and determine whether each dimension is minimization
-        pareto_front(const std::vector<value_type>& v, std::vector<uint8_t> is_minimization)
-                : pareto_front(v.begin(), v.end(), is_minimization) {}
+        front(const std::vector<value_type>& v, std::vector<uint8_t> is_minimization)
+                : front(v.begin(), v.end(), is_minimization) {}
 
         /// \brief Create a pareto set from a list of value pairs and determine whether each dimension is minimization
-        pareto_front(const std::vector<value_type>& v, std::initializer_list<bool> is_minimization)
-                : pareto_front(v.begin(), v.end(), init_list_to_vector(is_minimization)) {}
+        front(const std::vector<value_type>& v, std::initializer_list<bool> is_minimization)
+                : front(v.begin(), v.end(), init_list_to_vector(is_minimization)) {}
 
         /// \brief Create a pareto set from a list of value pairs
         template<class InputIterator>
-        pareto_front(InputIterator first, InputIterator last)
-                : pareto_front(first, last, true) {}
+        front(InputIterator first, InputIterator last)
+                : front(first, last, true) {}
 
         /// \brief Create a pareto set from a list of value pairs and determine whether it is minimization
         template<class InputIterator>
-        pareto_front(InputIterator first, InputIterator last, bool is_minimization)
-        : pareto_front(first, last, std::vector<uint8_t>(std::max(number_of_compile_dimensions,size_t(1)),is_minimization)) {}
+        front(InputIterator first, InputIterator last, bool is_minimization)
+        : front(first, last, std::vector<uint8_t>(std::max(number_of_compile_dimensions,size_t(1)),is_minimization)) {}
 
         /// \brief Create a pareto set from a list of value pairs and determine whether each dimension is minimization
         template<class InputIterator>
-        pareto_front(InputIterator first, InputIterator last, std::vector<uint8_t> is_minimization)
+        front(InputIterator first, InputIterator last, std::vector<uint8_t> is_minimization)
                 : data_(first, last) {
             if (number_of_compile_dimensions != 0) {
                 if (is_minimization.size() != number_of_compile_dimensions) {
@@ -433,11 +434,11 @@ namespace pareto_front {
         }
 
     public /* relational operators */:
-        bool operator==(const pareto_front &rhs) const {
+        bool operator==(const front &rhs) const {
             return is_minimization_ == rhs.is_minimization_ && data_ == rhs.data_;
         }
 
-        bool operator!=(const pareto_front &rhs) const {
+        bool operator!=(const front &rhs) const {
             return !(rhs == *this);
         }
 
@@ -741,7 +742,7 @@ namespace pareto_front {
 
         /// Coverage indicator
         /// \see http://www.optimization-online.org/DB_FILE/2018/10/6887.pdf
-        double coverage(const pareto_front& rhs) const {
+        double coverage(const front & rhs) const {
             size_t hits = 0;
             for (const auto& [k,v]: rhs) {
                 hits += dominates(k);
@@ -750,12 +751,12 @@ namespace pareto_front {
         }
 
         /// Ratio of coverage indicators
-        double coverage_ratio(const pareto_front& rhs) const {
+        double coverage_ratio(const front & rhs) const {
             return coverage(rhs) / rhs.coverage(*this);
         }
 
         /// Generational distance
-        double gd(const pareto_front& reference) const {
+        double gd(const front & reference) const {
             double distances = 0.;
             for (const auto& [k,v]: *this) {
                 distances += distance(k, reference.find_nearest(k)->first);
@@ -766,7 +767,7 @@ namespace pareto_front {
         /// Standard deviation from the generational distance
         /// It measures the deformation of the Pareto set
         /// approximation according to a Pareto optimal solution set.
-        double std_gd(const pareto_front& reference) const {
+        double std_gd(const front & reference) const {
             double _gd = gd(reference);
             double std_dev = 0.;
             for (const auto& [k,v]: *this) {
@@ -777,20 +778,20 @@ namespace pareto_front {
         }
 
         /// Inverted generational distance
-        double igd(const pareto_front& reference) const {
+        double igd(const front & reference) const {
             return reference.gd(*this);
         }
 
         /// Standard deviation from the inverted generational distance
-        double std_igd(const pareto_front& reference) const {
+        double std_igd(const front & reference) const {
             return reference.std_gd(*this);
         }
 
-        double hausdorff(const pareto_front& reference) const {
+        double hausdorff(const front & reference) const {
             return std::max(gd(reference), igd(reference));
         }
 
-        double igd_plus(const pareto_front& reference_front) const {
+        double igd_plus(const front & reference_front) const {
             double distances = 0.;
             // for each element in the reference front
             for (const auto& item: reference_front) {
@@ -801,7 +802,7 @@ namespace pareto_front {
             return distances/reference_front.size();
         }
 
-        double std_igd_plus(const pareto_front& reference_front) const {
+        double std_igd_plus(const front & reference_front) const {
             double _igd_plus = igd_plus(reference_front);
             double std_dev = 0.;
             for (const auto& item: reference_front) {
@@ -1085,7 +1086,7 @@ namespace pareto_front {
 
 
         /// Check if this front dominates another front
-        bool dominates(const pareto_front& p) const {
+        bool dominates(const front & p) const {
             if (empty()) {
                 return false;
             }
@@ -1098,7 +1099,7 @@ namespace pareto_front {
         }
 
         /// Check if this front strongly dominates another front
-        bool strongly_dominates(const pareto_front& p) const {
+        bool strongly_dominates(const front & p) const {
             if (empty()) {
                 return false;
             }
@@ -1111,7 +1112,7 @@ namespace pareto_front {
         }
 
         /// Check if this front non-dominates another front
-        bool non_dominates(const pareto_front& p) const {
+        bool non_dominates(const front & p) const {
             if (empty()) {
                 return true;
             }
@@ -1124,7 +1125,7 @@ namespace pareto_front {
         }
 
         /// Check if this front is is_partially_dominated_by another front
-        bool is_partially_dominated_by(const pareto_front& p) const {
+        bool is_partially_dominated_by(const front & p) const {
             if (empty()) {
                 return true;
             }
@@ -1137,7 +1138,7 @@ namespace pareto_front {
         }
 
         /// Check if this front is is_partially_dominated_by another front
-        bool is_completely_dominated_by(const pareto_front& p) const {
+        bool is_completely_dominated_by(const front & p) const {
             if (empty()) {
                 return true;
             }
@@ -1209,7 +1210,7 @@ namespace pareto_front {
             return find(k) != end();
         }
 
-        friend std::ostream &operator<<(std::ostream &os, const pareto_front &pf) {
+        friend std::ostream &operator<<(std::ostream &os, const front &pf) {
             os << "Pareto front (" << pf.size() << " elements - {";
             for (size_t i = 0; i < pf.is_minimization_.size() - 1; ++i) {
                 os << (pf.is_minimization_[i] ? "minimization" : "maximization") << ", ";
@@ -1557,9 +1558,6 @@ namespace pareto_front {
         /// We use uint8_t because bool to avoid the array specialization
         internal_minimization_type is_minimization_;
     };
-
-    template<typename NUMBER_TYPE = double, size_t NUMBER_OF_DIMENSIONS = 2, typename ELEMENT_TYPE = unsigned, typename TAG = default_tag<NUMBER_OF_DIMENSIONS>>
-    using front = pareto_front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, TAG>;
 
 }
 

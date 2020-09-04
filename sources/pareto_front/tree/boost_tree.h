@@ -5,9 +5,9 @@
 #include <pareto_front/point.h>
 #include <pareto_front/query_box.h>
 
-namespace pareto_front {
+namespace pareto {
     template <typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename TAG>
-    class pareto_front;
+    class front;
     struct boost_tree_tag;
 
     /// This is a r-tree with all the operations we need using
@@ -16,10 +16,10 @@ namespace pareto_front {
     /// that we don't really need for pareto fronts. It also does
     /// not make good use of the custom allocators that are
     /// fundamental in small trees.
-    template <typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename ALLOCATOR = std::allocator<std::pair<::pareto_front::point<NUMBER_TYPE, NUMBER_OF_DIMENSIONS>, ELEMENT_TYPE>>>
+    template <typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename ALLOCATOR = std::allocator<std::pair<::pareto::point<NUMBER_TYPE, NUMBER_OF_DIMENSIONS>, ELEMENT_TYPE>>>
     class boost_tree {
     public:
-        friend pareto_front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, boost_tree_tag>;
+        friend front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, boost_tree_tag>;
         using self_type = boost_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>;
         using number_type = NUMBER_TYPE;
         static constexpr size_t number_of_compile_dimensions = NUMBER_OF_DIMENSIONS;

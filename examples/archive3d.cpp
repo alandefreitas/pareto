@@ -7,7 +7,7 @@
 int main() {
     using std::cout;
     using std::endl;
-    using namespace pareto_front;
+    using namespace pareto;
     archive<double, 3, unsigned> ar(100, {minimization, maximization, minimization});
 
     ar(0.00139845, 0.731828, -0.417717) = 39;

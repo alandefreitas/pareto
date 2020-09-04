@@ -2,8 +2,8 @@
 
 #include <catch2/catch.hpp>
 
-#include <pareto_front/pareto_front.h>
 #include <pareto_front/archive.h>
+#include <pareto_front/front.h>
 
 unsigned randi();
 
@@ -27,10 +27,10 @@ double point_distance(const POINT_TYPE &p1, const POINT_TYPE &p2) {
 }
 
 TEST_CASE("Point dominance") {
-    using namespace pareto_front;
+    using namespace pareto;
     // Compile size is 0, so the dimension is inferred from
     // the point_type
-    using pareto_front_t = pareto_front<double, 0, unsigned>;
+    using pareto_front_t = front<double, 0, unsigned>;
     using point_t = pareto_front_t::point_type;
 
     // Points

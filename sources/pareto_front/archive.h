@@ -5,15 +5,16 @@
 #ifndef PARETO_FRONT_ARCHIVE_H
 #define PARETO_FRONT_ARCHIVE_H
 
-#include <pareto_front/pareto_front.h>
+#include <pareto_front/front.h>
 #include <vector>
-namespace pareto_front {
+namespace pareto {
 
     template<typename NUMBER_TYPE = double, size_t NUMBER_OF_DIMENSIONS = 2, typename ELEMENT_TYPE = unsigned, typename TAG = default_tag<NUMBER_OF_DIMENSIONS>>
     class archive {
     public /* constructors */:
         using self_type = archive<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, TAG>;
-        using pareto_front_type = pareto_front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, TAG>;
+        using pareto_front_type =
+            front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, TAG>;
         static constexpr size_t number_of_compile_dimensions = NUMBER_OF_DIMENSIONS;
         using number_type = typename pareto_front_type::number_type;
         using point_type = typename pareto_front_type::point_type;

@@ -2,8 +2,8 @@
 
 #include <catch2/catch.hpp>
 
-#include <pareto_front/pareto_front.h>
 #include <pareto_front/archive.h>
+#include <pareto_front/front.h>
 
 unsigned randi();
 
@@ -17,7 +17,7 @@ using uint8_t_vector_iterator = std::vector<uint8_t>::iterator;
 
 bool next_combination(uint8_t_vector_iterator first, uint8_t_vector_iterator last, uint8_t max_value = 0x01);
 
-template <size_t COMPILE_DIMENSION, typename TAG = pareto_front::default_tag<COMPILE_DIMENSION>>
+template <size_t COMPILE_DIMENSION, typename TAG = pareto::default_tag<COMPILE_DIMENSION>>
 void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION) {
     const size_t test_dimension = COMPILE_DIMENSION != 0 ? COMPILE_DIMENSION : RUNTIME_DIMENSION;
     size_t dimensions_count = 0;
@@ -27,7 +27,7 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION) {
         section_name += std::to_string(COMPILE_DIMENSION) + " compile dimensions - ";
         section_name += std::to_string(RUNTIME_DIMENSION) + " runtime dimensions - ";
         std::string type_name = std::string(typeid(TAG).name());
-        type_name = std::regex_replace(type_name, std::regex("(N12)pareto_front([\\d]+)([^E]+)E"), "pareto_front::$3");
+        type_name = std::regex_replace(type_name, std::regex("(N12)pareto_front([\\d]+)([^E]+)E"), "pareto::$3");
         section_name += type_name + " - ";
         if (is_mini[0]) {
             section_name += "{minimization";
@@ -44,8 +44,9 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION) {
         section_name += "}";
 
         SECTION(section_name) {
-            using namespace pareto_front;
-            using pareto_front_t = pareto_front<double, COMPILE_DIMENSION, unsigned, TAG>;
+            using namespace pareto;
+            using pareto_front_t =
+                front<double, COMPILE_DIMENSION, unsigned, TAG>;
             using point_type = typename pareto_front_t::point_type;
             using value_type = typename pareto_front_t::value_type;
 
@@ -377,7 +378,7 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION) {
 }
 
 TEST_CASE("Front - 1 dimension") {
-    using namespace pareto_front;
+    using namespace pareto;
     test_front<1, vector_tree_tag>(1);
     test_front<0, vector_tree_tag>(1);
     test_front<1, quad_tree_tag>(1);
@@ -392,7 +393,7 @@ TEST_CASE("Front - 1 dimension") {
 }
 
 TEST_CASE("Front - 2 dimensions") {
-    using namespace pareto_front;
+    using namespace pareto;
     test_front<2, vector_tree_tag>(2);
     test_front<0, vector_tree_tag>(2);
     test_front<2, quad_tree_tag>(2);
@@ -407,7 +408,7 @@ TEST_CASE("Front - 2 dimensions") {
 }
 
 TEST_CASE("Front - 3 dimensions") {
-    using namespace pareto_front;
+    using namespace pareto;
     test_front<3, vector_tree_tag>(3);
     test_front<0, vector_tree_tag>(3);
     test_front<3, quad_tree_tag>(3);
@@ -422,7 +423,7 @@ TEST_CASE("Front - 3 dimensions") {
 }
 
 TEST_CASE("Front - 5 dimensions") {
-    using namespace pareto_front;
+    using namespace pareto;
     test_front<5, vector_tree_tag>(5);
     test_front<0, vector_tree_tag>(5);
     test_front<5, quad_tree_tag>(5);
@@ -437,7 +438,7 @@ TEST_CASE("Front - 5 dimensions") {
 }
 
 TEST_CASE("Front - 9 dimensions") {
-    using namespace pareto_front;
+    using namespace pareto;
     test_front<9, vector_tree_tag>(9);
     test_front<0, vector_tree_tag>(9);
     test_front<9, quad_tree_tag>(9);
@@ -452,7 +453,7 @@ TEST_CASE("Front - 9 dimensions") {
 }
 
 TEST_CASE("Front - 13 dimensions") {
-    using namespace pareto_front;
+    using namespace pareto;
     test_front<13, vector_tree_tag>(13);
     test_front<0, vector_tree_tag>(13);
     test_front<13, quad_tree_tag>(13);

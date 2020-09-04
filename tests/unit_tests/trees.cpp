@@ -11,9 +11,9 @@ bool rand_flip();
 double randn();
 double randu();
 
-template <class TREE_TYPE = pareto_front::r_tree<double, 0, unsigned>>
+template <class TREE_TYPE = pareto::r_tree<double, 0, unsigned>>
 void test_tree() {
-    using namespace pareto_front;
+    using namespace pareto;
     using tree_type = TREE_TYPE;
     using value_type = typename tree_type::value_type;
     using point_type = typename tree_type::point_type;
@@ -286,23 +286,23 @@ void test_tree() {
 }
 
 TEST_CASE("Quad-Tree") {
-    test_tree<pareto_front::quad_tree<double, 0, unsigned>>();
-    test_tree<pareto_front::quad_tree<double, 3, unsigned>>();
+    test_tree<pareto::quad_tree<double, 0, unsigned>>();
+    test_tree<pareto::quad_tree<double, 3, unsigned>>();
 }
 
 TEST_CASE("kd-Tree") {
-    test_tree<pareto_front::kd_tree<double, 0, unsigned>>();
-    test_tree<pareto_front::kd_tree<double, 3, unsigned>>();
+    test_tree<pareto::kd_tree<double, 0, unsigned>>();
+    test_tree<pareto::kd_tree<double, 3, unsigned>>();
 }
 
 TEST_CASE("R-Tree") {
-    test_tree<pareto_front::r_tree<double, 0, unsigned>>();
-    test_tree<pareto_front::r_tree<double, 3, unsigned>>();
+    test_tree<pareto::r_tree<double, 0, unsigned>>();
+    test_tree<pareto::r_tree<double, 3, unsigned>>();
 }
 
 TEST_CASE("R*-Tree") {
-    test_tree<pareto_front::r_star_tree<double, 0, unsigned>>();
-    test_tree<pareto_front::r_star_tree<double, 3, unsigned>>();
+    test_tree<pareto::r_star_tree<double, 0, unsigned>>();
+    test_tree<pareto::r_star_tree<double, 3, unsigned>>();
 }
 
 uint64_t seed() {

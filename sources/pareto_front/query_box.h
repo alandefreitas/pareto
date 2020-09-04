@@ -7,7 +7,7 @@
 
 #include <pareto_front/point.h>
 
-namespace pareto_front {
+namespace pareto {
     template <typename NUMBER_T, std::size_t DimensionCount>
     class query_box {
         static constexpr size_t number_of_compile_dimensions_ = DimensionCount;

@@ -5,18 +5,20 @@
 #include <pareto_front/memory_pool.h>
 #include <vector>
 
-namespace pareto_front {
+namespace pareto {
+
     template <typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename TAG>
-    class pareto_front;
+    class front;
+
     struct vector_tree_tag;
 
     /// \brief This is a vector emulating a tree
     /// For all operations, we iterate through the vector looking for elements
     /// that match the predicates.
-    template <typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename ALLOCATOR = std::allocator<std::pair<::pareto_front::point<NUMBER_TYPE, NUMBER_OF_DIMENSIONS>, ELEMENT_TYPE>>>
+    template <typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename ALLOCATOR = std::allocator<std::pair<::pareto::point<NUMBER_TYPE, NUMBER_OF_DIMENSIONS>, ELEMENT_TYPE>>>
     class vector_tree {
     public:
-        friend pareto_front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, vector_tree_tag>;
+        friend front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, vector_tree_tag>;
         using self_type = vector_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>;
         using number_type = NUMBER_TYPE;
         static constexpr size_t number_of_compile_dimensions = NUMBER_OF_DIMENSIONS;

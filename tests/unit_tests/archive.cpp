@@ -2,8 +2,8 @@
 
 #include <catch2/catch.hpp>
 
-#include <pareto_front/pareto_front.h>
 #include <pareto_front/archive.h>
+#include <pareto_front/front.h>
 
 unsigned randi();
 
@@ -44,7 +44,7 @@ void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION) {
         section_name += "}";
 
         SECTION(section_name) {
-            using namespace pareto_front;
+            using namespace pareto;
             using archive_t = archive<double, COMPILE_DIMENSION, unsigned, TAG>;
             using point_type = typename archive_t::point_type;
             using value_type = typename archive_t::value_type;
@@ -384,7 +384,7 @@ void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION) {
 }
 
 TEST_CASE("Archive - 1 dimension") {
-    using namespace pareto_front;
+    using namespace pareto;
     test_archive<1, vector_tree_tag>(1);
     test_archive<0, vector_tree_tag>(1);
     test_archive<1, quad_tree_tag>(1);
@@ -399,7 +399,7 @@ TEST_CASE("Archive - 1 dimension") {
 }
 
 TEST_CASE("Archive - 2 dimension") {
-    using namespace pareto_front;
+    using namespace pareto;
     test_archive<2, vector_tree_tag>(2);
     test_archive<0, vector_tree_tag>(2);
     test_archive<2, quad_tree_tag>(2);
@@ -414,7 +414,7 @@ TEST_CASE("Archive - 2 dimension") {
 }
 
 TEST_CASE("Archive - 3 dimension") {
-    using namespace pareto_front;
+    using namespace pareto;
     test_archive<3, vector_tree_tag>(3);
     test_archive<0, vector_tree_tag>(3);
     test_archive<3, quad_tree_tag>(3);
@@ -429,7 +429,7 @@ TEST_CASE("Archive - 3 dimension") {
 }
 
 TEST_CASE("Archive - 5 dimension") {
-    using namespace pareto_front;
+    using namespace pareto;
     test_archive<5, vector_tree_tag>(5);
     test_archive<0, vector_tree_tag>(5);
     test_archive<5, quad_tree_tag>(5);
@@ -444,7 +444,7 @@ TEST_CASE("Archive - 5 dimension") {
 }
 
 TEST_CASE("Archive - 9 dimension") {
-    using namespace pareto_front;
+    using namespace pareto;
     test_archive<9, vector_tree_tag>(9);
     test_archive<0, vector_tree_tag>(9);
     test_archive<9, quad_tree_tag>(9);
@@ -459,7 +459,7 @@ TEST_CASE("Archive - 9 dimension") {
 }
 
 TEST_CASE("Archive - 13 dimension") {
-    using namespace pareto_front;
+    using namespace pareto;
     test_archive<13, vector_tree_tag>(13);
     test_archive<0, vector_tree_tag>(13);
     test_archive<13, quad_tree_tag>(13);

@@ -8,7 +8,7 @@
 #include <vector>
 #include <array>
 
-namespace pareto_front {
+namespace pareto {
 
     template <typename T>
     void maybe_resize(T& v, size_t n);

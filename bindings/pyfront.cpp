@@ -1,12 +1,12 @@
+#include <chrono>
+#include <iostream>
+#include <pareto_front/archive.h>
+#include <pareto_front/front.h>
+#include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-#include <pybind11/functional.h>
 #include <pybind11/stl_bind.h>
-#include <iostream>
 #include <random>
-#include <chrono>
-#include <pareto_front/pareto_front.h>
-#include <pareto_front/archive.h>
 
 namespace py = pybind11;
 
@@ -17,7 +17,7 @@ constexpr bool boost_rtree_is_deprecated = true;
 
 template <class TAG>
 std::string tag_to_string() {
-    using namespace pareto_front;
+    using namespace pareto;
     if constexpr (std::is_same_v<TAG,vector_tree_tag>) {
         return "list";
     } else if constexpr (std::is_same_v<TAG,quad_tree_tag>) {
@@ -38,7 +38,7 @@ std::string tag_to_string() {
 template<size_t N, class TAG = void>
 void binding_for_N_dimensional(py::module &m) {
     using namespace py::literals;
-    using namespace pareto_front;
+    using namespace pareto;
 
     // Types for convenience
     using pareto_front_type = std::conditional_t<std::is_same_v<TAG,void>, front<double, N, py::object>, front<double, N, py::object, TAG>>;
@@ -1202,7 +1202,7 @@ void binding_for_N_dimensional(py::module &m) {
 template<size_t n = max_num_dimensions, class module_t>
 std::enable_if_t<0 == n, void>
 binding_for_all_dimensions(module_t &m) {
-    using namespace pareto_front;
+    using namespace pareto;
     binding_for_N_dimensional<n>(m);
     binding_for_N_dimensional<n, vector_tree_tag>(m);
     binding_for_N_dimensional<n, quad_tree_tag>(m);
@@ -1220,7 +1220,7 @@ binding_for_all_dimensions(module_t &m) {
 template<size_t n = max_num_dimensions, class module_t>
 std::enable_if_t<0 < n, void>
 binding_for_all_dimensions(module_t &m) {
-    using namespace pareto_front;
+    using namespace pareto;
     binding_for_N_dimensional<n>(m);
     binding_for_N_dimensional<n, vector_tree_tag>(m);
     binding_for_N_dimensional<n, quad_tree_tag>(m);
@@ -1240,7 +1240,7 @@ template<size_t n = max_num_dimensions,
          class... Args>
 std::enable_if_t<0 == n, py::object>
 cast_for_dimension(std::string tag, size_t d, Args &&... args) {
-    using namespace pareto_front;
+    using namespace pareto;
     if (d == n) {
         if (tag.empty() || tag == "default") {
             py::object obj = py::cast(FRONT_OR_ARCHIVE<double, n, py::object, default_tag<n>>(args...));
@@ -1292,7 +1292,7 @@ template<size_t n = max_num_dimensions,
          class... Args>
 std::enable_if_t<0 < n, py::object>
 cast_for_dimension(std::string tag, size_t d, Args &&... args) {
-    using namespace pareto_front;
+    using namespace pareto;
     if (d == n) {
         if (tag.empty() || tag == "default") {
             py::object obj = py::cast(FRONT_OR_ARCHIVE<double, n, py::object, default_tag<n>>(args...));
@@ -1333,7 +1333,7 @@ cast_for_dimension(std::string tag, size_t d, Args &&... args) {
 /// Create modules
 PYBIND11_MODULE(pyfront, m) {
     using namespace py::literals;
-    using namespace pareto_front;
+    using namespace pareto;
     m.doc() = "A container to maintain and query multi-dimensional Pareto fronts and archives efficiently";
 
     /// Create bindings for n, n-1, n-2, n-3, ..., 3, 2, 1 dimensions
