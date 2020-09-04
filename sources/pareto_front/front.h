@@ -6,6 +6,7 @@
 #include <initializer_list>
 #include <ostream>
 #include <thread>
+#include <mutex>
 #include <optional>
 
 #include <trase.hpp>
