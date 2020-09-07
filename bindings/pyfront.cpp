@@ -11,7 +11,7 @@
 namespace py = pybind11;
 
 /// Max number of dimensions for the front
-/// Anything beyond 10 dimensions will have the dimension determined at runtime
+/// Anything beyond 10 (default) dimensions will have the dimension determined at runtime
 constexpr size_t max_num_dimensions = MAX_NUM_DIMENSIONS_PYTHON;
 constexpr bool boost_rtree_is_deprecated = true;
 
@@ -1222,6 +1222,7 @@ std::enable_if_t<0 < n, void>
 binding_for_all_dimensions(module_t &m) {
     using namespace pareto;
     binding_for_N_dimensional<n>(m);
+#ifdef BUILD_BINDING_FOR_ALL_STRUCTURES
     binding_for_N_dimensional<n, vector_tree_tag>(m);
     binding_for_N_dimensional<n, quad_tree_tag>(m);
     binding_for_N_dimensional<n, kd_tree_tag>(m);
@@ -1230,6 +1231,7 @@ binding_for_all_dimensions(module_t &m) {
     }
     binding_for_N_dimensional<n, r_tree_tag>(m);
     binding_for_N_dimensional<n, r_star_tree_tag>(m);
+#endif
     binding_for_all_dimensions<n - 1>(m);
 }
 
