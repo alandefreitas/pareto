@@ -33,27 +33,27 @@ double randn() {
 }
 
 template <size_t dimensions, size_t runtime_dimensions>
-typename pareto_front::pareto_front<double, dimensions, unsigned>::point_type random_point() {
-    typename pareto_front::pareto_front<double, dimensions, unsigned>::point_type p(runtime_dimensions);
+typename pareto::front<double, dimensions, unsigned>::point_type random_point() {
+    typename pareto::front<double, dimensions, unsigned>::point_type p(runtime_dimensions);
     std::generate(p.begin(), p.end(), randn);
     return p;
 };
 
 template <size_t dimensions, size_t runtime_dimensions>
-typename pareto_front::pareto_front<double, dimensions, unsigned>::value_type random_value() {
-    auto v = std::make_pair<typename pareto_front::pareto_front<double, dimensions, unsigned>::point_type, unsigned>(random_point<dimensions, runtime_dimensions>(), randi());
+typename pareto::front<double, dimensions, unsigned>::value_type random_value() {
+    auto v = std::make_pair<typename pareto::front<double, dimensions, unsigned>::point_type, unsigned>(random_point<dimensions, runtime_dimensions>(), randi());
     return v;
 };
 
 template <size_t dimensions, size_t runtime_dimensions>
-pareto_front::pareto_front<double, dimensions, unsigned>
+pareto::front<double, dimensions, unsigned>
 create_test_pareto(size_t target_size) {
-    static std::map<size_t,pareto_front::pareto_front<double, dimensions, unsigned>> cache;
+    static std::map<size_t,pareto::front<double, dimensions, unsigned>> cache;
     auto it = cache.find(target_size);
     if (it != cache.end()) {
         return it->second;
     }
-    pareto_front::pareto_front<double, dimensions, unsigned> pf(runtime_dimensions);
+    pareto::front<double, dimensions, unsigned> pf(runtime_dimensions);
     for (size_t i = 0; i < std::max(static_cast<size_t>(1000000), target_size*100) && pf.size() < target_size; ++i) {
         pf.insert(random_value<dimensions,runtime_dimensions>());
     }
@@ -63,7 +63,7 @@ create_test_pareto(size_t target_size) {
 
 template<size_t dimensions>
 void calculate_hypervolume(benchmark::State &state) {
-    using pareto_front_t = pareto_front::pareto_front<double, dimensions, unsigned>;
+    using pareto_front_t = pareto::front<double, dimensions, unsigned>;
     using point_t = typename pareto_front_t::point_type;
     double hv = 0.0;
     static std::map<size_t,double> known_hv;

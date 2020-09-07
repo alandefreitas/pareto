@@ -17,7 +17,7 @@ using uint8_t_vector_iterator = std::vector<uint8_t>::iterator;
 
 bool next_combination(uint8_t_vector_iterator first, uint8_t_vector_iterator last, uint8_t max_value = 0x01);
 
-template <size_t COMPILE_DIMENSION, typename TAG = pareto_front::default_tag<COMPILE_DIMENSION>>
+template <size_t COMPILE_DIMENSION, typename TAG = pareto::default_tag<COMPILE_DIMENSION>>
 void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION) {
     const size_t test_dimension = COMPILE_DIMENSION != 0 ? COMPILE_DIMENSION : RUNTIME_DIMENSION;
     size_t dimensions_count = 0;
@@ -27,7 +27,7 @@ void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION) {
         section_name += std::to_string(COMPILE_DIMENSION) + " compile dimensions - ";
         section_name += std::to_string(RUNTIME_DIMENSION) + " runtime dimensions - ";
         std::string type_name = std::string(typeid(TAG).name());
-        type_name = std::regex_replace(type_name, std::regex("(N12)pareto_front([\\d]+)([^E]+)E"), "pareto_front::$3");
+        type_name = std::regex_replace(type_name, std::regex("(N12)pareto_front([\\d]+)([^E]+)E"), "pareto::$3");
         section_name += type_name + " - ";
         if (is_mini[0]) {
             section_name += "{minimization";

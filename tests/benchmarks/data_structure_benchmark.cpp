@@ -33,22 +33,22 @@ double randn() {
 }
 
 template <size_t dimensions, typename TAG>
-typename pareto_front::pareto_front<double, dimensions, unsigned, TAG>::point_type random_point() {
-    typename pareto_front::pareto_front<double, dimensions, unsigned, TAG>::point_type p(dimensions);
+typename pareto::front<double, dimensions, unsigned, TAG>::point_type random_point() {
+    typename pareto::front<double, dimensions, unsigned, TAG>::point_type p(dimensions);
     std::generate(p.begin(), p.end(), randn);
     return p;
 };
 
 template <size_t dimensions, typename TAG>
-typename pareto_front::pareto_front<double, dimensions, unsigned, TAG>::value_type random_value() {
-    auto v = std::make_pair<typename pareto_front::pareto_front<double, dimensions, unsigned, TAG>::point_type, unsigned>(random_point<dimensions, TAG>(), randi());
+typename pareto::front<double, dimensions, unsigned, TAG>::value_type random_value() {
+    auto v = std::make_pair<typename pareto::front<double, dimensions, unsigned, TAG>::point_type, unsigned>(random_point<dimensions, TAG>(), randi());
     return v;
 };
 
 template <size_t dimensions, typename TAG>
-pareto_front::pareto_front<double, dimensions, unsigned, TAG>
+pareto::front<double, dimensions, unsigned, TAG>
 create_test_pareto(size_t target_size) {
-    pareto_front::pareto_front<double, dimensions, unsigned, TAG> pf;
+    pareto::front<double, dimensions, unsigned, TAG> pf;
     for (size_t i = 0; i < std::max(static_cast<size_t>(100000), target_size*100) && pf.size() < target_size; ++i) {
         pf.insert(random_value<dimensions, TAG>());
     }
@@ -56,9 +56,9 @@ create_test_pareto(size_t target_size) {
 }
 
 template <size_t dimensions, typename TAG>
-std::vector<typename pareto_front::pareto_front<double, dimensions, unsigned, TAG>::value_type>
+std::vector<typename pareto::front<double, dimensions, unsigned, TAG>::value_type>
 create_vector_with_values(size_t n) {
-    std::vector<typename pareto_front::pareto_front<double, dimensions, unsigned, TAG>::value_type> v;
+    std::vector<typename pareto::front<double, dimensions, unsigned, TAG>::value_type> v;
     v.reserve(n);
     for (size_t i = 0; i < n; ++i) {
         v.emplace_back(random_value<dimensions, TAG>());
@@ -74,13 +74,13 @@ void create_front_from_vector(benchmark::State &state) {
         auto v = create_vector_with_values<dimensions, TAG>(n);
 
         state.ResumeTiming();
-        benchmark::DoNotOptimize(pareto_front::pareto_front<double, dimensions, unsigned, TAG>(v.begin(), v.end()));
+        benchmark::DoNotOptimize(pareto::front<double, dimensions, unsigned, TAG>(v.begin(), v.end()));
     }
 }
 
 template <size_t dimensions, typename TAG>
 void insert_in_front(benchmark::State &state) {
-    using pareto_front_t = pareto_front::pareto_front<double, dimensions, unsigned, TAG>;
+    using pareto_front_t = pareto::front<double, dimensions, unsigned, TAG>;
     using point_t = typename pareto_front_t::point_type;
     size_t n = state.range(0);
     for (auto _ : state) {
@@ -97,14 +97,14 @@ void insert_in_front(benchmark::State &state) {
 
 template <size_t dimensions, typename TAG>
 void erase_from_front(benchmark::State &state) {
-    using pareto_front_t = pareto_front::pareto_front<double, dimensions, unsigned, TAG>;
+    using pareto_front_t = pareto::front<double, dimensions, unsigned, TAG>;
     using point_t = typename pareto_front_t::point_type;
     size_t n = state.range(0);
 
     for (auto _ : state) {
         state.PauseTiming();
         auto pf = create_test_pareto<dimensions, TAG>(n);
-        std::vector<typename pareto_front::pareto_front<double, dimensions, unsigned, TAG>::value_type> to_erase;
+        std::vector<typename pareto::front<double, dimensions, unsigned, TAG>::value_type> to_erase;
         to_erase.reserve(n);
         for (const auto& v: pf) {
             to_erase.emplace_back(v);
@@ -120,7 +120,7 @@ void erase_from_front(benchmark::State &state) {
 
 template <size_t dimensions, typename TAG>
 void check_dominance(benchmark::State &state) {
-    using pareto_front_t = pareto_front::pareto_front<double, dimensions, unsigned, TAG>;
+    using pareto_front_t = pareto::front<double, dimensions, unsigned, TAG>;
     using point_t = typename pareto_front_t::point_type;
     auto pf = create_test_pareto<dimensions, TAG>(state.range(0));
 
@@ -135,7 +135,7 @@ void check_dominance(benchmark::State &state) {
 
 template <size_t dimensions, typename TAG>
 void query_and_iterate(benchmark::State &state) {
-    using pareto_front_t = pareto_front::pareto_front<double, dimensions, unsigned, TAG>;
+    using pareto_front_t = pareto::front<double, dimensions, unsigned, TAG>;
     using point_t = typename pareto_front_t::point_type;
     auto pf = create_test_pareto<dimensions, TAG>(state.range(0));
     size_t c = 0;
@@ -155,7 +155,7 @@ void query_and_iterate(benchmark::State &state) {
 
 template <size_t dimensions, typename TAG>
 void nearest_and_iterate(benchmark::State &state) {
-    using pareto_front_t = pareto_front::pareto_front<double, dimensions, unsigned, TAG>;
+    using pareto_front_t = pareto::front<double, dimensions, unsigned, TAG>;
     using point_t = typename pareto_front_t::point_type;
     auto pf = create_test_pareto<dimensions, TAG>(state.range(0));
     size_t c = 0;
@@ -174,7 +174,7 @@ void nearest_and_iterate(benchmark::State &state) {
 
 template <size_t dimensions, typename TAG>
 void calculate_hypervolume(benchmark::State &state) {
-    using pareto_front_t = pareto_front::pareto_front<double, dimensions, unsigned, TAG>;
+    using pareto_front_t = pareto::front<double, dimensions, unsigned, TAG>;
     using point_t = typename pareto_front_t::point_type;
     for (auto _ : state) {
         state.PauseTiming();
@@ -193,7 +193,7 @@ void calculate_hypervolume(benchmark::State &state) {
 
 template <size_t dimensions, typename TAG>
 void calculate_igd(benchmark::State &state) {
-    using pareto_front_t = pareto_front::pareto_front<double, dimensions, unsigned, TAG>;
+    using pareto_front_t = pareto::front<double, dimensions, unsigned, TAG>;
     using point_t = typename pareto_front_t::point_type;
     for (auto _ : state) {
         state.PauseTiming();
@@ -239,12 +239,12 @@ void pareto_sizes_and_samples2(benchmark::internal::Benchmark* b) {
 size_t number_of_threads = std::thread::hardware_concurrency();
 
 /// Creating front: varying data structure, dimension and vector size
-using pareto_front::vector_tree_tag;
-using pareto_front::kd_tree_tag;
-using pareto_front::quad_tree_tag;
-using pareto_front::boost_tree_tag;
-using pareto_front::r_tree_tag;
-using pareto_front::r_star_tree_tag;
+using pareto::vector_tree_tag;
+using pareto::kd_tree_tag;
+using pareto::quad_tree_tag;
+using pareto::boost_tree_tag;
+using pareto::r_tree_tag;
+using pareto::r_star_tree_tag;
 
 /// Creating front: varying data structure, dimension, front size, and number of operations
 BENCHMARK_TEMPLATE(create_front_from_vector, 1, vector_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
