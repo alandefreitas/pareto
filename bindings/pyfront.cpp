@@ -11,8 +11,8 @@
 namespace py = pybind11;
 
 /// Max number of dimensions for the front
-/// Anything beyond 10 dimension will have the dimension determined at runtime
-constexpr size_t max_num_dimensions = 10;
+/// Anything beyond 10 dimensions will have the dimension determined at runtime
+constexpr size_t max_num_dimensions = MAX_NUM_DIMENSIONS_PYTHON;
 constexpr bool boost_rtree_is_deprecated = true;
 
 template <class TAG>
