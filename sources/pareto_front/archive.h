@@ -7,6 +7,7 @@
 
 #include <pareto_front/front.h>
 #include <vector>
+
 namespace pareto {
 
     template<typename NUMBER_TYPE = double, size_t NUMBER_OF_DIMENSIONS = 2, typename ELEMENT_TYPE = unsigned, typename TAG = default_tag<NUMBER_OF_DIMENSIONS>>
@@ -922,7 +923,12 @@ namespace pareto {
                         // Get points that might now not be dominated by the current front
                         auto it = data_[i + 1].find_intersection(point, data_[i + 1].worst());
                         // Copy these points because erasing points invalidate iterators
-                        std::vector<value_type> intersection(it, data_[i + 1].end());
+                        std::vector<value_type> intersection;
+                        auto it_end = data_[i + 1].end();
+                        while (it != it_end) {
+                            intersection.emplace_back(*it);
+                            ++it;
+                        }
                         // For each of these points
                         for (auto p_it = intersection.begin(); p_it != intersection.end(); ++p_it) {
                             // If this front doesn't dominate the point
