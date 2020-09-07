@@ -1458,7 +1458,12 @@ namespace pareto {
                 // Put them all in a separate list
                 // because iterators will be invalidated
                 auto it = find_intersection(ideal(), worst());
-                std::vector<value_type> all(it, end());
+                auto it_end = end();
+                std::vector<value_type> all;
+                while (it != it_end) {
+                    all.emplace_back(*it);
+                    ++it;
+                }
                 // Iterate removing points they dominate
                 size_t sum_removed = 0;
                 for (const auto& [k,v]: all) {

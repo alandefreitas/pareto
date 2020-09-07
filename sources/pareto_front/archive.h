@@ -711,7 +711,15 @@ namespace pareto {
                                                                           return v.first.dominates(x.first,
                                                                                                    is_minimization_);
                                                                       });
-                std::vector<value_type> dominated_solutions(dominated_it, data_[i].data_.end());
+                // This does not work on some compilers
+                // std::vector<value_type> dominated_solutions(dominated_it, data_[i].data_.end());
+                std::vector<value_type> dominated_solutions;
+                auto begin_it = data_[i].data_.end();
+                auto end_it = data_[i].data_.end();
+                while (begin_it != end_it) {
+                    dominated_solutions.emplace_back(*begin_it);
+                    ++begin_it;
+                }
                 // remove all of them from the current front
                 data_[i].erase(dominated_it, data_[i].data_.end());
                 // recursively insert all of them to higher fronts i+1, i+2, ...
