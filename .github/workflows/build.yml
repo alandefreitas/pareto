@@ -1,6 +1,6 @@
 name: ParetoFront
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 jobs:
   Build:
@@ -11,11 +11,11 @@ jobs:
       matrix:
         config:
           - {
-              name: "Windows/Static/X64/Release",
-              os: windows-latest,
-              config: Release,
-              args: -G "Visual Studio 16 2019" -A x64,
-            }
+            name: "Windows/Static/X64/Release",
+            os: windows-latest,
+            config: Release,
+            args: -G "Visual Studio 16 2019" -A x64, # the github machine cannot build the python bindings
+          }
           - {
             name: "Linux/Static/X64/Release",
             os: ubuntu-latest,
@@ -23,19 +23,23 @@ jobs:
             args: "-DCMAKE_C_COMPILER=/usr/bin/gcc-8 -DCMAKE_CXX_COMPILER=/usr/bin/g++-8",
           }
           - {
-              name: "MacOSX/Static/X64/Release",
-              os: macos-latest,
-              config: Release,
-              args: "",
-            }
+            name: "MacOSX/Static/X64/Release",
+            os: macos-latest,
+            config: Release,
+            args: "",
+          }
     steps:
       - uses: actions/checkout@v2
+#      - name: Install python3-dev on Linux
+#          if: matrix.config.os == 'ubuntu-latest'
+#          run: |
+#            sudo apt upgrade python3-dev
       - name: Create Work Dir
         run: mkdir build
       - name: Configure
         working-directory: ./build
         run: |
-          cmake .. ${{ matrix.config.args }} -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DBUILD_LONG_TESTS=OFF -DMAX_NUM_DIMENSIONS_PYTHON=3
+          cmake .. ${{ matrix.config.args }} -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DBUILD_LONG_TESTS=OFF -DMAX_NUM_DIMENSIONS_PYTHON=3 -DBUILD_BINDING_FOR_ALL_STRUCTURES=OFF
       - name: Build
         working-directory: ./build
         run: cmake --build . -j 2 --config ${{ matrix.config.config }}
