@@ -20,7 +20,7 @@ jobs:
             name: "Linux/Static/X64/Release",
             os: ubuntu-latest,
             config: Release,
-            args: "",
+            args: "-DCMAKE_C_COMPILER=/usr/bin/gcc-8 -DCMAKE_CXX_COMPILER=/usr/bin/g++-8",
           }
           - {
               name: "MacOSX/Static/X64/Release",
