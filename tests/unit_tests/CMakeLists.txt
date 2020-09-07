@@ -1,4 +1,5 @@
 include(CTest)
+enable_testing()
 
 CPMAddPackage(
         NAME Catch2
