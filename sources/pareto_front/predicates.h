@@ -521,8 +521,8 @@ namespace pareto {
                 return true;
             }
             // predicates now can only be intersect, within or disjoint
-            number_type volume_a;
-            number_type volume_b;
+            number_type volume_a = number_type{0};
+            number_type volume_b = number_type{0};
             if (is_intersects()) {
                 volume_a = as_intersects().data().volume();
             } else if (is_within()) {
