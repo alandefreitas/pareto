@@ -13,21 +13,23 @@ message("MASTER_PROJECT=${MASTER_PROJECT}")
 
 # What to build
 option(BUILD_EXAMPLES "Compile the examples" ${MASTER_PROJECT})
-option(BUILD_PYTHON_BINDINGS "Compile the Python binding" ${MASTER_PROJECT})
+option(BUILD_PYTHON_BINDING "Compile the Python binding" ${MASTER_PROJECT})
+message("BUILD_PYTHON_BINDING=${BUILD_PYTHON_BINDING}")
 option(BUILD_TESTS "Compile the tests" ${MASTER_PROJECT})
 
 # How to build
 option(BUILD_LONG_TESTS "Build the Data Structure Benchmark (It takes very long)" OFF)
+message("BUILD_LONG_TESTS=${BUILD_LONG_TESTS}")
 option(BUILD_BOOST_TREE "Include R-Tree using Boost Geometry (Boost dependency)" OFF)
 option(MAX_NUM_DIMENSIONS_PYTHON "Max number of compile-time dimensions for fronts in the Python bindings. Higher dimensions will be set at runtime." 10)
-message("BUILD_LONG_TESTS=${BUILD_LONG_TESTS}")
+option(BUILD_BINDING_FOR_ALL_STRUCTURES "Make all data structures available in the Python bindings" ON)
 message("MAX_NUM_DIMENSIONS_PYTHON=${MAX_NUM_DIMENSIONS_PYTHON}")
 
 # Main library
 add_subdirectory(sources)
 
 # Python bindings
-if (BUILD_PYTHON_BINDINGS)
+if (BUILD_PYTHON_BINDING)
     add_subdirectory(bindings)
 endif()
 
