@@ -389,9 +389,16 @@ void create_rtree_boost(benchmark::State &state) {
 #endif
 
 constexpr size_t max_container_size = 5000000;
+
+
 template <size_t MAX_SIZE = max_container_size>
 void container_sizes(benchmark::internal::Benchmark* b) {
-    for (long long i = 50; i <= MAX_SIZE; i *= 10) {
+#ifdef BUILD_LONG_TESTS
+    constexpr size_t max_size_adjusted = MAX_SIZE;
+#else
+    constexpr size_t max_size_adjusted = 500;
+#endif
+    for (long long i = 50; i <= max_size_adjusted; i *= 10) {
         b->Args({i});
     }
 }

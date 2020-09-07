@@ -246,6 +246,7 @@ using pareto::boost_tree_tag;
 using pareto::r_tree_tag;
 using pareto::r_star_tree_tag;
 
+#ifdef BUILD_LONG_TESTS
 /// Creating front: varying data structure, dimension, front size, and number of operations
 BENCHMARK_TEMPLATE(create_front_from_vector, 1, vector_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(create_front_from_vector, 1, kd_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
@@ -253,6 +254,7 @@ BENCHMARK_TEMPLATE(create_front_from_vector, 1, quad_tree_tag)->Apply(pareto_siz
 BENCHMARK_TEMPLATE(create_front_from_vector, 1, boost_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(create_front_from_vector, 1, r_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(create_front_from_vector, 1, r_star_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
+#endif
 
 BENCHMARK_TEMPLATE(create_front_from_vector, 2, vector_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(create_front_from_vector, 2, kd_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
@@ -261,6 +263,7 @@ BENCHMARK_TEMPLATE(create_front_from_vector, 2, boost_tree_tag)->Apply(pareto_si
 BENCHMARK_TEMPLATE(create_front_from_vector, 2, r_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(create_front_from_vector, 2, r_star_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 
+#ifdef BUILD_LONG_TESTS
 BENCHMARK_TEMPLATE(create_front_from_vector, 3, vector_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(create_front_from_vector, 3, kd_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(create_front_from_vector, 3, quad_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
@@ -289,7 +292,6 @@ BENCHMARK_TEMPLATE(create_front_from_vector, 13, boost_tree_tag)->Apply(pareto_s
 BENCHMARK_TEMPLATE(create_front_from_vector, 13, r_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(create_front_from_vector, 13, r_star_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 
-
 /// Inserting in the front: varying data structure, dimension, front size, and number of operations
 BENCHMARK_TEMPLATE(insert_in_front, 1, vector_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(insert_in_front, 1, kd_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
@@ -297,6 +299,7 @@ BENCHMARK_TEMPLATE(insert_in_front, 1, quad_tree_tag)->Apply(pareto_sizes)->Thre
 BENCHMARK_TEMPLATE(insert_in_front, 1, boost_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(insert_in_front, 1, r_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(insert_in_front, 1, r_star_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
+#endif
 
 BENCHMARK_TEMPLATE(insert_in_front, 2, vector_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(insert_in_front, 2, kd_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
@@ -305,6 +308,7 @@ BENCHMARK_TEMPLATE(insert_in_front, 2, boost_tree_tag)->Apply(pareto_sizes)->Thr
 BENCHMARK_TEMPLATE(insert_in_front, 2, r_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(insert_in_front, 2, r_star_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 
+#ifdef BUILD_LONG_TESTS
 BENCHMARK_TEMPLATE(insert_in_front, 3, vector_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(insert_in_front, 3, kd_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(insert_in_front, 3, quad_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
@@ -341,6 +345,7 @@ BENCHMARK_TEMPLATE(erase_from_front, 1, quad_tree_tag)->Apply(pareto_sizes)->Thr
 BENCHMARK_TEMPLATE(erase_from_front, 1, boost_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(erase_from_front, 1, r_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(erase_from_front, 1, r_star_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
+#endif
 
 BENCHMARK_TEMPLATE(erase_from_front, 2, vector_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(erase_from_front, 2, kd_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
@@ -349,6 +354,7 @@ BENCHMARK_TEMPLATE(erase_from_front, 2, boost_tree_tag)->Apply(pareto_sizes)->Th
 BENCHMARK_TEMPLATE(erase_from_front, 2, r_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(erase_from_front, 2, r_star_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 
+#ifdef BUILD_LONG_TESTS
 BENCHMARK_TEMPLATE(erase_from_front, 3, vector_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(erase_from_front, 3, kd_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(erase_from_front, 3, quad_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
@@ -385,6 +391,7 @@ BENCHMARK_TEMPLATE(check_dominance, 1, quad_tree_tag)->Apply(pareto_sizes)->Thre
 BENCHMARK_TEMPLATE(check_dominance, 1, boost_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(check_dominance, 1, r_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(check_dominance, 1, r_star_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
+#endif
 
 BENCHMARK_TEMPLATE(check_dominance, 2, vector_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(check_dominance, 2, kd_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
@@ -393,6 +400,7 @@ BENCHMARK_TEMPLATE(check_dominance, 2, boost_tree_tag)->Apply(pareto_sizes)->Thr
 BENCHMARK_TEMPLATE(check_dominance, 2, r_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(check_dominance, 2, r_star_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 
+#ifdef BUILD_LONG_TESTS
 BENCHMARK_TEMPLATE(check_dominance, 3, vector_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(check_dominance, 3, kd_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(check_dominance, 3, quad_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
@@ -429,6 +437,7 @@ BENCHMARK_TEMPLATE(query_and_iterate, 1, quad_tree_tag)->Apply(pareto_sizes)->Th
 BENCHMARK_TEMPLATE(query_and_iterate, 1, boost_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(query_and_iterate, 1, r_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(query_and_iterate, 1, r_star_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
+#endif
 
 BENCHMARK_TEMPLATE(query_and_iterate, 2, vector_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(query_and_iterate, 2, kd_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
@@ -437,6 +446,7 @@ BENCHMARK_TEMPLATE(query_and_iterate, 2, boost_tree_tag)->Apply(pareto_sizes)->T
 BENCHMARK_TEMPLATE(query_and_iterate, 2, r_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(query_and_iterate, 2, r_star_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 
+#ifdef BUILD_LONG_TESTS
 BENCHMARK_TEMPLATE(query_and_iterate, 3, vector_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(query_and_iterate, 3, kd_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(query_and_iterate, 3, quad_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
@@ -465,7 +475,6 @@ BENCHMARK_TEMPLATE(query_and_iterate, 13, boost_tree_tag)->Apply(pareto_sizes)->
 BENCHMARK_TEMPLATE(query_and_iterate, 13, r_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(query_and_iterate, 13, r_star_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 
-
 /// Find nearest and iterate: varying data structure, dimension, and front size
 BENCHMARK_TEMPLATE(nearest_and_iterate, 1, vector_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(nearest_and_iterate, 1, kd_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
@@ -473,6 +482,7 @@ BENCHMARK_TEMPLATE(nearest_and_iterate, 1, quad_tree_tag)->Apply(pareto_sizes)->
 BENCHMARK_TEMPLATE(nearest_and_iterate, 1, boost_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(nearest_and_iterate, 1, r_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(nearest_and_iterate, 1, r_star_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
+#endif
 
 BENCHMARK_TEMPLATE(nearest_and_iterate, 2, vector_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(nearest_and_iterate, 2, kd_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
@@ -481,6 +491,7 @@ BENCHMARK_TEMPLATE(nearest_and_iterate, 2, boost_tree_tag)->Apply(pareto_sizes)-
 BENCHMARK_TEMPLATE(nearest_and_iterate, 2, r_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(nearest_and_iterate, 2, r_star_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 
+#ifdef BUILD_LONG_TESTS
 BENCHMARK_TEMPLATE(nearest_and_iterate, 3, vector_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(nearest_and_iterate, 3, kd_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(nearest_and_iterate, 3, quad_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
@@ -517,6 +528,7 @@ BENCHMARK_TEMPLATE(calculate_igd, 1, quad_tree_tag)->Apply(pareto_sizes)->Thread
 BENCHMARK_TEMPLATE(calculate_igd, 1, boost_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(calculate_igd, 1, r_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(calculate_igd, 1, r_star_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
+#endif
 
 BENCHMARK_TEMPLATE(calculate_igd, 2, vector_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(calculate_igd, 2, kd_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
@@ -525,6 +537,7 @@ BENCHMARK_TEMPLATE(calculate_igd, 2, boost_tree_tag)->Apply(pareto_sizes)->Threa
 BENCHMARK_TEMPLATE(calculate_igd, 2, r_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(calculate_igd, 2, r_star_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 
+#ifdef BUILD_LONG_TESTS
 BENCHMARK_TEMPLATE(calculate_igd, 3, vector_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(calculate_igd, 3, kd_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(calculate_igd, 3, quad_tree_tag)->Apply(pareto_sizes)->Threads(number_of_threads)->Iterations(1);
@@ -562,6 +575,7 @@ BENCHMARK_TEMPLATE(calculate_hypervolume, 1, quad_tree_tag)->Apply(pareto_sizes_
 BENCHMARK_TEMPLATE(calculate_hypervolume, 1, boost_tree_tag)->Apply(pareto_sizes_and_samples)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(calculate_hypervolume, 1, r_tree_tag)->Apply(pareto_sizes_and_samples)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(calculate_hypervolume, 1, r_star_tree_tag)->Apply(pareto_sizes_and_samples)->Threads(number_of_threads)->Iterations(1);
+#endif
 
 BENCHMARK_TEMPLATE(calculate_hypervolume, 2, vector_tree_tag)->Apply(pareto_sizes_and_samples)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(calculate_hypervolume, 2, kd_tree_tag)->Apply(pareto_sizes_and_samples)->Threads(number_of_threads)->Iterations(1);
@@ -570,6 +584,7 @@ BENCHMARK_TEMPLATE(calculate_hypervolume, 2, boost_tree_tag)->Apply(pareto_sizes
 BENCHMARK_TEMPLATE(calculate_hypervolume, 2, r_tree_tag)->Apply(pareto_sizes_and_samples)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(calculate_hypervolume, 2, r_star_tree_tag)->Apply(pareto_sizes_and_samples)->Threads(number_of_threads)->Iterations(1);
 
+#ifdef BUILD_LONG_TESTS
 BENCHMARK_TEMPLATE(calculate_hypervolume, 3, vector_tree_tag)->Apply(pareto_sizes_and_samples)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(calculate_hypervolume, 3, kd_tree_tag)->Apply(pareto_sizes_and_samples)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(calculate_hypervolume, 3, quad_tree_tag)->Apply(pareto_sizes_and_samples)->Threads(number_of_threads)->Iterations(1);
@@ -590,6 +605,7 @@ BENCHMARK_TEMPLATE(calculate_hypervolume, 9, quad_tree_tag)->Apply(pareto_sizes_
 BENCHMARK_TEMPLATE(calculate_hypervolume, 9, boost_tree_tag)->Apply(pareto_sizes_and_samples2)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(calculate_hypervolume, 9, r_tree_tag)->Apply(pareto_sizes_and_samples2)->Threads(number_of_threads)->Iterations(1);
 BENCHMARK_TEMPLATE(calculate_hypervolume, 9, r_star_tree_tag)->Apply(pareto_sizes_and_samples2)->Threads(number_of_threads)->Iterations(1);
+#endif
 
 BENCHMARK_MAIN();
 

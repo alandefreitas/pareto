@@ -377,6 +377,7 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION) {
     } while (next_combination(is_mini.begin(), is_mini.end()) && ++dimensions_count < 5);
 }
 
+#ifdef BUILD_LONG_TESTS
 TEST_CASE("Front - 1 dimension") {
     using namespace pareto;
     test_front<1, vector_tree_tag>(1);
@@ -391,6 +392,7 @@ TEST_CASE("Front - 1 dimension") {
     test_front<1, r_star_tree_tag>(1);
     test_front<0, r_star_tree_tag>(1);
 }
+#endif
 
 TEST_CASE("Front - 2 dimensions") {
     using namespace pareto;
@@ -407,6 +409,7 @@ TEST_CASE("Front - 2 dimensions") {
     test_front<0, r_star_tree_tag>(2);
 }
 
+#ifdef BUILD_LONG_TESTS
 TEST_CASE("Front - 3 dimensions") {
     using namespace pareto;
     test_front<3, vector_tree_tag>(3);
@@ -466,6 +469,7 @@ TEST_CASE("Front - 13 dimensions") {
     test_front<13, r_star_tree_tag>(13);
     test_front<0, r_star_tree_tag>(13);
 }
+#endif
 
 uint64_t seed() {
 //    static uint64_t seed = static_cast<uint64_t>(std::random_device()()) |

@@ -128,9 +128,11 @@ void pareto_sizes_and_samples2(benchmark::internal::Benchmark* b) {
 size_t number_of_threads = std::thread::hardware_concurrency();
 
 BENCHMARK_TEMPLATE(calculate_hypervolume, 2)->Apply(pareto_sizes_and_samples)->Iterations(1);
+#ifdef BUILD_LONG_TESTS
 BENCHMARK_TEMPLATE(calculate_hypervolume, 3)->Apply(pareto_sizes_and_samples)->Iterations(1);
 BENCHMARK_TEMPLATE(calculate_hypervolume, 5)->Apply(pareto_sizes_and_samples)->Iterations(1);
 BENCHMARK_TEMPLATE(calculate_hypervolume, 9)->Apply(pareto_sizes_and_samples2)->Iterations(1);
 BENCHMARK_TEMPLATE(calculate_hypervolume, 9)->Apply(pareto_sizes_and_samples)->Iterations(1);
+#endif
 
 BENCHMARK_MAIN();

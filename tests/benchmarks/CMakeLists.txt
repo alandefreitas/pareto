@@ -21,15 +21,24 @@ if (benchmark_ADDED)
     target_compile_definitions(benchmark PUBLIC -DNDEBUG)
 endif()
 
-if (BUILD_LONG_TESTS)
-    # run with "--benchmark_repetitions=30 --benchmark_display_aggregates_only=true --benchmark_out=data_structure_benchmark.csv --benchmark_out_format=csv"
-    add_executable(pareto_front_hv_benchmark hv_benchmark.cpp)
-    target_link_libraries(pareto_front_hv_benchmark PUBLIC pareto_front benchmark)
 
-    add_executable(pareto_front_data_structure_benchmark data_structure_benchmark.cpp)
-    target_link_libraries(pareto_front_data_structure_benchmark PUBLIC pareto_front benchmark)
+# run with "--benchmark_repetitions=30 --benchmark_display_aggregates_only=true --benchmark_out=data_structure_benchmark.csv --benchmark_out_format=csv"
+add_executable(pareto_front_hv_benchmark hv_benchmark.cpp)
+target_link_libraries(pareto_front_hv_benchmark PUBLIC pareto_front benchmark)
+if (BUILD_LONG_TESTS)
+    target_compile_definitions(pareto_front_hv_benchmark PUBLIC BUILD_LONG_TESTS)
+endif()
+
+add_executable(pareto_front_data_structure_benchmark data_structure_benchmark.cpp)
+target_link_libraries(pareto_front_data_structure_benchmark PUBLIC pareto_front benchmark)
+if (BUILD_LONG_TESTS)
+    target_compile_definitions(pareto_front_data_structure_benchmark PUBLIC BUILD_LONG_TESTS)
 endif()
 
 # Memory allocators make a huge difference for sets. Not so much for other data structures.
-add_executable(pareto_front_memory_resource_benchmark monotonic_resource.cpp memory_resource_benchmark.cpp)
-target_link_libraries(pareto_front_memory_resource_benchmark PUBLIC pareto_front benchmark)
+include(CheckIncludeFileCXX)
+check_include_file_cxx(bit HAS_BIT)
+if (HAS_BIT)
+    add_executable(pareto_front_memory_resource_benchmark monotonic_resource.cpp memory_resource_benchmark.cpp)
+    target_link_libraries(pareto_front_memory_resource_benchmark PUBLIC pareto_front benchmark)
+endif()
