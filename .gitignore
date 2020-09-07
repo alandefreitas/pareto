@@ -6,3 +6,4 @@ codealike.json
 gh-md-toc
 build*/
 CMakeLists.txt.user
+out
