@@ -1,6 +1,6 @@
 # - Trase library
 # This is a package for svg plots
-# It will later be replaced by matplotplusplus
+# Future work: replace it with matplotplusplus
 CPMAddPackage(
         NAME trase
         GITHUB_REPOSITORY trase-cpp/trase
@@ -16,6 +16,7 @@ CPMAddPackage(
 # It could go offline at anytime.
 add_library(hv pareto_front/hv-2.0rc2/hv.h pareto_front/hv-2.0rc2/hv.c)
 add_compile_definitions(hv VARIANT=4)
+set_target_properties(hv PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 if (BUILD_BOOST_TREE)
     # - Geometry package
