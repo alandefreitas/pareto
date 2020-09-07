@@ -12,7 +12,7 @@ CPMAddPackage(
 
 # Hypervolume computation in C
 # http://lopez-ibanez.eu/hypervolume
-# This is included because it's not on a git repository.
+# This is bundled because it's not on a git repository.
 # It could go offline at anytime.
 add_library(hv pareto_front/hv-2.0rc2/hv.h pareto_front/hv-2.0rc2/hv.c)
 add_compile_definitions(hv VARIANT=4)
@@ -30,6 +30,9 @@ find_package(Threads)
 add_library(pareto_front INTERFACE)
 target_include_directories(pareto_front INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(pareto_front INTERFACE hv trase Threads::Threads)
+
+# Retroactively make trase -fPIC
+set_target_properties(trase PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 if (BUILD_BOOST_TREE)
     target_include_directories(pareto_front INTERFACE ${Boost_INCLUDE_DIR})
