@@ -177,15 +177,15 @@ namespace pareto {
             }
 
             rtree_node *node_pointer() {
-                as_branch().second;
+                return as_branch().second;
             }
 
             mapped_type &mapped_value() {
-                as_value().second;
+                return as_value().second;
             }
 
             point_type &point_value() {
-                as_value().first;
+                return as_value().first;
             }
 
         private:

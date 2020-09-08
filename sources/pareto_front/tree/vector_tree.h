@@ -71,11 +71,6 @@ namespace pareto {
                 maybe_advance_predicate();
             }
 
-            iterator(const vector_type &source, std::function<bool(const value_type&)> fn)
-                    : query_it_(source.begin()), query_it_end_(source.end()), query_function_(fn) {
-                maybe_advance_predicate();
-            }
-
             iterator(vector_type &source) : query_it_(source.begin()), query_it_end_(source.end()) {}
 
             iterator(const raw_vector_iterator &raw_begin_it, const raw_vector_iterator &raw_end_it) : query_it_(raw_begin_it), query_it_end_(raw_end_it) {}
@@ -149,8 +144,9 @@ namespace pareto {
             }
 
             reference operator[](size_t i) const {
-                query_it_ = query_it_.operator[](i);
-                return *this;
+                const std::pair<key_type, mapped_type>& p = query_it_.operator*();
+                std::pair<const key_type, mapped_type>* p2 = (std::pair<const key_type, mapped_type>*) &p;
+                return *p2;
             }
 
         private /* functions */:
@@ -260,9 +256,8 @@ namespace pareto {
                 return query_it_.operator->();
             }
 
-            reference operator[](size_t i) const {
-                query_it_ = query_it_.operator[](i);
-                return *this;
+            const_reference operator[](size_t i) const {
+                return query_it_.operator[](i);
             }
 
         private:
@@ -503,7 +498,7 @@ namespace pareto {
             if constexpr (NUMBER_OF_DIMENSIONS != 0) {
                 return NUMBER_OF_DIMENSIONS;
             } else {
-                return data_.front().dimensions();
+                return data_.front().first.dimensions();
             }
         }
 

@@ -9,7 +9,9 @@
 #include <mutex>
 #include <optional>
 
+#ifdef BUILD_FRONTS_WITH_TRASE
 #include <trase.hpp>
+#endif
 #include <pareto_front/hv-2.0rc2/hv.h>
 
 #include <pareto_front/common.h>
@@ -1222,6 +1224,7 @@ namespace pareto {
             return os;
         }
 
+#ifdef BUILD_FRONTS_WITH_TRASE
         /// Setup a trace figure with the plot
         void setup_trase_figure(std::shared_ptr<trase::Figure>& fig, point_type min_point, point_type max_point, point_type worst_point, bool plot_ideal = true, bool plot_worst = true, bool plot_nadir = true, float point_color = 0.f, std::optional<point_type> extra_point = std::nullopt, std::optional<const_iterator> it = std::nullopt) const {
             std::shared_ptr<trase::Axis> ax = fig->axis();
@@ -1417,6 +1420,7 @@ namespace pareto {
             fig->draw(backend);
             return ss.str();
         }
+#endif
 
     private /* functions */:
         /// \brief Clear solutions are dominated by p

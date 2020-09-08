@@ -1319,10 +1319,6 @@ namespace pareto {
             return data_[0].std_igd_plus(reference_front.data_[0]);
         }
 
-        double gd_plus(const pareto_front_type &reference_front) const {
-            return data_[0].gd_plus(reference_front);
-        }
-
         /// Uniformity metric
         /// This is the minimal distance between two points of the Pareto front
         /// approximation. This measure is straightforward to compute and easy
@@ -1693,6 +1689,7 @@ namespace pareto {
             return os;
         }
 
+#ifdef BUILD_FRONTS_WITH_TRASE
         std::string svg(std::optional<point_type> extra_point = std::nullopt,
                         std::optional<const_iterator> it = std::nullopt) const {
             std::shared_ptr<trase::Figure> fig = trase::figure();
@@ -1726,60 +1723,61 @@ namespace pareto {
             fig->draw(backend);
             return ss.str();
         }
+#endif
 
     private /* functions */:
-        /// \brief Clear solutions are dominated by p
-        /// Pareto-optimal front is the set F consisting of
-        /// all non-dominated solutions x in the whole
-        /// search space. No solution can dominate another
-        /// solution. Note that this means two solutions
-        /// might have the same values though.
-        size_t clear_dominated(point_type p) {
-            // The modification of the rtree may invalidate the iterators
-            // https://www.boost.org/doc/libs/1_60_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/boost__geometry__index__rtree/begin__.html
-            // Remove doesn't take iterators pointing to values
-            // Remove removes values equal to these passed as a range
-            // https://www.boost.org/doc/libs/1_73_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/group__rtree__functions/remove_rtree_________iterator__iterator_.html
-            // We have to make only one query and get a copy of all ITEMS (not iterators)
-            // we want to remove.
-            if (!empty()) {
-                // Query
-                const_iterator it = data_.begin_intersection(p, worst(), [&p, this](const value_type &x) {
-                    return p.dominates(x.first, is_minimization_);
-                });
-                // erase these elements
-                return erase(it, end());
-            }
-            return 0;
-        }
-
-        /// \brief Clear all solutions dominated by some point
-        size_t clear_dominated() {
-            // The modification of the rtree may invalidate the iterators
-            // https://www.boost.org/doc/libs/1_60_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/boost__geometry__index__rtree/begin__.html
-            // Remove doesn't take iterators pointing to values
-            // Remove removes values equal to these passed as a range
-            // https://www.boost.org/doc/libs/1_73_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/group__rtree__functions/remove_rtree_________iterator__iterator_.html
-            // We have to make only one query and get a copy of all ITEMS (not iterators)
-            // we want to remove.
-            if (size() > 1) {
-                // Query everyone
-                // Put them all in a separate list
-                // because iterators will be invalidated
-                auto it = find_intersection(ideal(), worst());
-                std::vector<value_type> all(it, end());
-                // Iterate removing points they dominate
-                size_t sum_removed = 0;
-                for (const auto&[k, v]: all) {
-                    // if k hasn't been removed yet
-                    if (find(k) != end()) {
-                        sum_removed += clear_dominated(k);
-                    }
-                }
-                return sum_removed;
-            }
-            return 0;
-        }
+//        /// \brief Clear solutions are dominated by p
+//        /// Pareto-optimal front is the set F consisting of
+//        /// all non-dominated solutions x in the whole
+//        /// search space. No solution can dominate another
+//        /// solution. Note that this means two solutions
+//        /// might have the same values though.
+//        size_t clear_dominated(point_type p) {
+//            // The modification of the rtree may invalidate the iterators
+//            // https://www.boost.org/doc/libs/1_60_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/boost__geometry__index__rtree/begin__.html
+//            // Remove doesn't take iterators pointing to values
+//            // Remove removes values equal to these passed as a range
+//            // https://www.boost.org/doc/libs/1_73_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/group__rtree__functions/remove_rtree_________iterator__iterator_.html
+//            // We have to make only one query and get a copy of all ITEMS (not iterators)
+//            // we want to remove.
+//            if (!empty()) {
+//                // Query
+//                const_iterator it = data_.begin_intersection(p, worst(), [&p, this](const value_type &x) {
+//                    return p.dominates(x.first, is_minimization_);
+//                });
+//                // erase these elements
+//                return erase(it, end());
+//            }
+//            return 0;
+//        }
+//
+//        /// \brief Clear all solutions dominated by some point
+//        size_t clear_dominated() {
+//            // The modification of the rtree may invalidate the iterators
+//            // https://www.boost.org/doc/libs/1_60_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/boost__geometry__index__rtree/begin__.html
+//            // Remove doesn't take iterators pointing to values
+//            // Remove removes values equal to these passed as a range
+//            // https://www.boost.org/doc/libs/1_73_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/group__rtree__functions/remove_rtree_________iterator__iterator_.html
+//            // We have to make only one query and get a copy of all ITEMS (not iterators)
+//            // we want to remove.
+//            if (size() > 1) {
+//                // Query everyone
+//                // Put them all in a separate list
+//                // because iterators will be invalidated
+//                auto it = find_intersection(ideal(), worst());
+//                std::vector<value_type> all(it, end());
+//                // Iterate removing points they dominate
+//                size_t sum_removed = 0;
+//                for (const auto&[k, v]: all) {
+//                    // if k hasn't been removed yet
+//                    if (find(k) != end()) {
+//                        sum_removed += clear_dominated(k);
+//                    }
+//                }
+//                return sum_removed;
+//            }
+//            return 0;
+//        }
 
         void maybe_resize(std::array<uint8_t, number_of_compile_dimensions> &v, size_t n) {}
 

@@ -54,7 +54,7 @@ namespace pareto {
     template <typename number_t, size_t compile_dimensions>
     void maybe_clear(std::array<number_t,compile_dimensions>& v) {}
 
-    std::vector<uint8_t> init_list_to_vector(std::initializer_list<bool> is_minimization) {
+    inline std::vector<uint8_t> init_list_to_vector(std::initializer_list<bool> is_minimization) {
         std::vector<uint8_t> v(is_minimization.begin(), is_minimization.end());
         return v;
     }

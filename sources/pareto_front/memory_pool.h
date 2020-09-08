@@ -7,6 +7,7 @@
 
 #include <climits>
 #include <cstddef>
+#include <set>
 
 namespace pareto {
 

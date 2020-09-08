@@ -186,15 +186,15 @@ namespace pareto {
             }
 
             rstar_tree_node *node_pointer() {
-                as_branch().second;
+                return as_branch().second;
             }
 
             mapped_type &mapped_value() {
-                as_value().second;
+                return as_value().second;
             }
 
             point_type &point_value() {
-                as_value().first;
+                return as_value().first;
             }
 
             bool operator==(const branch_variant &rhs) const {
@@ -264,11 +264,13 @@ namespace pareto {
             branches_array branches_;
         };
 
+      public:
         /// Check if using the fast allocator
         constexpr static bool is_using_default_fast_allocator() {
             return std::is_same_v<node_allocator_type, default_fast_memory_pool<rstar_tree_node>>;
         }
 
+      private:
         /// A link list of nodes for reinsertion after a delete operation
         using list_allocator_type = allocator_type<rstar_tree_node *>;
         using node_list = std::forward_list<rstar_tree_node *, list_allocator_type>;

@@ -15,6 +15,7 @@
 #include <queue>
 #include <map>
 #include <forward_list>
+#include <sstream>
 #include <pareto_front/point.h>
 #include <pareto_front/query_box.h>
 #include <pareto_front/predicates.h>
