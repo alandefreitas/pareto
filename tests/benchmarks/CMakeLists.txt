@@ -38,7 +38,7 @@ endif()
 # Memory allocators make a huge difference for sets. Not so much for other data structures.
 include(CheckIncludeFileCXX)
 check_include_file_cxx(bit HAS_BIT)
-if (HAS_BIT)
+if (HAS_BIT AND NOT MSVC)
     add_executable(pareto_front_memory_resource_benchmark monotonic_resource.cpp memory_resource_benchmark.cpp)
     target_link_libraries(pareto_front_memory_resource_benchmark PUBLIC pareto_front benchmark)
 endif()

@@ -1,6 +1,3 @@
-include(CTest)
-enable_testing()
-
 CPMAddPackage(
         NAME Catch2
         GITHUB_REPOSITORY catchorg/Catch2
@@ -29,6 +26,11 @@ target_link_libraries(unit_test_trees PUBLIC pareto_front Catch2)
 if (BUILD_LONG_TESTS)
     target_compile_definitions(unit_test_trees PUBLIC BUILD_LONG_TESTS)
 endif()
+if(MSVC)
+    # Because there is so much in the file
+    target_compile_options(unit_test_trees PRIVATE /bigobj)
+    target_compile_options(unit_test_trees PUBLIC /wd4305)
+endif()
 catch_discover_tests(unit_test_trees)
 
 add_executable(unit_test_pareto_front fronts.cpp)
@@ -36,11 +38,21 @@ target_link_libraries(unit_test_pareto_front PUBLIC pareto_front Catch2)
 if (BUILD_LONG_TESTS)
     target_compile_definitions(unit_test_pareto_front PUBLIC BUILD_LONG_TESTS)
 endif()
+if(MSVC)
+    # Because there is so much in the file
+    target_compile_options(unit_test_pareto_front PRIVATE /bigobj)
+    target_compile_options(unit_test_pareto_front PUBLIC /wd4305)
+endif()
 catch_discover_tests(unit_test_pareto_front)
 
 add_executable(unit_test_pareto_archive archive.cpp)
 target_link_libraries(unit_test_pareto_archive PUBLIC pareto_front Catch2)
 if (BUILD_LONG_TESTS)
     target_compile_definitions(unit_test_pareto_archive PUBLIC BUILD_LONG_TESTS)
+endif()
+if(MSVC)
+    # Because there is so much in the file
+    target_compile_options(unit_test_pareto_archive PRIVATE /bigobj)
+    target_compile_options(unit_test_pareto_archive PUBLIC /wd4305)
 endif()
 catch_discover_tests(unit_test_pareto_archive)
