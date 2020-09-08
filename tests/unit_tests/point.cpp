@@ -2,8 +2,7 @@
 
 #include <catch2/catch.hpp>
 
-#include <pareto_front/archive.h>
-#include <pareto_front/front.h>
+#include "instantiation/test_instantiations.h"
 
 unsigned randi();
 

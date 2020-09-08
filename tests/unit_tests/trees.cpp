@@ -1,9 +1,6 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
-#include <pareto_front/tree/quad_tree.h>
-#include <pareto_front/tree/kd_tree.h>
-#include <pareto_front/tree/r_tree.h>
-#include <pareto_front/tree/r_star_tree.h>
+#include "instantiation/test_instantiations.h"
 
 uint64_t seed();
 unsigned randi();
