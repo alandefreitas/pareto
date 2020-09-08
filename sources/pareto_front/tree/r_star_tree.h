@@ -280,13 +280,13 @@ namespace pareto {
 
             static constexpr int NOT_TAKEN = -1;
 
-            std::array<int, maxnodes_ + 1> partition_;
+            std::array<int, maxnodes_ + 1> partition_{};
 
             size_t total_{0};
 
             size_t min_fill_{0};
 
-            std::pair<int, int> count_;
+            std::pair<int, int> count_{0, 0};
 
             std::pair<box_type, box_type> cover_;
 
@@ -294,11 +294,11 @@ namespace pareto {
 
             std::array<branch_variant, maxnodes_ + 1> branch_buffer_{};
 
-            size_t branch_count_;
+            size_t branch_count_{0};
 
             box_type cover_split_;
 
-            number_type cover_split_area_;
+            number_type cover_split_area_{0};
         };
 
     public /* iterators */:
@@ -805,7 +805,7 @@ namespace pareto {
                             first_time_in_this_branch = false;
                             continue;
                         }
-                        for (size_t index = current_branch_ - !first_time_in_this_branch;
+                        for (int index = current_branch_ - !first_time_in_this_branch;
                              index >= 0; --index) {
                             // if value passes the predicate
                             if (passes_predicates(current_node_->branches_[index].as_value())) {
@@ -833,7 +833,7 @@ namespace pareto {
                         // iterate from previous branch
                         // current branch as been iterated, as in the first part of this "if"
                         bool predicate_might_pass = false;
-                        for (size_t index = current_branch_ - !first_time_in_this_branch; index >= 0; --index) {
+                        for (int index = current_branch_ - !first_time_in_this_branch; index >= 0; --index) {
                             // If branch might have nodes that pass all predicates
                             if (might_pass_predicates(current_node_->branches_[index].as_branch().first)) {
                                 // Found a value branch in a node

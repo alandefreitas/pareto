@@ -1476,12 +1476,12 @@ namespace pareto {
                 const size_t x_line_ib = rankings_b[x_i[b]];
                 c_ab += std::max(x_line_ia,x_line_ib) - std::min(x_line_ia,x_line_ib);
             }
-            return c_ab;
+            return static_cast<double>(c_ab);
         }
 
         double normalized_conflict(const size_t a, const size_t b) const {
             double denominator = 0.;
-            double n = size();
+            double n = static_cast<double>(size());
             for (size_t i = 1; i <= size(); ++i) {
                 denominator += abs(2*i-n-1);
             }

@@ -725,8 +725,8 @@ namespace pareto {
                 }
             }
             std::vector<double> v_ref(inv_ref.begin(), inv_ref.end());
-            int n = size();
-            int d = dimensions();
+            int n = static_cast<int>(size());
+            int d = static_cast<int>(dimensions());
             static std::mutex hv_mutex;
             hv_mutex.lock();
             double hv = fpli_hv(data.data(), d, n, v_ref.data());
@@ -1014,12 +1014,12 @@ namespace pareto {
                 const size_t x_line_ib = rankings_b[x_i[b]];
                 c_ab += std::max(x_line_ia,x_line_ib) - std::min(x_line_ia,x_line_ib);
             }
-            return c_ab;
+            return static_cast<double>(c_ab);
         }
 
         double normalized_conflict(const size_t a, const size_t b) const {
             double denominator = 0.;
-            double n = size();
+            double n = static_cast<double>(size());
             for (size_t i = 1; i <= size(); ++i) {
                 denominator += abs(2*i-n-1);
             }
@@ -1514,7 +1514,7 @@ namespace pareto {
 
         static std::mt19937 &generator() {
             static std::mt19937 g(
-                    static_cast<uint64_t>(std::random_device()()) | std::chrono::high_resolution_clock::now().time_since_epoch().count());
+                    static_cast<unsigned int>(static_cast<uint64_t>(std::random_device()()) | std::chrono::high_resolution_clock::now().time_since_epoch().count()));
             return g;
         }
 

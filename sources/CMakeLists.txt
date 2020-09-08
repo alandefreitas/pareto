@@ -1,6 +1,6 @@
 # - Trase library
 # This is a package for svg plots
-# Future work: replace it with matplotplusplus
+# Future work: replace trase with matplotplusplus
 CPMAddPackage(
         NAME trase
         GITHUB_REPOSITORY trase-cpp/trase

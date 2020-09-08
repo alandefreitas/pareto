@@ -83,7 +83,7 @@ using default_coordinate_system_for_points = void;
             values_ = x.values_;
         }
 
-        point(point&& x) {
+        point(point&& x) noexcept {
             values_ = std::move(x.values_);
         }
 
