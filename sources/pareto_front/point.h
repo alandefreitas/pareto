@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <numeric>
 #include <ostream>
+#include <cassert>
 #include <pareto_front/common.h>
 #ifdef BUILD_BOOST_TREE
 #include <boost/geometry/geometry.hpp>

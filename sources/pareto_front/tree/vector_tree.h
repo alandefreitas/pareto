@@ -4,6 +4,7 @@
 #include <pareto_front/point.h>
 #include <pareto_front/memory_pool.h>
 #include <vector>
+#include <functional>
 
 namespace pareto {
 
