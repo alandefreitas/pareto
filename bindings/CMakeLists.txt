@@ -23,6 +23,8 @@ add_library(pyfront_point_instantiation
 target_link_libraries(pyfront_point_instantiation PUBLIC pareto_front pybind11)
 target_include_directories(pyfront_point_instantiation PUBLIC ${PYBIND11_INCLUDE_DIR})
 target_compile_options(pyfront_point_instantiation PRIVATE -fvisibility=hidden -Os)
+set_target_properties(pyfront_point_instantiation PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+
 
 add_library(pyfront_query_box_instantiation
         instantiation/python_instantiations.h
@@ -30,6 +32,7 @@ add_library(pyfront_query_box_instantiation
         )
 target_link_libraries(pyfront_query_box_instantiation PUBLIC pyfront_point_instantiation)
 target_compile_options(pyfront_query_box_instantiation PRIVATE -fvisibility=hidden -Os)
+set_target_properties(pyfront_query_box_instantiation PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 add_library(pyfront_tree_instantiation
         instantiation/python_instantiations.h
@@ -41,6 +44,7 @@ add_library(pyfront_tree_instantiation
         )
 target_link_libraries(pyfront_tree_instantiation PUBLIC pyfront_query_box_instantiation)
 target_compile_options(pyfront_tree_instantiation PRIVATE -fvisibility=hidden -Os)
+set_target_properties(pyfront_tree_instantiation PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 add_library(pyfront_front_instantiation
         instantiation/python_instantiations.h
@@ -53,6 +57,7 @@ add_library(pyfront_front_instantiation
         )
 target_link_libraries(pyfront_front_instantiation PUBLIC pyfront_tree_instantiation)
 target_compile_options(pyfront_front_instantiation PRIVATE -fvisibility=hidden -Os)
+set_target_properties(pyfront_front_instantiation PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 add_library(pyfront_archive_instantiation
         instantiation/python_instantiations.h
@@ -65,6 +70,7 @@ add_library(pyfront_archive_instantiation
         )
 target_link_libraries(pyfront_archive_instantiation PUBLIC pyfront_front_instantiation)
 target_compile_options(pyfront_archive_instantiation PRIVATE -fvisibility=hidden -Os)
+set_target_properties(pyfront_archive_instantiation PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 # The file binding_n_dimensional.h is the one with the template
 # function to create bindings for a front with N dimensions and
@@ -79,7 +85,7 @@ file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/binding_n_dimensional_extern_templates.h
         )
 foreach (TREE_TYPE vector quad kd r r_star)
     foreach (DIMENSION RANGE 0 ${MAX_NUM_DIMENSIONS_PYTHON})
-        message("TREE_TYPE=${TREE_TYPE} DIMENSION=${DIMENSION}")
+        message("Generating translation unit for binding_${TREE_TYPE}_${DIMENSION}_dimensional.cpp")
         configure_file(
                 translation_unit.cpp.in
                 ${CMAKE_CURRENT_BINARY_DIR}/binding_${TREE_TYPE}_${DIMENSION}_dimensional.cpp
