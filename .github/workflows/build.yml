@@ -46,3 +46,11 @@ jobs:
       - name: Test
         working-directory: ./build
         run: ctest -j 2 -C Release
+#      - name: Install
+#        working-directory: ./build
+#        run: cmake --install .
+      - name: Archive Python Binding
+        uses: actions/upload-artifact@v2
+        with:
+          name: python-bindings
+          path: build/bindings/pyfront.cpython-*.so
