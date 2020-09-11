@@ -1,6 +1,6 @@
 name: ParetoFront
 
-on: [ push, pull_request ]
+on: [ pull_request, push ]
 
 jobs:
   Build:
@@ -14,43 +14,56 @@ jobs:
             name: "Windows/Static/X64/Release",
             os: windows-latest,
             config: Release,
-            args: -G "Visual Studio 16 2019" -A x64, # the github machine cannot build the python bindings
+            args: -G "Visual Studio 16 2019" -A x64,
+            sudocmd: "",
           }
           - {
             name: "Linux/Static/X64/Release",
             os: ubuntu-latest,
             config: Release,
             args: "-DCMAKE_C_COMPILER=/usr/bin/gcc-8 -DCMAKE_CXX_COMPILER=/usr/bin/g++-8",
+            sudocmd: "sudo",
           }
           - {
             name: "MacOSX/Static/X64/Release",
             os: macos-latest,
             config: Release,
             args: "",
+            sudocmd: "sudo",
           }
     steps:
       - uses: actions/checkout@v2
-#      - name: Install python3-dev on Linux
-#          if: matrix.config.os == 'ubuntu-latest'
-#          run: |
-#            sudo apt upgrade python3-dev
       - name: Create Work Dir
         run: mkdir build
-      - name: Configure
+      - name: Configure for pull_request
+        if: github.event_name == 'pull_request'
         working-directory: ./build
         run: |
-          cmake .. ${{ matrix.config.args }} -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DBUILD_LONG_TESTS=OFF -DMAX_NUM_DIMENSIONS_PYTHON=3 -DBUILD_BINDING_FOR_ALL_STRUCTURES=OFF
+          cmake .. ${{ matrix.config.args }} -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DBUILD_LONG_TESTS=OFF -DMAX_NUM_DIMENSIONS_PYTHON=3 -DBUILD_BINDING_FOR_ALL_STRUCTURES=ON
+      - name: Configure for push
+        if: github.event_name == 'push'
+        working-directory: ./build
+        run: |
+          cmake .. ${{ matrix.config.args }} -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DBUILD_LONG_TESTS=ON -DMAX_NUM_DIMENSIONS_PYTHON=10 -DBUILD_BINDING_FOR_ALL_STRUCTURES=ON
       - name: Build
         working-directory: ./build
         run: cmake --build . -j 2 --config ${{ matrix.config.config }}
       - name: Test
         working-directory: ./build
         run: ctest -j 2 -C Release
-#      - name: Install
-#        working-directory: ./build
-#        run: cmake --install .
+      - name: Install
+        working-directory: ./build
+        run: ${{ matrix.config.sudocmd }} cmake --install .
+      - name: Create packages
+        working-directory: ./build
+        run: ${{ matrix.config.sudocmd }} cpack
       - name: Archive Python Binding
         uses: actions/upload-artifact@v2
         with:
-          name: python-bindings
-          path: build/bindings/pyfront.cpython-*.so
+          name: Python Bindings ${{ matrix.config.name }}
+          path: build/bindings/pyfront.cp*-*.*
+      - name: Archive Python Binding
+        uses: actions/upload-artifact@v2
+        with:
+          name: Packages ${{ matrix.config.name }}
+          path: build/pareto-front-1.1.0-*.*
