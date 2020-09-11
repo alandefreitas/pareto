@@ -13,7 +13,7 @@ include(GNUInstallDirs)
 # Include CPM to find or download packages
 # Note that CPM will try to find the packages locally before downloading them
 # This avoids ODR problems
-option(CPM_USE_LOCAL_PACKAGES "Always try to use `find_package` to get dependencies" ON)
+option(CPM_USE_LOCAL_PACKAGES "Try `find_package` before downloading dependencies" ON)
 
 include(cmake/CPM.cmake)
 # Check if this a master project or a subdirectory of another project
@@ -33,25 +33,35 @@ option(BUILD_EXAMPLES "Compile the examples" ${MASTER_PROJECT})
 option(BUILD_PYTHON_BINDING "Compile the Python binding" ${MASTER_PROJECT})
 option(BUILD_TESTS "Compile the tests" ${MASTER_PROJECT})
 option(BUILD_INSTALLER "Build an installation package" ${MASTER_PROJECT})
-if (BUILD_INSTALLER)
-    message("Install directories")
-    message("CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
-    message("CMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}")
-    message("CMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}")
-    message("CMAKE_INSTALL_INCLUDEDIR=${CMAKE_INSTALL_INCLUDEDIR}")
-endif()
 option(BUILD_PACKAGE "Build an installation package" ${MASTER_PROJECT})
 
 # How to build
-option(BUILD_LONG_TESTS "Build the Data Structure Benchmark (It takes very long)" OFF)
+option(BUILD_LONG_TESTS "Build the Data Structure Benchmark (It takes very long)" ON)
+
 option(BUILD_BOOST_TREE "Include R-Tree using Boost Geometry (Boost dependency)" OFF)
-option(MAX_NUM_DIMENSIONS_PYTHON "Max number of compile-time dimensions for fronts in the Python bindings. Higher dimensions will be set at runtime." 10)
+
+if(CMAKE_BUILD_TYPE MATCHES DEBUG)
+    set(DEBUG_MODE ON)
+    set(NOT_DEBUG_MODE OFF)
+else()
+    set(DEBUG_MODE OFF)
+    set(NOT_DEBUG_MODE ON)
+endif()
+if (DEBUG_MODE)
+    set(DEFAULT_MAX_NUM_DIMENSIONS_PYTHON 3)
+else()
+    set(DEFAULT_MAX_NUM_DIMENSIONS_PYTHON 10)
+endif()
+option(MAX_NUM_DIMENSIONS_PYTHON "Max number of compile-time dimensions for fronts in the Python bindings. Higher dimensions will be set at runtime." ${DEFAULT_MAX_NUM_DIMENSIONS_PYTHON})
 if (NOT MAX_NUM_DIMENSIONS_PYTHON)
     set(MAX_NUM_DIMENSIONS_PYTHON 10)
 endif()
 message("MAX_NUM_DIMENSIONS_PYTHON=${MAX_NUM_DIMENSIONS_PYTHON}")
+
 option(BUILD_BINDING_FOR_ALL_STRUCTURES "Make all data structures available in the Python bindings" ON)
+
 option(BUILD_FRONTS_WITH_TRASE "Trase includes functions to plot pareto fronts. These were only used for the documentation." OFF)
+
 option(OPTIMIZE_RELEASE_CODE_BY_DEFAULT "Turn on optimization flags by default if we are in Release" ON)
 if (OPTIMIZE_RELEASE_CODE_BY_DEFAULT)
     if (MSVC)
@@ -60,7 +70,8 @@ if (OPTIMIZE_RELEASE_CODE_BY_DEFAULT)
         set(CMAKE_CXX_FLAGS_RELEASE "-O2")
     endif()
 endif()
-option(BUILD_WITH_PEDANTIC_WARNINGS "Use pedantic warnings. This is useful for developers because many of these warnings will be in continuous integration anyway." OFF)
+
+option(BUILD_WITH_PEDANTIC_WARNINGS "Use pedantic warnings. This is useful for developers because many of these warnings will be in continuous integration anyway." ${DEBUG_MODE})
 option(BUILD_WITH_UTF8 "Accept utf-8 in MSVC by default." ON)
 if (BUILD_WITH_UTF8 AND MSVC)
     set(CMAKE_CXX_FLAGS "/utf-8")
@@ -116,7 +127,7 @@ if (BUILD_INSTALLER)
             COMPATIBILITY AnyNewerVersion
     )
 
-    # Create ParetoFrontConfig.cmake from ParetoFrontConfig.cmake
+    # Create ParetoFrontConfig.cmake from ParetoFrontConfig.cmake.in
     # ParetoFrontConfig.cmake will include the ParetoFrontTargets.cmake file
     # We could have just renamed ParetoFrontTargets.cmake to ParetoFrontConfig.cmake
     # But ParetoFrontConfig.cmake allows us to include extra dependencies
