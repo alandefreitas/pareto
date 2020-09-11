@@ -6,6 +6,7 @@
 #define PARETO_FRONT_PREDICATES_H
 
 #include <variant>
+
 #include <pareto_front/point.h>
 #include <pareto_front/query_box.h>
 
@@ -200,11 +201,11 @@ namespace pareto {
         using object_variant = std::variant<point_type, query_box_type>;
         object_variant data_;
     public:
-        nearest(const point_type &data, size_t k) : data_(data), k_(k) {}
-        nearest(const point_type &data) : data_(object_variant(data)), k_(1) {}
+        nearest(const point_type &data, size_t k) : k_(k), data_(data) {}
+        explicit nearest(const point_type &data) : k_(1), data_(object_variant(data)) {}
 
-        nearest(const query_box_type &data, size_t k) : data_(object_variant(data)), k_(k) {}
-        nearest(const query_box_type &data) : data_(object_variant(data)), k_(1) {}
+        nearest(const query_box_type &data, size_t k) : k_(k), data_(object_variant(data)) {}
+        explicit nearest(const query_box_type &data) : k_(1), data_(object_variant(data)) {}
 
         size_t k() const {
             return k_;
@@ -263,7 +264,7 @@ namespace pareto {
         }
 
         /// Does the box pass the predicate?
-        bool pass_predicate(const query_box_type& rhs) const {
+        bool pass_predicate(const query_box_type& rhs [[maybe_unused]]) const {
             // This is just a placeholder
             // The function of nearest predicates is to
             // change how iterators work. Not to calculate
@@ -273,33 +274,33 @@ namespace pareto {
         }
 
         /// Can a child in this box pass the predicate?
-        bool might_pass_predicate(const query_box_type& rhs) const {
+        bool might_pass_predicate(const query_box_type& rhs [[maybe_unused]]) const {
             // This is just a placeholder
             return true;
         }
 
         /// Does the point pass the predicate?
-        bool pass_predicate(const point_type& rhs) const {
+        bool pass_predicate(const point_type& rhs [[maybe_unused]]) const {
             // This is just a placeholder
             return true;
         }
 
         /// Can a child in this box pass the predicate?
-        bool might_pass_predicate(const point_type& rhs) const {
+        bool might_pass_predicate(const point_type& rhs [[maybe_unused]]) const {
             // This is just a placeholder
             return true;
         }
 
         /// Does the value pass the predicate?
         template <class mapped_type>
-        bool pass_predicate(const std::pair<point_type, mapped_type>& rhs) const {
+        bool pass_predicate(const std::pair<point_type, mapped_type>& rhs [[maybe_unused]]) const {
             // This is just a placeholder
             return true;
         }
 
         /// Can a child in this box pass the predicate?
         template <class mapped_type>
-        bool might_pass_predicate(const std::pair<point_type, mapped_type>& rhs) const {
+        bool might_pass_predicate(const std::pair<point_type, mapped_type>& rhs [[maybe_unused]]) const {
             // This is just a placeholder
             return true;
         }
@@ -340,12 +341,12 @@ namespace pareto {
         }
 
         /// Does the box pass the predicate?
-        bool pass_predicate(const query_box_type& rhs) const {
+        bool pass_predicate(const query_box_type& rhs [[maybe_unused]]) const {
             return true;
         }
 
         /// Can a child in this box pass the predicate?
-        bool might_pass_predicate(const query_box_type& rhs) const {
+        bool might_pass_predicate(const query_box_type& rhs [[maybe_unused]]) const {
             return true;
         }
 
@@ -359,7 +360,7 @@ namespace pareto {
         }
 
         /// Can a child in this box pass the predicate?
-        bool might_pass_predicate(const point_type& rhs) const {
+        bool might_pass_predicate(const point_type& rhs [[maybe_unused]]) const {
             return true;
         }
 
@@ -373,7 +374,7 @@ namespace pareto {
         }
 
         /// Can a child in this box pass the predicate?
-        bool might_pass_predicate(const value_type& rhs) const {
+        bool might_pass_predicate(const value_type& rhs [[maybe_unused]]) const {
             return true;
         }
 

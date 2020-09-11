@@ -68,7 +68,7 @@ namespace pareto {
         }
 
         /// Construct and set everything to null
-        interleaved_memory_pool(const interleaved_memory_pool& memoryPool) noexcept : interleaved_memory_pool() {
+        interleaved_memory_pool(const interleaved_memory_pool& memoryPool [[maybe_unused]]) noexcept : interleaved_memory_pool() {
             // the copy constructor doesn't really copy because it wouldn't make much sense
         }
 
@@ -82,13 +82,13 @@ namespace pareto {
             n_blocks_ = memoryPool.n_blocks_;
         }
 
-        template <class U> interleaved_memory_pool(const interleaved_memory_pool<U>& memoryPool) noexcept : interleaved_memory_pool() {
+        template <class U> interleaved_memory_pool(const interleaved_memory_pool<U>& memoryPool [[maybe_unused]]) noexcept : interleaved_memory_pool() {
             // the copy constructor doesn't really copy because it wouldn't make much sense
             // This simply converts the types
         }
 
         /// Delete all blocks
-        ~interleaved_memory_pool() noexcept {
+        virtual ~interleaved_memory_pool() noexcept {
             // pointer to current block
             slot_pointer_type curr = current_block_;
             // if current block is not null
@@ -132,7 +132,7 @@ namespace pareto {
         /// Can only allocate one object at a time.
         /// n and hint are ignored because memory pools cannot
         /// efficiently guarantee a sequence of elements
-        pointer allocate(size_type n = 1, const_pointer hint = 0) {
+        pointer allocate(size_type n = 1, [[maybe_unused]] const_pointer hint = 0) {
             // std::cout << "allocate" << std::endl;
             // free list is sorted, we allocate there, or in contiguous memory
             if constexpr (allow_contiguous_allocation) {
@@ -394,8 +394,20 @@ namespace pareto {
 
         /// A slot might store an element or a pointer to the next position available
         union slot_type {
+            // Store an element
             value_type element;
+            // Pointer to the next free slot
             slot_type* next;
+
+            // The constructor does not have to do anything
+            slot_type() {};
+
+            // The constructor does not have to do anything
+            // The memory pool will deallocate positions without destructing (see ::deallocate)
+            // You just need to destruct value_type if it uses dynamic memory
+            // If you need to destruct the element, you have to do it before deallocating the memory
+            // For instance, see functions like deallocate_rstar_tree_node
+            ~slot_type() {};
         };
 
         typedef char* binary_data_pointer_type;
@@ -563,7 +575,7 @@ namespace pareto {
         }
 
         /// Construct and set everything to null
-        free_memory_pool(const free_memory_pool& memoryPool) noexcept : free_memory_pool() {
+        free_memory_pool(const free_memory_pool& memoryPool [[maybe_unused]]) noexcept : free_memory_pool() {
             // the copy constructor doesn't really copy because it wouldn't make much sense
         }
 
@@ -577,7 +589,7 @@ namespace pareto {
             n_blocks_ = memoryPool.n_blocks_;
         }
 
-        template <class U> free_memory_pool(const free_memory_pool<U>& memoryPool) noexcept : free_memory_pool() {
+        template <class U> free_memory_pool(const free_memory_pool<U>& memoryPool [[maybe_unused]]) noexcept : free_memory_pool() {
             // the copy constructor doesn't really copy because it wouldn't make much sense
             // This simply converts the types
         }

@@ -12,6 +12,7 @@
 #ifdef BUILD_FRONTS_WITH_TRASE
 #include <trase.hpp>
 #endif
+
 #include <pareto_front/hv-2.0rc2/hv.h>
 
 #include <pareto_front/common.h>
@@ -20,9 +21,11 @@
 #include <pareto_front/tree/vector_tree.h>
 #include <pareto_front/tree/quad_tree.h>
 #include <pareto_front/tree/kd_tree.h>
+
 #ifdef BUILD_BOOST_TREE
 #include <pareto_front/tree/boost_tree.h>
 #endif
+
 #include <pareto_front/tree/r_tree.h>
 #include <pareto_front/tree/r_star_tree.h>
 
@@ -167,7 +170,7 @@ namespace pareto {
         /// per front because our fast allocator is not stateless.
         front(const internal_minimization_type& is_minimization, std::shared_ptr<node_allocator_type>& external_allocator)
                 : data_(external_allocator) {
-            if (number_of_compile_dimensions > 0) {
+            if constexpr (number_of_compile_dimensions > 0) {
                 if (number_of_compile_dimensions != is_minimization_.size()) {
                     throw std::invalid_argument("Number of minimization directions should match the dimension");
                 }
@@ -333,11 +336,11 @@ namespace pareto {
         }
 
         size_type is_minimization() const noexcept {
-            return std::all_of(is_minimization_.begin(), is_minimization_.end(), [](auto i){return i == true;});
+            return std::all_of(is_minimization_.begin(), is_minimization_.end(), [](auto i){return i == uint8_t(1);});
         }
 
         size_type is_maximization() const noexcept {
-            return std::all_of(is_minimization_.begin(), is_minimization_.end(), [](auto i){return i == false;});
+            return std::all_of(is_minimization_.begin(), is_minimization_.end(), [](auto i){return i == uint8_t(0);});
         }
 
         size_type is_minimization(size_t dimension) const noexcept {
@@ -415,7 +418,7 @@ namespace pareto {
 
         template <typename... Targs>
         mapped_type& operator()(const number_type& k, const Targs&... ks) {
-            constexpr size_t d = sizeof...(Targs) + 1;
+            // constexpr size_t d = sizeof...(Targs) + 1;
             point_type p(k, ks...);
             return operator[](p);
         }
@@ -440,11 +443,16 @@ namespace pareto {
 
     public /* relational operators */:
         bool operator==(const front &rhs) const {
-            return is_minimization_ == rhs.is_minimization_ && data_ == rhs.data_;
+            return is_minimization_ == rhs.is_minimization_ &&
+            std::equal(data_.begin(), data_.end(), rhs.data_.begin(), rhs.data_.end(), [](const auto& a, const auto& b) {
+                return a.first == b.first && mapped_type_custom_equality_operator(a.second,b.second);
+            });
         }
 
         bool operator!=(const front &rhs) const {
-            return !(rhs == *this);
+            return is_minimization_ != rhs.is_minimization_ || !std::equal(data_.begin(), data_.end(), rhs.data_.begin(), rhs.data_.end(), [](const auto& a, const auto& b) {
+                return a.first == b.first && mapped_type_custom_equality_operator(a.second,b.second);
+            });;
         }
 
     public /* modifiers */:
@@ -628,7 +636,7 @@ namespace pareto {
             }
             for (size_t i = 1; i <= size(); ++i) {
                 for (auto it = find_nearest(p,i); it != end(); ++it) {
-                    if (*itself != *it) {
+                    if (itself->first != it->first || !mapped_type_custom_equality_operator(itself->second,it->second)) {
                         return it;
                     }
                 }

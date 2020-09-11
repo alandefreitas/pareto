@@ -16,6 +16,7 @@
 #include <map>
 #include <forward_list>
 #include <sstream>
+
 #include <pareto_front/point.h>
 #include <pareto_front/query_box.h>
 #include <pareto_front/predicates.h>
@@ -90,7 +91,7 @@ namespace pareto {
                     : parent_(parent) {}
 
             quadtree_node(quadtree_node* parent, const value_type& value)
-                    : parent_(parent), value_(value), bounds_(box_type(value.first)) {}
+                    : value_(value), parent_(parent), bounds_(box_type(value.first)) {}
 
             /// An internal node, contains other nodes
             bool is_internal_node() const {
@@ -282,7 +283,7 @@ namespace pareto {
                 return *this;
             }
 
-            const iterator_impl operator++(int i) {
+            const iterator_impl operator++(int) {
                 auto tmp = *this;
                 advance_to_next_valid();
                 return tmp;
@@ -293,7 +294,7 @@ namespace pareto {
                 return *this;
             }
 
-            const iterator_impl operator--(int i) {
+            const iterator_impl operator--(int) {
                 auto tmp = *this;
                 return_to_previous_valid();
                 return tmp;
@@ -793,9 +794,7 @@ namespace pareto {
             using queue_element = std::tuple<node_pointer_type, bool, distance_type>;
 
             // Function to compare queue_elements by their distance to the reference point
-            static constexpr auto queue_comp = [](const queue_element &a, const queue_element &b) -> bool {
-                return std::get<2>(a) > std::get<2>(b);
-            };
+            static const std::function<bool(const queue_element&, const queue_element&)> queue_comp;
 
             // Queue <- NewPriorityQueue()
             std::vector<queue_element> nearest_queue_;
@@ -911,11 +910,15 @@ namespace pareto {
         /// We implement it this way because this operation is the only
         /// one we need for our front application.
         bool operator==(const self_type &rhs) const {
-            return std::equal(begin(), end(), rhs.begin(), rhs.end());
+            return std::equal(begin(), end(), rhs.begin(), rhs.end(), [](const auto& a, const auto& b) {
+                return a.first == b.first && mapped_type_custom_equality_operator(a.second, b.second);
+            });
         }
 
         bool operator!=(const self_type &rhs) const {
-            return !(rhs == *this);
+            return !std::equal(begin(), end(), rhs.begin(), rhs.end(), [](const auto& a, const auto& b) {
+                return a.first == b.first && mapped_type_custom_equality_operator(a.second, b.second);
+            });
         }
 
         const_iterator find(const point_type &p) const {
@@ -1388,7 +1391,7 @@ namespace pareto {
 
         std::string to_string() const {
             std::string str;
-            auto current = root_;
+            // auto current = root_;
             str += to_string(root_, 0);
             return str;
         }
@@ -1428,6 +1431,17 @@ namespace pareto {
         std::shared_ptr<node_allocator_type> alloc_;
 
     };
+
+    // MSVC hack (we cannot define it inside iterator_impl)
+    template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR>
+    template <bool constness>
+    const std::function<bool(const typename quad_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element&,
+                             const typename quad_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element&)> quad_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::iterator_impl<constness>::queue_comp = [](
+            const typename quad_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element& a,
+            const typename quad_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element& b) -> bool {
+        return std::get<2>(a) > std::get<2>(b);
+    };
+
 }
 
 #endif //PARETO_FRONT_QUAD_TREE_H

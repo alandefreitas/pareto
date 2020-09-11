@@ -1,10 +1,12 @@
 #ifndef PARETO_FRONTS_PREDICATE_VECTOR_H
 #define PARETO_FRONTS_PREDICATE_VECTOR_H
 
-#include <pareto_front/point.h>
-#include <pareto_front/memory_pool.h>
 #include <vector>
 #include <functional>
+
+#include <pareto_front/point.h>
+#include <pareto_front/memory_pool.h>
+#include <pareto_front/query_box.h>
 
 namespace pareto {
 
@@ -72,7 +74,7 @@ namespace pareto {
                 maybe_advance_predicate();
             }
 
-            iterator(vector_type &source) : query_it_(source.begin()), query_it_end_(source.end()) {}
+            explicit iterator(vector_type &source) : query_it_(source.begin()), query_it_end_(source.end()) {}
 
             iterator(const raw_vector_iterator &raw_begin_it, const raw_vector_iterator &raw_end_it) : query_it_(raw_begin_it), query_it_end_(raw_end_it) {}
 
@@ -95,7 +97,7 @@ namespace pareto {
             }
 
             bool operator!=(const iterator &rhs) const {
-                return !(*this == rhs);
+                return (query_it_ != rhs.query_it_);
             }
 
             iterator &operator++() {
@@ -145,7 +147,7 @@ namespace pareto {
             }
 
             reference operator[](size_t i) const {
-                const std::pair<key_type, mapped_type>& p = query_it_.operator*();
+                const std::pair<key_type, mapped_type>& p = query_it_.operator[](i);
                 std::pair<const key_type, mapped_type>* p2 = (std::pair<const key_type, mapped_type>*) &p;
                 return *p2;
             }
@@ -220,7 +222,7 @@ namespace pareto {
             }
 
             bool operator!=(const const_iterator &rhs) const {
-                return !(*this == rhs);
+                return(query_it_ != rhs.query_it_);
             }
 
             const_iterator &operator++() {
@@ -290,7 +292,9 @@ namespace pareto {
         /// \brief Constructor using an external allocator
         /// Only archives should use this
         /// Vector trees can't have memory pools so we do nothing here
-        vector_tree(std::shared_ptr<node_allocator_type>& external_allocator)
+        /// Vectors use contiguous memory so memory pools would be even less
+        /// efficient.
+        vector_tree(std::shared_ptr<node_allocator_type>& external_allocator [[maybe_unused]])
                 : vector_tree() {}
 
 
@@ -317,11 +321,15 @@ namespace pareto {
         }
 
         bool operator==(const vector_tree &rhs) const {
-            return data_ == rhs.data_;
+            return std::equal(data_.begin(), data_.end(), rhs.data_.begin(), rhs.data_.end(), [](const auto& a, const auto& b) {
+                return a.first == b.first && mapped_type_custom_equality_operator(a.second,b.second);
+            });
         }
 
         bool operator!=(const vector_tree &rhs) const {
-            return !(rhs == *this);
+            return !std::equal(data_.begin(), data_.end(), rhs.data_.begin(), rhs.data_.end(), [](const auto& a, const auto& b) {
+                return a.first == b.first && mapped_type_custom_equality_operator(a.second,b.second);
+            });;
         }
 
         const_iterator find(const point_type& p) const {
@@ -398,7 +406,7 @@ namespace pareto {
         }
 
         const_iterator begin_nearest(const point_type& p) const {
-            auto it = std::min_element(data_.begin(), data_.end(), [this, p](const value_type& v1, const value_type& v2) {
+            auto it = std::min_element(data_.begin(), data_.end(), [p](const value_type& v1, const value_type& v2) {
                 return p.distance(v1.first) < p.distance(v2.first);
             });
             if (it != data_.end()) {
@@ -420,7 +428,7 @@ namespace pareto {
             }
             auto data_copy = data_;
             k = std::min(k, size());
-            std::partial_sort(data_copy.begin(), data_copy.begin() + k, data_copy.end(), [this, p](value_type v1, value_type v2) {
+            std::partial_sort(data_copy.begin(), data_copy.begin() + k, data_copy.end(), [p](value_type v1, value_type v2) {
                 return p.distance(v1.first) < p.distance(v2.first);
             });
             std::vector<point_type> nearest_set;
@@ -440,7 +448,7 @@ namespace pareto {
             }
             auto data_copy = data_;
             k = std::min(k, size());
-            std::partial_sort(data_copy.begin(), data_copy.begin() + k, data_copy.end(), [this, p](value_type v1, value_type v2) {
+            std::partial_sort(data_copy.begin(), data_copy.begin() + k, data_copy.end(), [p](value_type v1, value_type v2) {
                 return p.distance(v1.first) < p.distance(v2.first);
             });
             std::vector<point_type> nearest_set;
@@ -456,7 +464,7 @@ namespace pareto {
         const_iterator begin_nearest(const box_type& p, size_t k) const {
             auto data_copy = data_;
             k = std::min(k, size());
-            std::partial_sort(data_copy.begin(), data_copy.begin() + k, data_copy.end(), [this, p](value_type v1, value_type v2) {
+            std::partial_sort(data_copy.begin(), data_copy.begin() + k, data_copy.end(), [p](value_type v1, value_type v2) {
                 return p.distance(v1.first) < p.distance(v2.first);
             });
             std::vector<point_type> nearest_set;
@@ -473,7 +481,7 @@ namespace pareto {
         const_iterator begin_nearest(const box_type& p, size_t k, PREDICATE_TYPE fn) const {
             auto data_copy = data_;
             k = std::min(k, size());
-            std::partial_sort(data_copy.begin(), data_copy.begin() + k, data_copy.end(), [this, p](value_type v1, value_type v2) {
+            std::partial_sort(data_copy.begin(), data_copy.begin() + k, data_copy.end(), [p](value_type v1, value_type v2) {
                 return distance(v1.first, p) < distance(v2.first, p);
             });
             std::vector<point_type> nearest_set;
@@ -578,7 +586,9 @@ namespace pareto {
             std::vector<value_type> v(first, last);
             // remove using these copies as reference
             for (const value_type& x: v) {
-                data_.erase(std::find(data_.begin(), data_.end(), x));
+                data_.erase(std::find_if(data_.begin(), data_.end(), [&x](const auto& a) {
+                    return a.first == x.first && mapped_type_custom_equality_operator(a.second,x.second);
+                }));
             }
             return v.size();
         }

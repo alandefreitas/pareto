@@ -11,6 +11,7 @@
 #include <queue>
 #include <map>
 #include <forward_list>
+
 #include <pareto_front/point.h>
 #include <pareto_front/query_box.h>
 #include <pareto_front/predicates.h>
@@ -188,6 +189,29 @@ namespace pareto {
                 return as_value().first;
             }
 
+            const mapped_type &mapped_value() const {
+                return as_value().second;
+            }
+
+            const point_type &point_value() const {
+                return as_value().first;
+            }
+
+            bool operator==(const branch_variant &rhs) const {
+                if (is_branch() != rhs.is_branch()) {
+                    return false;
+                }
+                if (is_branch()) {
+                    return as_branch() == rhs.as_branch();
+                } else {
+                    return point_value() == rhs.point_value() && mapped_type_custom_equality_operator(mapped_value(), rhs.mapped_value());
+                }
+            }
+
+            bool operator!=(const branch_variant &rhs) const {
+                return !(*this == rhs);
+            }
+
         private:
             variant_type data_;
         };
@@ -201,7 +225,7 @@ namespace pareto {
             rtree_node() : rtree_node(0, 0) {}
 
             rtree_node(size_t count, size_t level)
-                    : count_(count), level_(level), parent_(nullptr) {}
+                    : parent_(nullptr), count_(count), level_(level) {}
 
             /// An internal node, contains other nodes
             bool is_internal_node() const {
@@ -429,7 +453,7 @@ namespace pareto {
                 return *this;
             }
 
-            const iterator_impl operator++(int i) {
+            const iterator_impl operator++(int) {
                 auto tmp = *this;
                 advance_to_next_valid();
                 return tmp;
@@ -440,7 +464,7 @@ namespace pareto {
                 return *this;
             }
 
-            const iterator_impl operator--(int i) {
+            const iterator_impl operator--(int) {
                 auto tmp = *this;
                 return_to_previous_valid();
                 return tmp;
@@ -955,9 +979,7 @@ namespace pareto {
             using queue_element = std::tuple<pointer_type, size_t, distance_type>;
 
             // Function to compare queue_elements by their distance to the reference point
-            static constexpr auto queue_comp = [](const queue_element &a, const queue_element &b) -> bool {
-                return std::get<2>(a) > std::get<2>(b);
-            };
+            static const std::function<bool(const queue_element&, const queue_element&)> queue_comp;
 
             // Queue <- NewPriorityQueue()
             std::vector<queue_element> nearest_queue_;
@@ -1106,14 +1128,14 @@ namespace pareto {
 
         iterator find(const value_type &v) {
             iterator it = begin_intersection(v.first, v.first,
-                                             [&v](const value_type &x) { return x.second == v.second; });
+                                             [&v](const value_type &x) { return mapped_type_custom_equality_operator(x.second,v.second);; });
             it.predicates_.clear();
             return it;
         }
 
         const_iterator find(const value_type &v) const {
             const_iterator it = begin_intersection(v.first, v.first,
-                                                   [&v](const value_type &x) { return x.second == v.second; });
+                                                   [&v](const value_type &x) { return mapped_type_custom_equality_operator(x.second,v.second);; });
             it.predicates_.clear();
             return it;
         }
@@ -1376,7 +1398,7 @@ namespace pareto {
             rtree_node *new_rtree_node = nullptr;
 
             // If the root split
-            auto result_tuple = insert_branch_recursive(branch, root_node, new_rtree_node, a_level);
+            auto result_tuple = insert_branch_recursive(branch, root_node, new_rtree_node, static_cast<int>(a_level));
             bool root_was_split = std::get<0>(result_tuple);
             if (root_was_split) {
                 // Grow tree taller and new root
@@ -1422,11 +1444,11 @@ namespace pareto {
         insert_branch_recursive(const branch_variant &branch, rtree_node *&parent_node,
                                 rtree_node *&maybe_new_tree_node, int target_level) {
             assert(parent_node);
-            assert(target_level >= 0 && target_level <= parent_node->level_);
+            assert(target_level >= 0 && target_level <= static_cast<int>(parent_node->level_));
 
             // Recurse until we reach the correct level for the new record. Data records
             // will always be called with target_level == 0 (leaf)
-            if (parent_node->level_ > target_level) {
+            if (static_cast<int>(parent_node->level_) > target_level) {
                 // Still above level for insertion, go down tree recursively
                 // Find the optimal branch for this record
                 size_t index = pick_rtree_branch(branch.rectangle(), parent_node);
@@ -1462,7 +1484,7 @@ namespace pareto {
                     // we return if the immediate branch split, but propagate up the directions to the new value
                     return std::make_tuple(branch_was_split, insertion_branch, insertion_index);
                 }
-            } else if (parent_node->level_ == target_level) {
+            } else if (static_cast<int>(parent_node->level_) == target_level) {
                 // We have reached level for insertion. Add branch, split if necessary
                 return add_rtree_branch(branch, parent_node, maybe_new_tree_node);
             } else {
@@ -1556,7 +1578,7 @@ namespace pareto {
             // variable to keep the volume we calculate for the query box
             number_type volume;
             // best volume of the new box
-            number_type best_volume;
+            number_type best_volume = 0;
             // index of the branch most appropriate for the new element
             size_t best = 0;
             // variable to keep the combination of both query boxes
@@ -1687,7 +1709,7 @@ namespace pareto {
             // Calculate rect containing all in the set
             partition_vars.cover_split_ = partition_vars.branch_buffer_[0].rectangle();
 
-            for (int index = 1; index < maxnodes_ + 1; ++index) {
+            for (size_t index = 1; index < maxnodes_ + 1; ++index) {
                 partition_vars.cover_split_ = partition_vars.cover_split_.combine(
                         partition_vars.branch_buffer_[index].rectangle());
             }
@@ -1712,12 +1734,12 @@ namespace pareto {
             init_partition_variables(a_par_vars, a_par_vars.branch_count_, a_min_fill);
             pick_seeds(a_par_vars);
             // while (not all nodes have groups && groups have less than minimum number of branches (4))
-            while (((a_par_vars.count_.first + a_par_vars.count_.second) < a_par_vars.total_)
-                   && (a_par_vars.count_.first < (a_par_vars.total_ - a_par_vars.min_fill_))
-                   && (a_par_vars.count_.second < (a_par_vars.total_ - a_par_vars.min_fill_))) {
+            while (((a_par_vars.count_.first + a_par_vars.count_.second) < static_cast<int>(a_par_vars.total_))
+                   && (a_par_vars.count_.first < static_cast<int>(a_par_vars.total_ - a_par_vars.min_fill_))
+                   && (a_par_vars.count_.second < static_cast<int>(a_par_vars.total_ - a_par_vars.min_fill_))) {
                 biggest_diff = static_cast<number_type>(-1);
                 // for each branch
-                for (int index = 0; index < a_par_vars.total_; ++index) {
+                for (size_t index = 0; index < a_par_vars.total_; ++index) {
                     // if branch is not in a group yet
                     if (partition_vars::NOT_TAKEN == a_par_vars.partition_[index]) {
                         box_type current_query_box = a_par_vars.branch_buffer_[index].rectangle();
@@ -1736,12 +1758,12 @@ namespace pareto {
                         // save the group that included the element with the biggest difference
                         if (diff > biggest_diff) {
                             biggest_diff = diff;
-                            chosen = index;
+                            chosen = static_cast<int>(index);
                             better_group = group;
                         } else if ((diff == biggest_diff) &&
                                    (((group == 0) ? a_par_vars.count_.first : a_par_vars.count_.second) <
                                     (better_group == 0 ? a_par_vars.count_.first : a_par_vars.count_.second))) {
-                            chosen = index;
+                            chosen = static_cast<int>(index);
                             better_group = group;
                         }
                     }
@@ -1750,24 +1772,24 @@ namespace pareto {
             }
 
             // If one group too full, put remaining rects in the other
-            if ((a_par_vars.count_.first + a_par_vars.count_.second) < a_par_vars.total_) {
+            if ((a_par_vars.count_.first + a_par_vars.count_.second) < static_cast<int>(a_par_vars.total_)) {
                 // first group is full
-                if (a_par_vars.count_.first >= a_par_vars.total_ - a_par_vars.min_fill_) {
+                if (a_par_vars.count_.first >= static_cast<int>(a_par_vars.total_ - a_par_vars.min_fill_)) {
                     group = 1;
                 } else {
                     group = 0;
                 }
                 // classify nodes not taken
-                for (int index = 0; index < a_par_vars.total_; ++index) {
+                for (int index = 0; index < static_cast<int>(a_par_vars.total_); ++index) {
                     if (partition_vars::NOT_TAKEN == a_par_vars.partition_[index]) {
                         classify(index, group, a_par_vars);
                     }
                 }
             }
 
-            assert((a_par_vars.count_.first + a_par_vars.count_.second) == a_par_vars.total_);
-            assert((a_par_vars.count_.first >= a_par_vars.min_fill_) &&
-                   (a_par_vars.count_.second >= a_par_vars.min_fill_));
+            assert((a_par_vars.count_.first + a_par_vars.count_.second) == static_cast<int>(a_par_vars.total_));
+            assert((a_par_vars.count_.first >= static_cast<int>(a_par_vars.min_fill_)) &&
+                   (a_par_vars.count_.second >= static_cast<int>(a_par_vars.min_fill_)));
         }
 
         // Copy branches from the buffer into two nodes according to the partition.
@@ -1782,7 +1804,7 @@ namespace pareto {
             size_t last_branch_index;
 
             // for each branch to include in the nodes
-            for (int index = 0; index < a_par_vars.total_; ++index) {
+            for (size_t index = 0; index < a_par_vars.total_; ++index) {
                 assert(a_par_vars.partition_[index] == 0 || a_par_vars.partition_[index] == 1);
                 // node where we should put the branch (0 or 1)
                 int target_rtree_node_index = a_par_vars.partition_[index];
@@ -1806,24 +1828,24 @@ namespace pareto {
             a_par_vars.area_.first = a_par_vars.area_.second = (number_type) 0;
             a_par_vars.total_ = a_maxquery_boxs;
             a_par_vars.min_fill_ = a_min_fill;
-            for (int index = 0; index < a_maxquery_boxs; ++index) {
+            for (size_t index = 0; index < a_maxquery_boxs; ++index) {
                 a_par_vars.partition_[index] = partition_vars::NOT_TAKEN;
             }
         }
 
         void pick_seeds(partition_vars &a_par_vars) {
-            int seed0 = 0, seed1 = 0;
+            size_t seed0 = 0, seed1 = 0;
             number_type worst, waste;
             number_type area[maxnodes_ + 1];
             // calculate volume of each branch
-            for (int index = 0; index < a_par_vars.total_; ++index) {
+            for (size_t index = 0; index < a_par_vars.total_; ++index) {
                 area[index] = calculate_query_box_volume(a_par_vars.branch_buffer_[index].rectangle());
             }
             // worst area possible (whole partition area)
             worst = -a_par_vars.cover_split_area_ - 1;
             // for each pair of branches
-            for (int indexA = 0; indexA < a_par_vars.total_ - 1; ++indexA) {
-                for (int indexB = indexA + 1; indexB < a_par_vars.total_; ++indexB) {
+            for (size_t indexA = 0; indexA < a_par_vars.total_ - 1; ++indexA) {
+                for (size_t indexB = indexA + 1; indexB < a_par_vars.total_; ++indexB) {
                     // combine box
                     box_type onequery_box = a_par_vars.branch_buffer_[indexA].rectangle().combine(
                             a_par_vars.branch_buffer_[indexB].rectangle());
@@ -1837,8 +1859,8 @@ namespace pareto {
                 }
             }
 
-            classify(seed0, 0, a_par_vars);
-            classify(seed1, 1, a_par_vars);
+            classify(static_cast<int>(seed0), 0, a_par_vars);
+            classify(static_cast<int>(seed1), 1, a_par_vars);
         }
 
         /// Put a branch in one of the groups.
@@ -1899,7 +1921,7 @@ namespace pareto {
 
                 // This list node has less than minnodes_, so
                 // For each branch of this node, put it in the root
-                for (int index = 0; index < temp_rtree_node->count_; ++index) {
+                for (size_t index = 0; index < temp_rtree_node->count_; ++index) {
                     insert_branch(temp_rtree_node->branches_[index], root_node, temp_rtree_node->level_);
                 }
 
@@ -2040,7 +2062,7 @@ namespace pareto {
             // not a leaf node
             if (parent_node->is_internal_node()) {
                 // call the function recursively for all branches
-                for (int index = 0; index < parent_node->count_; ++index) {
+                for (size_t index = 0; index < parent_node->count_; ++index) {
                     count_recursive(parent_node->branches_[index].as_branch().second, counter);
                 }
             } else {
@@ -2057,7 +2079,7 @@ namespace pareto {
             // Not a leaf node
             if (current->is_internal_node()) {
                 // for each branch
-                for (int index = 0; index < current->count_; ++index) {
+                for (size_t index = 0; index < current->count_; ++index) {
                     std::pair<box_type, rtree_node *> &current_rtree_branch = current->branches_[index].as_branch();
                     const std::pair<box_type, rtree_node *> &other_rtree_branch = other->branches_[index].as_branch();
                     current_rtree_branch.first = other_rtree_branch.first;
@@ -2066,7 +2088,7 @@ namespace pareto {
                 }
             } else {
                 // A leaf node
-                for (int index = 0; index < current->count_; ++index) {
+                for (size_t index = 0; index < current->count_; ++index) {
                     const value_type &other_rtree_branch = other->branches_[index].as_value();
                     current->branches_[index] = branch_variant(
                             std::make_pair(other_rtree_branch.first, other_rtree_branch.second));
@@ -2135,17 +2157,17 @@ namespace pareto {
             if (dimensions() <= 50) {
                 unit_sphere_volume_ = (number_type) UNIT_SPHERE_VOLUMES[NUMBER_OF_DIMENSIONS];
             } else {
-                number_type v0 = 1.;
-                number_type v1 = 2.;
+                // number_type v0 = 1.;
+                // number_type v1 = 2.;
                 size_t i = 2;
-                number_type vi_minus_2 = 1.;
-                number_type vi_minus_1 = 2.;
-                number_type vi = (2. * pi) / i * vi_minus_2;
+                number_type vi_minus_2 = static_cast<number_type>(1.);
+                number_type vi_minus_1 = static_cast<number_type>(2.);
+                number_type vi = static_cast<number_type>((static_cast<number_type>(2.) * static_cast<number_type>(pi)) / static_cast<number_type>(i) * vi_minus_2);
                 while (i < number_of_compile_dimensions_) {
                     ++i;
                     vi_minus_2 = vi_minus_1;
                     vi_minus_1 = vi;
-                    vi = (2. * 3.14159265359) / i * vi_minus_2;
+                    vi = static_cast<number_type>((static_cast<number_type>(2.) * static_cast<number_type>(3.14159265359)) / static_cast<number_type>(i) * vi_minus_2);
                 }
                 unit_sphere_volume_ = vi;
             }
@@ -2261,6 +2283,16 @@ namespace pareto {
         /// Allocator for lists
         list_allocator_type list_alloc_;
 
+    };
+
+    // MSVC hack
+    template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR>
+    template <bool constness>
+    const std::function<bool(const typename r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element&,
+                             const typename r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element&)> r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::iterator_impl<constness>::queue_comp = [](
+            const typename r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element& a,
+            const typename r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element& b) -> bool {
+        return std::get<2>(a) > std::get<2>(b);
     };
 }
 

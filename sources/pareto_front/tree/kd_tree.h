@@ -14,7 +14,11 @@
 #include <vector>
 #include <queue>
 #include <map>
+#include <sstream>
 #include <forward_list>
+#include <memory>
+#include <tuple>
+
 #include <pareto_front/point.h>
 #include <pareto_front/query_box.h>
 #include <pareto_front/predicates.h>
@@ -87,7 +91,7 @@ namespace pareto {
                     : kdtree_node(parent, value, 0) {}
 
             kdtree_node(kdtree_node* parent, const value_type& value, size_t split_dimension)
-                    : parent_(parent), value_(value), split_dimension_(split_dimension), bounds_(box_type(value.first)) {}
+                    : value_(value), split_dimension_(split_dimension), parent_(parent), bounds_(box_type(value.first)) {}
 
             /// An internal node, contains other nodes
             bool is_internal_node() const {
@@ -151,6 +155,7 @@ namespace pareto {
         template<bool is_const = false>
         class iterator_impl {
         public:
+
             // friend const_iterator;
             friend kd_tree;
             using difference_type = typename self_type::difference_type;
@@ -167,6 +172,7 @@ namespace pareto {
                 begin,
                 end
             };
+
 
             /// Default
             explicit iterator_impl() : iterator_impl(nullptr, nullptr) {}
@@ -283,7 +289,7 @@ namespace pareto {
                 return *this;
             }
 
-            const iterator_impl operator++(int i) {
+            const iterator_impl operator++(int) {
                 auto tmp = *this;
                 advance_to_next_valid();
                 return tmp;
@@ -294,7 +300,7 @@ namespace pareto {
                 return *this;
             }
 
-            const iterator_impl operator--(int i) {
+            const iterator_impl operator--(int) {
                 auto tmp = *this;
                 return_to_previous_valid();
                 return tmp;
@@ -518,7 +524,7 @@ namespace pareto {
                         }
                     } else {
                         // 11. else if Element is a leaf node then
-                        // 15. else /* Element is a non-leaf node*/
+                        // 15. else: Element is a non-leaf node
                         // These two conditions have blocks enqueuing all child elements.
                         // So they are equivalent to us because we use variants
                         // for the branches.
@@ -814,9 +820,7 @@ namespace pareto {
             using queue_element = std::tuple<node_pointer_type, bool, distance_type>;
 
             // Function to compare queue_elements by their distance to the reference point
-            static constexpr auto queue_comp = [](const queue_element &a, const queue_element &b) -> bool {
-                return std::get<2>(a) > std::get<2>(b);
-            };
+            static const std::function<bool(const queue_element&, const queue_element&)> queue_comp;
 
             // Queue <- NewPriorityQueue()
             std::vector<queue_element> nearest_queue_;
@@ -832,6 +836,7 @@ namespace pareto {
 
             // Allow hiding of non-public functions while allowing manipulation by logical owner
             friend class kd_tree;
+
         };
 
         using iterator = iterator_impl<false>;
@@ -932,11 +937,15 @@ namespace pareto {
         /// We implement it this way because this operation is the only
         /// one we need for our front application.
         bool operator==(const self_type &rhs) const {
-            return std::equal(begin(), end(), rhs.begin(), rhs.end());
+            return std::equal(begin(), end(), rhs.begin(), rhs.end(), [](const auto& a, const auto& b) {
+                return a.first == b.first && mapped_type_custom_equality_operator(a.second,b.second);
+            });
         }
 
         bool operator!=(const self_type &rhs) const {
-            return !(rhs == *this);
+            return !std::equal(begin(), end(), rhs.begin(), rhs.end(), [](const auto& a, const auto& b) {
+                return a.first == b.first && mapped_type_custom_equality_operator(a.second,b.second);
+            });
         }
 
         const_iterator find(const point_type &p) const {
@@ -959,7 +968,7 @@ namespace pareto {
 
         const_iterator find(const value_type &v) const {
             const_iterator it = begin_intersection(v.first, v.first,
-                                                   [&v](const value_type &x) { return x.second == v.second; });
+                                                   [&v](const value_type &x) { return mapped_type_custom_equality_operator(x.second,v.second); });
             it.predicates_.clear();
             return it;
         }
@@ -1086,7 +1095,6 @@ namespace pareto {
         }
 
 
-
         iterator max_element(size_t dimension) {
             if (empty()) {
                 return end();
@@ -1116,6 +1124,7 @@ namespace pareto {
         }
 
     public /* Modifying functions */:
+
         /// Insert entry
         /// \param v Pair value <point, value>
         /// \return Iterator to the new element
@@ -1196,6 +1205,7 @@ namespace pareto {
             // erase if found
             return !it.is_end() ? erase(it) : 0;
         }
+
 
         /// Remove range of iterators from the front
         size_t erase(const_iterator first, const_iterator last) {
@@ -1448,7 +1458,7 @@ namespace pareto {
 
         std::string to_string() const {
             std::string str;
-            auto current = root_;
+            // auto current = root_;
             str += to_string(root_, 0);
             return str;
         }
@@ -1489,6 +1499,16 @@ namespace pareto {
         /// This is an important component of archives, where it's
         /// unreasonable to create an allocator for every new front.
         std::shared_ptr<node_allocator_type> alloc_;
+    };
+
+    // MSVC hack (we cannot define it in iterator_impl)
+    template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR>
+    template <bool constness>
+    const std::function<bool(const typename kd_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element&,
+                             const typename kd_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element&)> kd_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::iterator_impl<constness>::queue_comp = [](
+            const typename kd_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element& a,
+            const typename kd_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element& b) -> bool {
+        return std::get<2>(a) > std::get<2>(b);
     };
 }
 

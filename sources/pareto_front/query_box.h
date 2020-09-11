@@ -99,7 +99,7 @@ namespace pareto {
             return (second_[index] - first_[index])/2.0;
         }
 
-        bool empty(size_t index) const {
+        bool empty() const {
             for (size_t index=0; index < dimensions(); ++index) {
                 if (second_[index] - first_[index] == 0) {
                     return true;
@@ -123,7 +123,7 @@ namespace pareto {
         /// Combine two rectangles into larger one containing both
         query_box combine(const query_box& other) const {
             box_type new_query_box(dimensions());
-            for (int index = 0; index < dimensions(); ++index) {
+            for (size_t index = 0; index < dimensions(); ++index) {
                 new_query_box.min()[index] = std::min(min()[index], other.min()[index]);
                 new_query_box.max()[index] = std::max(max()[index], other.max()[index]);
             }
@@ -137,7 +137,7 @@ namespace pareto {
         /// Return the intersection of two rectangles into a smaller rectangle
         query_box intersection(const query_box& other) const {
             box_type new_query_box(dimensions());
-            for (int index = 0; index < dimensions(); ++index) {
+            for (size_t index = 0; index < dimensions(); ++index) {
                 new_query_box.min()[index] = std::max(min()[index], other.min()[index]);
                 new_query_box.max()[index] = std::min(max()[index], other.max()[index]);
             }
@@ -151,7 +151,7 @@ namespace pareto {
         /// Combine the rectangle into larger one containing the point
         query_box combine(const point_type& p) const {
             box_type new_query_box;
-            for (int index = 0; index < dimensions(); ++index) {
+            for (size_t index = 0; index < dimensions(); ++index) {
                 new_query_box.min()[index] = std::min(min()[index], p[index]);
                 new_query_box.max()[index] = std::max(max()[index], p[index]);
             }
@@ -262,7 +262,6 @@ namespace pareto {
         /// inside the rectangle if it's on the lower boundary. This is to avoid
         /// annoying edge cases because computational geometry is hard. */
         inline bool in_half_closed_rectangle( point_type& p ) {
-            bool ret = true;
             for (size_t i=0; i < dimensions(); i++) {
                 if (p[i] > second_[i]) {
                     return false;

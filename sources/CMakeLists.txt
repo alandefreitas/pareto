@@ -36,8 +36,6 @@ target_include_directories(pareto_front
         INTERFACE $<BUILD_INTERFACE:${PARETOFRONTS_ROOT_DIR}/sources>
                   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-target_include_directories(pareto_front INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
-
 target_link_libraries(pareto_front INTERFACE hv Threads::Threads)
 if (BUILD_FRONTS_WITH_TRASE)
     target_link_libraries(pareto_front INTERFACE trase)
@@ -53,30 +51,27 @@ endif()
 
 # Install
 if(BUILD_INSTALLER)
-    # Install headers
-    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-            FILES_MATCHING PATTERN "*.h"
-        )
-
-    # Install targets
-    install(TARGETS hv
-            EXPORT pareto_frontTargets
+    # Install hv and pareto_front targets
+    # Because pareto_front is INTERFACE, this installs no artifacts
+    # but includes pareto_front in the EXPORT
+    install(TARGETS hv pareto_front
+            EXPORT ParetoFrontTargets
+            COMPONENT "C++ Library"
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        )
+    )
 
-    # Install cmake script
-    install(EXPORT pareto_frontTargets
-            FILE ParetoFrontsTargets.cmake
-            NAMESPACE ParetoFronts::
-            DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ParetoFronts
-        )
+    # Install headers
+    install(DIRECTORY ${PARETOFRONTS_ROOT_DIR}/sources/
+            COMPONENT "C++ Library"
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+            FILES_MATCHING PATTERN "*.h"
+    )
+
+    # Install cmake script that imports the targets
+    install(EXPORT ParetoFrontTargets
+            FILE ParetoFrontTargets.cmake
+            NAMESPACE ParetoFrontTargets::
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ParetoFront
+    )
 endif()
-
-# Set warnings to the same level for MSVC
-#if (MSVC)
-#  target_compile_options(pareto_front INTERFACE /W4 /WX)
-#else()
-#  target_compile_options(pareto_front INTERFACE -Wall -Wextra -pedantic -Werror)
-#endif()

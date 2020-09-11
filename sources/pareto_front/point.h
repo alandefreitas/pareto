@@ -11,10 +11,13 @@
 #include <numeric>
 #include <ostream>
 #include <cassert>
-#include <pareto_front/common.h>
+#include <cmath>
+
 #ifdef BUILD_BOOST_TREE
 #include <boost/geometry/geometry.hpp>
 #endif
+
+#include <pareto_front/common.h>
 
 namespace pareto {
 
@@ -433,8 +436,8 @@ using default_coordinate_system_for_points = void;
         /// \return Quadrant
         size_t quadrant( const point& p ) const {
             size_t quad = 0;
-            for (int i = 0; i < dimensions(); i++) {
-                quad += p[i] <= values_[i] ? 1<<i : 0;
+            for (size_t i = 0; i < dimensions(); i++) {
+                quad += p[i] <= values_[i] ? 1u << i : 0;
             }
             return quad;
         }

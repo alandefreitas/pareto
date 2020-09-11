@@ -5,8 +5,9 @@
 #ifndef PARETO_FRONT_ARCHIVE_H
 #define PARETO_FRONT_ARCHIVE_H
 
-#include <pareto_front/front.h>
 #include <vector>
+
+#include <pareto_front/front.h>
 
 namespace pareto {
 
@@ -178,7 +179,7 @@ namespace pareto {
                 return *this;
             }
 
-            const iterator_impl operator++(int i) {
+            const iterator_impl operator++(int) {
                 auto tmp = *this;
                 current_iter_.operator++();
                 advance_to_next_valid();
@@ -198,7 +199,7 @@ namespace pareto {
                 return *this;
             }
 
-            const iterator_impl operator--(int i) {
+            const iterator_impl operator--(int) {
                 auto tmp = *this;
                 return_to_previous_valid();
                 return tmp;
@@ -452,7 +453,7 @@ namespace pareto {
         template<class InputIterator>
         archive(size_t max_size, InputIterator first, InputIterator last, std::vector<uint8_t> is_minimization)
                 : max_size_(max_size), alloc_(new node_allocator_type()) {
-            if (number_of_compile_dimensions != 0) {
+            if constexpr (number_of_compile_dimensions != 0) {
                 if (is_minimization.size() != number_of_compile_dimensions) {
                     throw std::invalid_argument(
                             "The size specified at compile time does not match the number of minimization directions");
@@ -561,11 +562,11 @@ namespace pareto {
         }
 
         size_type is_minimization() const noexcept {
-            return std::all_of(is_minimization_.begin(), is_minimization_.end(), [](auto i){return i == true;});
+            return std::all_of(is_minimization_.begin(), is_minimization_.end(), [](auto i){return i == uint8_t(1);});
         }
 
         size_type is_maximization() const noexcept {
-            return std::all_of(is_minimization_.begin(), is_minimization_.end(), [](auto i){return i == false;});
+            return std::all_of(is_minimization_.begin(), is_minimization_.end(), [](auto i){return i == uint8_t(0);});
         }
 
         size_type is_minimization(size_t dimension) const noexcept {
@@ -627,7 +628,7 @@ namespace pareto {
 
         template <typename... Targs>
         mapped_type& operator()(const number_type& k, const Targs&... ks) {
-            constexpr size_t d = sizeof...(Targs) + 1;
+            // constexpr size_t d = sizeof...(Targs) + 1;
             point_type p(k, ks...);
             return operator[](p);
         }
@@ -723,24 +724,24 @@ namespace pareto {
                 // remove all of them from the current front
                 data_[i].erase(dominated_it, data_[i].data_.end());
                 // recursively insert all of them to higher fronts i+1, i+2, ...
-                for (const auto &v: dominated_solutions) {
-                    try_insert(i + 1, v);
+                for (const auto &v2: dominated_solutions) {
+                    try_insert(i + 1, v2);
                 }
                 // insert v in this front
                 auto [pfit, ok] = data_[i].insert(v);
                 std::vector<std::pair<size_t, pareto_front_iterator>> begins;
                 begins.emplace_back(i, pfit);
-                iterator it = iterator(begins, this);
+                iterator it2 = iterator(begins, this);
                 // if inserting v made the archive exceed its max size
                 if (size() > max_size()) {
                     resize(max_size());
                     // iterator might be invalidated
                     // item might even have been removed
                     // look for item again
-                    auto it = find(v.first);
-                    return std::make_pair(it, it != end());
+                    auto it3 = find(v.first);
+                    return std::make_pair(it3, it3 != end());
                 }
-                return std::make_pair(it, true);
+                return std::make_pair(it2, true);
             }
             // if all fronts dominate v
             // if there's room for more elements in the archive
@@ -751,8 +752,8 @@ namespace pareto {
                 if (ok) {
                     std::vector<std::pair<size_t, pareto_front_iterator>> begins;
                     begins.emplace_back(data_.size() - 1, pfit);
-                    iterator it = iterator(begins, this, pfit, 0);
-                    return std::make_pair(it, true);
+                    iterator it2 = iterator(begins, this, pfit, 0);
+                    return std::make_pair(it2, true);
                 }
             }
             return {end(), false};
@@ -914,8 +915,9 @@ namespace pareto {
                                                        return a.is_partially_dominated_by(point) < b;
                                                    });
             size_t c = 0;
-            for (size_t i = lower_bound_it - data_.begin(); i < upper_bound_it - data_.begin(); ++i) {
-                if ((c = data_[i].erase(point))) { // if we could erase in this front
+            for (size_t i = lower_bound_it - data_.begin(); i < static_cast<size_t>(upper_bound_it - data_.begin()); ++i) {
+                c = data_[i].erase(point);
+                if (c != 0) { // if we could erase in this front
                     // if front became empty
                     if (data_[i].empty()) {
                         // just erase the front and we're all set
@@ -1119,7 +1121,7 @@ namespace pareto {
 
             // check which begin has the nearest point
             auto best_it = std::min_element(nearests.begin(), nearests.end(),
-                                            [this, p](const auto &ita, const auto &itb) {
+                                            [p](const auto &ita, const auto &itb) {
                                                 return p.distance(ita.second->first) < p.distance(itb.second->first);
                                             });
 
@@ -1147,7 +1149,7 @@ namespace pareto {
             }
             // check which begin has the nearest
             auto best_it = std::min_element(nearest_iters.begin(), nearest_iters.end(),
-                                            [this, p](const auto &ita, const auto &itb) {
+                                            [p](const auto &ita, const auto &itb) {
                                                 return p.distance(ita.second->first) < p.distance(itb.second->first);
                                             });
             // get begins
@@ -1176,7 +1178,7 @@ namespace pareto {
             // Let's put all of them in a vector
             std::vector<value_type> v(const_iterator(begins, this), end());
             // Sort these points by distance
-            std::partial_sort(v.begin(), v.begin() + k, v.end(), [this, &p](const value_type &a, const value_type &b) {
+            std::partial_sort(v.begin(), v.begin() + k, v.end(), [&p](const value_type &a, const value_type &b) {
                 return p.distance(a.first) < p.distance(b.first);
             });
             // Find distance of the k-th closest
@@ -1185,7 +1187,7 @@ namespace pareto {
             begins.clear();
             for (size_t i = 0; i < fronts(); ++i) {
                 // Iterator to nearest k of each, excluding distances larger than overall k-th
-                auto it = typename pareto_front_type::const_iterator(data_[i].data_.begin_nearest(p, k, [this, p, d](
+                auto it = typename pareto_front_type::const_iterator(data_[i].data_.begin_nearest(p, k, [p, d](
                         const value_type &v) { return p.distance(v.first) <= d; }));
                 if (it != data_[i].end()) {
                     begins.emplace_back(i, it);
@@ -1779,7 +1781,7 @@ namespace pareto {
 //            return 0;
 //        }
 
-        void maybe_resize(std::array<uint8_t, number_of_compile_dimensions> &v, size_t n) {}
+        void maybe_resize(std::array<uint8_t, number_of_compile_dimensions> &v [[maybe_unused]], size_t n [[maybe_unused]]) {}
 
         void maybe_resize(std::vector<uint8_t> &v, size_t n) {
             v.resize(n);
