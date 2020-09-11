@@ -45,7 +45,7 @@ extern template std::string tag_to_string<pareto::r_star_tree_tag>();
 /// class name with no extra qualifiers. This will be the default
 /// front for that dimension.
 template<size_t N, class TAG>
-void binding_for_N_dimensional(py::module &m, bool defining_default = false) {
+void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
     using namespace py::literals;
     using namespace pareto;
 
@@ -61,7 +61,7 @@ void binding_for_N_dimensional(py::module &m, bool defining_default = false) {
     // Point object
     // only define it once for each dimension, all trees of same
     // dimension use the same point type
-    if (defining_default) {
+    if (define_point_class) {
         std::string class_name;
         class_name = "point" + std::to_string(N) + "d";
         py::class_<point_type> p(m, class_name.c_str());
@@ -282,12 +282,7 @@ void binding_for_N_dimensional(py::module &m, bool defining_default = false) {
     ///////////////////////////
     /// pareto_front object ///
     ///////////////////////////
-    std::string class_name2;
-    if (defining_default) {
-        class_name2 = "front" + std::to_string(N) + "d";
-    } else {
-        class_name2 = "front" + std::to_string(N) + "d" + tag_to_string<TAG>();
-    }
+    std::string class_name2 = "front" + std::to_string(N) + "d" + tag_to_string<TAG>();
     py::class_<pareto_front_type> pf(m, class_name2.c_str());
 
     // Default constructor
@@ -308,7 +303,7 @@ void binding_for_N_dimensional(py::module &m, bool defining_default = false) {
     pf.def(py::init<const std::vector<value_type>&,bool>());
     pf.def(py::init<const std::vector<value_type>&,std::vector<uint8_t>>());
     pf.def(py::init<const std::vector<value_type>&,std::initializer_list<bool>>());
-    pf.def(py::init([](pareto_front_type &a, py::iterator &iter) {
+    pf.def(py::init([](py::iterator &iter) {
         auto p = new pareto_front_type();
         while (iter != py::iterator::sentinel()) {
             p->emplace(iter->template cast<value_type>());
@@ -317,7 +312,7 @@ void binding_for_N_dimensional(py::module &m, bool defining_default = false) {
         return p;
     }));
 
-    pf.def(py::init([](pareto_front_type &a, py::iterator &iter, bool is_minimization) {
+    pf.def(py::init([](py::iterator &iter, bool is_minimization) {
         auto p = new pareto_front_type(is_minimization);
         while (iter != py::iterator::sentinel()) {
             p->emplace(iter->template cast<value_type>());
@@ -719,11 +714,7 @@ void binding_for_N_dimensional(py::module &m, bool defining_default = false) {
     /// pareto archive object ///
     /////////////////////////////
     std::string class_name3;
-    if (defining_default) {
-        class_name3 = "archive" + std::to_string(N) + "d";
-    } else {
-        class_name3 = "archive" + std::to_string(N) + "d" + tag_to_string<TAG>();
-    }
+    class_name3 = "archive" + std::to_string(N) + "d" + tag_to_string<TAG>();
     py::class_<pareto_archive_type> ar(m, class_name3.c_str());
 
     // Default constructor

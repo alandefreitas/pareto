@@ -12,15 +12,28 @@ template<size_t n = max_num_dimensions, class module_t>
 std::enable_if_t<0 == n, void>
 binding_for_all_dimensions(module_t &m) {
     using namespace pareto;
-    binding_for_N_dimensional<n, kd_tree_tag>(m, true);
+    // Always create bindings for vector and kd trees
+    binding_for_N_dimensional<n, vector_tree_tag>(m,true);
+    binding_for_N_dimensional<n, kd_tree_tag>(m,false);
+
+    // Maybe create bindings for other data structures
 #ifdef BUILD_BINDING_FOR_ALL_STRUCTURES
-    binding_for_N_dimensional<n, vector_tree_tag>(m);
-    binding_for_N_dimensional<n, quad_tree_tag>(m);
-    binding_for_N_dimensional<n, kd_tree_tag>(m);
+    binding_for_N_dimensional<n, quad_tree_tag>(m, false);
     // boost trees do not work with 0 dimensions
-    binding_for_N_dimensional<n, r_tree_tag>(m);
-    binding_for_N_dimensional<n, r_star_tree_tag>(m);
+    binding_for_N_dimensional<n, r_tree_tag>(m, false);
+    binding_for_N_dimensional<n, r_star_tree_tag>(m, false);
 #endif
+
+    // Create alias for the default data structure
+    // The default data structure is front0d instead of front0dDATASTRUCTURE
+    std::string default_class_name = "front" + std::to_string(n) + "d";
+    std::string registered_name = "front" + std::to_string(n) + "d";
+    if constexpr (n == 1) {
+        registered_name += tag_to_string<vector_tree_tag>();
+    } else {
+        registered_name += tag_to_string<kd_tree_tag>();
+    }
+    m.attr(default_class_name.c_str()) = m.attr(registered_name.c_str());
 }
 
 /// Create bindings for front with n > 1 dimensions
@@ -33,21 +46,32 @@ template<size_t n = max_num_dimensions, class module_t>
 std::enable_if_t<0 < n, void>
 binding_for_all_dimensions(module_t &m) {
     using namespace pareto;
-    if constexpr (n == 1) {
-        binding_for_N_dimensional<n, vector_tree_tag>(m, true);
-    } else {
-        binding_for_N_dimensional<n, kd_tree_tag>(m, true);
-    }
+    // Always create bindings for vector and kd trees
+    binding_for_N_dimensional<n, vector_tree_tag>(m,true);
+    binding_for_N_dimensional<n, kd_tree_tag>(m,false);
+
+    // Maybe create bindings for other data structures
 #ifdef BUILD_BINDING_FOR_ALL_STRUCTURES
-    binding_for_N_dimensional<n, vector_tree_tag>(m);
-    binding_for_N_dimensional<n, quad_tree_tag>(m);
-    binding_for_N_dimensional<n, kd_tree_tag>(m);
+    binding_for_N_dimensional<n, quad_tree_tag>(m,false);
     if constexpr (!boost_rtree_is_deprecated) {
-        binding_for_N_dimensional<n, boost_tree_tag>(m);
+        binding_for_N_dimensional<n, boost_tree_tag>(m,false);
     }
-    binding_for_N_dimensional<n, r_tree_tag>(m);
-    binding_for_N_dimensional<n, r_star_tree_tag>(m);
+    binding_for_N_dimensional<n, r_tree_tag>(m,false);
+    binding_for_N_dimensional<n, r_star_tree_tag>(m,false);
 #endif
+
+    // Create aliases for the default data structure
+    // The default data structure is frontNd instead of frontNdDATASTRUCTURE
+    std::string default_class_name = "front" + std::to_string(n) + "d";
+    std::string registered_name = "front" + std::to_string(n) + "d";
+    if constexpr (n == 1) {
+        registered_name += tag_to_string<vector_tree_tag>();
+    } else {
+        registered_name += tag_to_string<kd_tree_tag>();
+    }
+    m.attr(default_class_name.c_str()) = m.attr(registered_name.c_str());
+
+    // Create bindings for lower dimensions n-1, n-2, ...
     binding_for_all_dimensions<n - 1>(m);
 }
 
@@ -66,11 +90,12 @@ cast_for_dimension(std::string tag, size_t d, Args &&... args) {
         } else if (tag == "list") {
             py::object obj = py::cast(FRONT_OR_ARCHIVE<double, n, py::object, vector_tree_tag>(args...));
             return obj;
-        } else if (tag == "quadtree") {
-            py::object obj = py::cast(FRONT_OR_ARCHIVE<double, n, py::object, quad_tree_tag>(args...));
-            return obj;
         } else if (tag == "kdtree") {
             py::object obj = py::cast(FRONT_OR_ARCHIVE<double, n, py::object, kd_tree_tag>(args...));
+            return obj;
+#ifdef BUILD_BINDING_FOR_ALL_STRUCTURES
+        } else if (tag == "quadtree") {
+            py::object obj = py::cast(FRONT_OR_ARCHIVE<double, n, py::object, quad_tree_tag>(args...));
             return obj;
         } else if (tag == "boostrtree") {
             if constexpr (boost_rtree_is_deprecated) {
@@ -90,11 +115,16 @@ cast_for_dimension(std::string tag, size_t d, Args &&... args) {
         } else if (tag == "rstartree") {
             py::object obj = py::cast(FRONT_OR_ARCHIVE<double, n, py::object, r_star_tree_tag>(args...));
             return obj;
+#endif
         }
+#ifdef BUILD_BINDING_FOR_ALL_STRUCTURES
         throw std::invalid_argument("Invalid data structure tag. Valid tags are '', 'default', 'list', 'quadtree', 'kdtree', 'boostrtree', 'rtree', or 'rstartree'");
+#else
+        throw std::invalid_argument("Invalid data structure tag. Valid tags are '', 'default', 'list', or 'kdtree'");
+#endif
     } else {
-        // create a front/archive with dimension defined at runtime
-        auto runtime_front = FRONT_OR_ARCHIVE<double, 0, py::object, r_star_tree_tag>(args...);
+        // Create a front/archive with dimension defined at runtime
+        auto runtime_front = FRONT_OR_ARCHIVE<double, 0, py::object, kd_tree_tag>(args...);
         // set the runtime dimension
         runtime_front.dimensions(d);
         // create python object
@@ -123,11 +153,12 @@ cast_for_dimension(std::string tag, size_t d, Args &&... args) {
         } else if (tag == "list") {
             py::object obj = py::cast(FRONT_OR_ARCHIVE<double, n, py::object, vector_tree_tag>(args...));
             return obj;
-        } else if (tag == "quadtree") {
-            py::object obj = py::cast(FRONT_OR_ARCHIVE<double, n, py::object, quad_tree_tag>(args...));
-            return obj;
         } else if (tag == "kdtree") {
             py::object obj = py::cast(FRONT_OR_ARCHIVE<double, n, py::object, kd_tree_tag>(args...));
+            return obj;
+#ifdef BUILD_BINDING_FOR_ALL_STRUCTURES
+        } else if (tag == "quadtree") {
+            py::object obj = py::cast(FRONT_OR_ARCHIVE<double, n, py::object, quad_tree_tag>(args...));
             return obj;
         } else if (tag == "boostrtree") {
             if constexpr (boost_rtree_is_deprecated) {
@@ -146,8 +177,13 @@ cast_for_dimension(std::string tag, size_t d, Args &&... args) {
         } else if (tag == "rstartree") {
             py::object obj = py::cast(FRONT_OR_ARCHIVE<double, n, py::object, r_star_tree_tag>(args...));
             return obj;
+#endif
         }
+#ifdef BUILD_BINDING_FOR_ALL_STRUCTURES
         throw std::invalid_argument("Invalid data structure tag. Valid tags are '', 'default', 'list', 'quadtree', 'kdtree', 'boostrtree', 'rtree', or 'rstartree'");
+#else
+        throw std::invalid_argument("Invalid data structure tag. Valid tags are '', 'default', 'list', or 'kdtree'");
+#endif
     } else {
         return cast_for_dimension<n-1, FRONT_OR_ARCHIVE>(tag, d, args...);
     }
@@ -162,7 +198,7 @@ PYBIND11_MODULE(pyfront, m) {
     /// Create bindings for n, n-1, n-2, n-3, ..., 3, 2, 1 dimensions
     binding_for_all_dimensions<max_num_dimensions>(m);
 
-    /// Function that returns a py object front with n dimensions
+    /// Create function that returns a py object front with n dimensions
     m.def("front", [](size_t dimensions) {
         return cast_for_dimension<max_num_dimensions, front>("", dimensions);
     });

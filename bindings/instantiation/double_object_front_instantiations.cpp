@@ -2,19 +2,21 @@
 // Created by Alan Freitas on 08/09/20.
 //
 
-#include "python_instantiations.h"
+#include <pybind11/pybind11.h>
+#include "../custom_equality.h"
 #include <pareto_front/front.h>
 
 namespace pareto {
-    template class front<double, 0, py::object>;
-    template class front<double, 1, py::object>;
-    template class front<double, 2, py::object>;
-    template class front<double, 3, py::object>;
-    template class front<double, 4, py::object>;
-    template class front<double, 5, py::object>;
-    template class front<double, 6, py::object>;
-    template class front<double, 7, py::object>;
-    template class front<double, 8, py::object>;
-    template class front<double, 9, py::object>;
-    template class front<double, 10, py::object>;
+
+    template class front<double, 0, pybind11::object>;
+    template class front<double, 1, pybind11::object>;
+    template class front<double, 2, pybind11::object>;
+    template class front<double, 3, pybind11::object>;
+    template class front<double, 4, pybind11::object>;
+    template class front<double, 5, pybind11::object>;
+    template class front<double, 6, pybind11::object>;
+    template class front<double, 7, pybind11::object>;
+    template class front<double, 8, pybind11::object>;
+    template class front<double, 9, pybind11::object>;
+    template class front<double, 10, pybind11::object>;
 }

@@ -2,19 +2,21 @@
 // Created by Alan Freitas on 08/09/20.
 //
 
-#include "python_instantiations.h"
-#include <pareto_front/front.h>
+#include <pybind11/pybind11.h>
+#include "../custom_equality.h"
+#include <pareto_front/archive.h>
 
 namespace pareto {
-    template class archive<double, 0, py::object, vector_tree_tag>;
-    template class archive<double, 1, py::object, vector_tree_tag>;
-    template class archive<double, 2, py::object, vector_tree_tag>;
-    template class archive<double, 3, py::object, vector_tree_tag>;
-    template class archive<double, 4, py::object, vector_tree_tag>;
-    template class archive<double, 5, py::object, vector_tree_tag>;
-    template class archive<double, 6, py::object, vector_tree_tag>;
-    template class archive<double, 7, py::object, vector_tree_tag>;
-    template class archive<double, 8, py::object, vector_tree_tag>;
-    template class archive<double, 9, py::object, vector_tree_tag>;
-    template class archive<double, 10, py::object, vector_tree_tag>;
+
+    template class archive<double, 0, pybind11::object, vector_tree_tag>;
+    template class archive<double, 1, pybind11::object, vector_tree_tag>;
+    template class archive<double, 2, pybind11::object, vector_tree_tag>;
+    template class archive<double, 3, pybind11::object, vector_tree_tag>;
+    template class archive<double, 4, pybind11::object, vector_tree_tag>;
+    template class archive<double, 5, pybind11::object, vector_tree_tag>;
+    template class archive<double, 6, pybind11::object, vector_tree_tag>;
+    template class archive<double, 7, pybind11::object, vector_tree_tag>;
+    template class archive<double, 8, pybind11::object, vector_tree_tag>;
+    template class archive<double, 9, pybind11::object, vector_tree_tag>;
+    template class archive<double, 10, pybind11::object, vector_tree_tag>;
 }

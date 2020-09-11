@@ -2,7 +2,6 @@
 // Created by Alan Freitas on 08/09/20.
 //
 
-#include "python_instantiations.h"
 #include <pareto_front/query_box.h>
 
 namespace pareto {
