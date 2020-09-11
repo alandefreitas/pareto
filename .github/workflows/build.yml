@@ -1,6 +1,24 @@
 name: ParetoFront
 
-on: [ pull_request, push ]
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+      - '!.github/workflows/build.yml'
+      - 'documentation/**'
+      - '.clang-format'
+      - '.gitignore'
+      - 'LICENSE'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+      - '!.github/workflows/build.yml'
+      - 'documentation/**'
+      - '.clang-format'
+      - '.gitignore'
+      - 'LICENSE'
 
 jobs:
   Build:
