@@ -112,7 +112,7 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION) {
                 // 1.31336, 0.887686, -1.35926
                 pf.insert(std::make_pair(p1, 2));
                 pf.insert(std::make_pair(p2, 3));
-                size_t s = pf.size();
+                // size_t s = pf.size();
                 pf.emplace(random_value());
                 std::vector v = {random_value(), random_value(), random_value()};
                 pf.insert(v.begin(), v.end());
@@ -134,12 +134,12 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION) {
             SECTION("Container functions and iterators") {
                 auto pf = random_pareto_front();
                 size_t counter = 0;
-                for (const auto &[k, v] : pf) {
+                for ([[maybe_unused]] const auto &[k, v] : pf) {
                     ++counter;
                 }
                 REQUIRE(counter == pf.size());
                 counter = 0;
-                for (auto &[k, v] : pf) {
+                for ([[maybe_unused]] auto &[k, v] : pf) {
                     ++counter;
                 }
                 REQUIRE(counter == pf.size());

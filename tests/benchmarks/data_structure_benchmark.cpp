@@ -80,8 +80,8 @@ void create_front_from_vector(benchmark::State &state) {
 
 template <size_t dimensions, typename TAG>
 void insert_in_front(benchmark::State &state) {
-    using pareto_front_t = pareto::front<double, dimensions, unsigned, TAG>;
-    using point_t = typename pareto_front_t::point_type;
+    // using pareto_front_t = pareto::front<double, dimensions, unsigned, TAG>;
+    // using point_t = typename pareto_front_t::point_type;
     size_t n = state.range(0);
     for (auto _ : state) {
         state.PauseTiming();
@@ -89,7 +89,7 @@ void insert_in_front(benchmark::State &state) {
         auto to_insert = create_vector_with_values<dimensions, TAG>(n);
 
         state.ResumeTiming();
-        for (int i = 0; i < n; ++i) {
+        for (size_t i = 0; i < n; ++i) {
             benchmark::DoNotOptimize(pf.insert(to_insert[i]));
         }
     }
@@ -97,8 +97,8 @@ void insert_in_front(benchmark::State &state) {
 
 template <size_t dimensions, typename TAG>
 void erase_from_front(benchmark::State &state) {
-    using pareto_front_t = pareto::front<double, dimensions, unsigned, TAG>;
-    using point_t = typename pareto_front_t::point_type;
+    // using pareto_front_t = pareto::front<double, dimensions, unsigned, TAG>;
+    // using point_t = typename pareto_front_t::point_type;
     size_t n = state.range(0);
 
     for (auto _ : state) {
@@ -112,7 +112,7 @@ void erase_from_front(benchmark::State &state) {
         std::shuffle(to_erase.begin(), to_erase.end(), generator());
 
         state.ResumeTiming();
-        for (int i = 0; i < n; ++i) {
+        for (size_t i = 0; i < n; ++i) {
             benchmark::DoNotOptimize(pf.erase(to_erase[i].first));
         }
     }
@@ -120,8 +120,8 @@ void erase_from_front(benchmark::State &state) {
 
 template <size_t dimensions, typename TAG>
 void check_dominance(benchmark::State &state) {
-    using pareto_front_t = pareto::front<double, dimensions, unsigned, TAG>;
-    using point_t = typename pareto_front_t::point_type;
+    // using pareto_front_t = pareto::front<double, dimensions, unsigned, TAG>;
+    // using point_t = typename pareto_front_t::point_type;
     auto pf = create_test_pareto<dimensions, TAG>(state.range(0));
 
     for (auto _ : state) {
@@ -135,15 +135,15 @@ void check_dominance(benchmark::State &state) {
 
 template <size_t dimensions, typename TAG>
 void query_and_iterate(benchmark::State &state) {
-    using pareto_front_t = pareto::front<double, dimensions, unsigned, TAG>;
-    using point_t = typename pareto_front_t::point_type;
+    // using pareto_front_t = pareto::front<double, dimensions, unsigned, TAG>;
+    // using point_t = typename pareto_front_t::point_type;
     auto pf = create_test_pareto<dimensions, TAG>(state.range(0));
     size_t c = 0;
 
     for (auto _ : state) {
         state.PauseTiming();
         auto p1 = random_point<dimensions, TAG>();
-        auto p2 = random_point<dimensions, TAG>();
+        // auto p2 = random_point<dimensions, TAG>();
 
         state.ResumeTiming();
         auto it = pf.find_intersection(p1,p1);
@@ -155,8 +155,8 @@ void query_and_iterate(benchmark::State &state) {
 
 template <size_t dimensions, typename TAG>
 void nearest_and_iterate(benchmark::State &state) {
-    using pareto_front_t = pareto::front<double, dimensions, unsigned, TAG>;
-    using point_t = typename pareto_front_t::point_type;
+    // using pareto_front_t = pareto::front<double, dimensions, unsigned, TAG>;
+    // using point_t = typename pareto_front_t::point_type;
     auto pf = create_test_pareto<dimensions, TAG>(state.range(0));
     size_t c = 0;
 
@@ -174,13 +174,13 @@ void nearest_and_iterate(benchmark::State &state) {
 
 template <size_t dimensions, typename TAG>
 void calculate_hypervolume(benchmark::State &state) {
-    using pareto_front_t = pareto::front<double, dimensions, unsigned, TAG>;
-    using point_t = typename pareto_front_t::point_type;
+    // using pareto_front_t = pareto::front<double, dimensions, unsigned, TAG>;
+    // using point_t = typename pareto_front_t::point_type;
     for (auto _ : state) {
         state.PauseTiming();
         auto pf = create_test_pareto<dimensions, TAG>(state.range(0));
         auto nadir = pf.nadir();
-        size_t c = 0;
+        // size_t c = 0;
 
         state.ResumeTiming();
         if (state.range(1) == 0) {
@@ -191,20 +191,29 @@ void calculate_hypervolume(benchmark::State &state) {
     }
 }
 
+template <typename FRONT_T, size_t dimensions>
+FRONT_T generate_reference_set() {
+    if constexpr (dimensions == 0) {
+        return FRONT_T(dimensions);
+    } else {
+        return FRONT_T();
+    }
+}
+
 template <size_t dimensions, typename TAG>
 void calculate_igd(benchmark::State &state) {
     using pareto_front_t = pareto::front<double, dimensions, unsigned, TAG>;
-    using point_t = typename pareto_front_t::point_type;
+    // using point_t = typename pareto_front_t::point_type;
     for (auto _ : state) {
         state.PauseTiming();
         auto pf = create_test_pareto<dimensions, TAG>(state.range(0));
         std::vector v(pf.begin(), pf.end());
-        pareto_front_t reference_set(dimensions);
+        auto reference_set = generate_reference_set<pareto_front_t,dimensions>();
         for (auto &[k, v] : v) {
             auto k2 = k - 2.0;
             reference_set.insert({k2,v});
         }
-        size_t c = 0;
+        // size_t c = 0;
         state.ResumeTiming();
         benchmark::DoNotOptimize(pf.igd(reference_set));
     }
@@ -212,16 +221,16 @@ void calculate_igd(benchmark::State &state) {
 
 constexpr size_t max_pareto_size = 5000;
 void pareto_sizes(benchmark::internal::Benchmark* b) {
-    for (long long i = 50; i <= max_pareto_size; i *= 10) {
-        b->Args({i});
+    for (size_t i = 50; i <= max_pareto_size; i *= 10) {
+        b->Args({static_cast<long long>(i)});
     }
 }
 
 constexpr size_t max_number_of_samples = 10000;
 void pareto_sizes_and_samples(benchmark::internal::Benchmark* b) {
-    for (long long i = 50; i <= max_pareto_size; i *= 10) {
+    for (long long i = 50; i <= static_cast<long long>(max_pareto_size); i *= 10) {
         // b->Args({i,0});
-        for (long long j = 100; j <= max_number_of_samples; j *= 10) {
+        for (long long j = 100; j <= static_cast<long long>(max_number_of_samples); j *= 10) {
             b->Args({i,j});
         }
     }
@@ -230,7 +239,7 @@ void pareto_sizes_and_samples(benchmark::internal::Benchmark* b) {
 void pareto_sizes_and_samples2(benchmark::internal::Benchmark* b) {
     for (long long i = 50; i <= 200; i *= 2) {
         // b->Args({i,0});
-        for (long long j = 100; j <= max_number_of_samples; j *= 10) {
+        for (long long j = 100; j <= static_cast<long long>(max_number_of_samples); j *= 10) {
             b->Args({i,j});
         }
     }

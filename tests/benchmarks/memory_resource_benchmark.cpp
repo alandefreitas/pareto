@@ -64,7 +64,7 @@ double randn() {
 void create_set_fast_pool(benchmark::State &state) {
     std::set<std::array<double,3>, std::less<std::array<double,3>>, pareto::fast_memory_pool<std::array<double,3>>> s;
     for (auto _ : state) {
-        for (size_t i = 0; i < state.range(0); ++i) {
+        for (long long i = 0; i < state.range(0); ++i) {
             s.emplace();
         }
         benchmark::DoNotOptimize(s);
@@ -74,7 +74,7 @@ void create_set_fast_pool(benchmark::State &state) {
 void create_set_free_pool(benchmark::State &state) {
     std::set<std::array<double,3>, std::less<std::array<double,3>>, pareto::free_memory_pool<std::array<double,3>>> s;
     for (auto _ : state) {
-        for (size_t i = 0; i < state.range(0); ++i) {
+        for (long long i = 0; i < state.range(0); ++i) {
             s.emplace();
         }
         benchmark::DoNotOptimize(s);
@@ -84,7 +84,7 @@ void create_set_free_pool(benchmark::State &state) {
 void create_set_new(benchmark::State &state) {
     std::set<std::array<double,3>> s;
     for (auto _ : state) {
-        for (size_t i = 0; i < state.range(0); ++i) {
+        for (long long i = 0; i < state.range(0); ++i) {
             s.emplace();
         }
         benchmark::DoNotOptimize(s);
@@ -96,7 +96,7 @@ void create_set_monotonic(benchmark::State &state) {
     std::pmr::polymorphic_allocator<std::array<double,3>> alloc(&rsrc);
     std::set<std::array<double,3>, std::less<std::array<double,3>>, std::pmr::polymorphic_allocator<std::array<double,3>>> s(alloc);
     for (auto _ : state) {
-        for (size_t i = 0; i < state.range(0); ++i) {
+        for (long long i = 0; i < state.range(0); ++i) {
             s.emplace();
         }
         benchmark::DoNotOptimize(s);
@@ -106,7 +106,7 @@ void create_set_monotonic(benchmark::State &state) {
 void create_set_contiguous_pool(benchmark::State &state) {
     std::set<std::array<double,3>, std::less<std::array<double,3>>, pareto::contiguous_memory_pool<std::array<double,3>>> s;
     for (auto _ : state) {
-        for (size_t i = 0; i < state.range(0); ++i) {
+        for (long long i = 0; i < state.range(0); ++i) {
             s.emplace();
         }
         benchmark::DoNotOptimize(s);
@@ -118,7 +118,7 @@ void create_small_vector_contiguous_pool(benchmark::State &state) {
     using small_vector_type = std::vector<double, pareto::contiguous_memory_pool<double>>;
     std::vector<small_vector_type> v;
     for (auto _ : state) {
-        for (size_t i = 0; i < state.range(0); ++i) {
+        for (long long i = 0; i < state.range(0); ++i) {
             v.emplace(v.end(), alloc);
             v.back().resize(3);
             v.back()[0] = 0;
@@ -134,7 +134,7 @@ void create_shared_pointer_vector_fast_pool(benchmark::State &state) {
     std::vector<std::shared_ptr<std::array<double,3>>> v;
     v.reserve(state.range(0));
     for (auto _ : state) {
-        for (size_t i = 0; i < state.range(0); ++i) {
+        for (long long i = 0; i < state.range(0); ++i) {
             auto p = alloc.allocate(1);
             alloc.construct(p);
             v.emplace(v.end(), p, [&alloc](auto p){ alloc.destroy(p); alloc.deallocate(p,1); });
@@ -154,7 +154,7 @@ void create_shared_pointer_vector_new(benchmark::State &state) {
     std::vector<std::shared_ptr<std::array<double,3>>> v;
     v.reserve(state.range(0));
     for (auto _ : state) {
-        for (size_t i = 0; i < state.range(0); ++i) {
+        for (long long i = 0; i < state.range(0); ++i) {
             v.emplace(v.end(), std::make_shared<std::array<double,3>>());
             v.back()->operator[](0) = 0;
             v.back()->operator[](1) = 1;
@@ -172,7 +172,7 @@ void create_pointer_vector_fast_pool(benchmark::State &state) {
     std::vector<std::array<double,3>*> v;
     v.reserve(state.range(0));
     for (auto _ : state) {
-        size_t i = 0;
+        long long i = 0;
         for (i = 0; i < state.range(0); ++i) {
             auto p = alloc.allocate(1);
             alloc.construct(p);
@@ -198,7 +198,7 @@ void create_pointer_vector_new(benchmark::State &state) {
     std::vector<std::array<double,3>*> v;
     v.reserve(state.range(0));
     for (auto _ : state) {
-        size_t i = 0;
+        long long i = 0;
         for (i = 0; i < state.range(0); ++i) {
             auto p = alloc.allocate(1);
             alloc.construct(p);
@@ -223,7 +223,7 @@ void create_small_vector_free_pool(benchmark::State &state) {
     using small_vector_type = std::vector<double, pareto::free_memory_pool<double>>;
     std::vector<small_vector_type> v;
     for (auto _ : state) {
-        for (size_t i = 0; i < state.range(0); ++i) {
+        for (long long i = 0; i < state.range(0); ++i) {
             v.emplace(v.end(), alloc);
             v.back().resize(3);
             v.back()[0] = 0;
@@ -242,7 +242,7 @@ void create_small_vector_new(benchmark::State &state) {
     using small_vector_type = std::vector<double, std::allocator<double>>;
     std::vector<small_vector_type> v;
     for (auto _ : state) {
-        for (size_t i = 0; i < state.range(0); ++i) {
+        for (long long i = 0; i < state.range(0); ++i) {
             v.emplace(v.end(), alloc);
             v.back().resize(3);
             v.back()[0] = 0;
@@ -262,7 +262,7 @@ void create_small_vector_monotonic(benchmark::State &state) {
     using small_vector_type = std::vector<double, std::pmr::polymorphic_allocator<double>>;
     std::vector<small_vector_type> v;
     for (auto _ : state) {
-        for (size_t i = 0; i < state.range(0); ++i) {
+        for (long long i = 0; i < state.range(0); ++i) {
             v.emplace(v.end(), alloc);
             v.back().resize(3);
             v.back()[0] = 0;
@@ -279,7 +279,7 @@ void create_small_vector_monotonic(benchmark::State &state) {
 void create_large_vector_contiguous_interleaved_pool(benchmark::State &state) {
     std::vector<double, pareto::contiguous_memory_pool<double>> s;
     for (auto _ : state) {
-        for (size_t i = 0; i < state.range(0); ++i) {
+        for (long long i = 0; i < state.range(0); ++i) {
             s.emplace_back(i);
         }
         benchmark::DoNotOptimize(s);
@@ -292,7 +292,7 @@ void create_large_vector_contiguous_interleaved_pool(benchmark::State &state) {
 void create_large_vector_free_pool(benchmark::State &state) {
     std::vector<double, pareto::free_memory_pool<double>> s;
     for (auto _ : state) {
-        for (size_t i = 0; i < state.range(0); ++i) {
+        for (long long i = 0; i < state.range(0); ++i) {
             s.emplace_back(i);
         }
         benchmark::DoNotOptimize(s);
@@ -305,7 +305,7 @@ void create_large_vector_free_pool(benchmark::State &state) {
 void create_large_vector_new(benchmark::State &state) {
     std::vector<double> s;
     for (auto _ : state) {
-        for (size_t i = 0; i < state.range(0); ++i) {
+        for (long long i = 0; i < state.range(0); ++i) {
             s.emplace_back(i);
         }
         benchmark::DoNotOptimize(s);
@@ -320,7 +320,7 @@ void create_rtree_fast_pool(benchmark::State &state) {
     using tree_type = pareto::r_tree<double, 3, unsigned, pareto::default_fast_memory_pool>;
     tree_type s;
     for (auto _ : state) {
-        for (size_t i = 0; i < state.range(0); ++i) {
+        for (long long i = 0; i < state.range(0); ++i) {
             s.insert(std::make_pair(tree_type::point_type({static_cast<double>(i),static_cast<double>(i),static_cast<double>(i)}), static_cast<unsigned>(i)));
         }
         benchmark::DoNotOptimize(s);
@@ -334,7 +334,7 @@ void create_rtree_std_allocator(benchmark::State &state) {
     using tree_type = pareto::r_tree<double, 3, unsigned, std::allocator>;
     tree_type s;
     for (auto _ : state) {
-        for (size_t i = 0; i < state.range(0); ++i) {
+        for (long long i = 0; i < state.range(0); ++i) {
             s.insert(std::make_pair(tree_type::point_type({static_cast<double>(i),static_cast<double>(i),static_cast<double>(i)}), static_cast<unsigned>(i)));
         }
         benchmark::DoNotOptimize(s);
@@ -348,7 +348,7 @@ void create_rtree_runtime_fast_pool(benchmark::State &state) {
     using tree_type = pareto::r_tree<double, 0, unsigned, pareto::default_fast_memory_pool>;
     tree_type s;
     for (auto _ : state) {
-        for (size_t i = 0; i < state.range(0); ++i) {
+        for (long long i = 0; i < state.range(0); ++i) {
             s.insert(std::make_pair(tree_type::point_type({static_cast<double>(i),static_cast<double>(i),static_cast<double>(i)}), static_cast<unsigned>(i)));
         }
         benchmark::DoNotOptimize(s);
@@ -362,7 +362,7 @@ void create_rtree_runtime_std_allocator(benchmark::State &state) {
     using tree_type = pareto::r_tree<double, 0, unsigned, std::allocator>;
     tree_type s;
     for (auto _ : state) {
-        for (size_t i = 0; i < state.range(0); ++i) {
+        for (long long i = 0; i < state.range(0); ++i) {
             s.insert(std::make_pair(tree_type::point_type({static_cast<double>(i),static_cast<double>(i),static_cast<double>(i)}), static_cast<unsigned>(i)));
         }
         benchmark::DoNotOptimize(s);
@@ -377,7 +377,7 @@ void create_rtree_boost(benchmark::State &state) {
     using tree_type = pareto::boost_tree<double, 3, unsigned>;
     tree_type s;
     for (auto _ : state) {
-        for (size_t i = 0; i < state.range(0); ++i) {
+        for (long long i = 0; i < state.range(0); ++i) {
             s.insert(std::make_pair(tree_type::point_type({static_cast<double>(i),static_cast<double>(i),static_cast<double>(i)}), static_cast<unsigned>(i)));
         }
         benchmark::DoNotOptimize(s);
@@ -398,7 +398,7 @@ void container_sizes(benchmark::internal::Benchmark* b) {
 #else
     constexpr size_t max_size_adjusted = 500;
 #endif
-    for (long long i = 50; i <= max_size_adjusted; i *= 10) {
+    for (long long i = 50; i <= static_cast<long long>(max_size_adjusted); i *= 10) {
         b->Args({i});
     }
 }

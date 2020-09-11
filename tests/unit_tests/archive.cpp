@@ -19,7 +19,7 @@ bool next_combination(uint8_t_vector_iterator first, uint8_t_vector_iterator las
 
 template <size_t COMPILE_DIMENSION, typename TAG = pareto::default_tag<COMPILE_DIMENSION>>
 void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION) {
-    const size_t test_dimension = COMPILE_DIMENSION != 0 ? COMPILE_DIMENSION : RUNTIME_DIMENSION;
+    size_t test_dimension = COMPILE_DIMENSION != 0 ? COMPILE_DIMENSION : RUNTIME_DIMENSION;
     size_t dimensions_count = 0;
     std::vector<uint8_t> is_mini(test_dimension, false);
     do {
@@ -113,7 +113,7 @@ void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION) {
                 }
                 ar.insert(p1, 2);
                 ar.insert(p2, 3);
-                size_t s = ar.size();
+                // size_t s = ar.size();
                 ar.emplace(random_value());
                 std::vector v = {random_value(), random_value(), random_value()};
                 ar.emplace(v.begin(), v.end());
@@ -150,7 +150,7 @@ void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION) {
                 }
                 REQUIRE(ar.size() == counter);
                 counter = 0;
-                for (auto &[k, v] : ar) {
+                for ([[maybe_unused]] auto &[k, v] : ar) {
                     ++counter;
                 }
                 REQUIRE(counter == ar.size());
@@ -239,9 +239,6 @@ void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION) {
                         }
                     }
                     REQUIRE(outside_the_box);
-                }
-                if (COMPILE_DIMENSION == 2 && RUNTIME_DIMENSION == 2 && std::is_same_v<TAG, r_tree_tag> && is_mini == std::vector<uint8_t>({0x01,0x00})) {
-                    std::cout << "Here we go" << std::endl;
                 }
                 for (auto it = ar.find_nearest(p); it != ar.end(); ++it) {
                     for (auto &[k, v] : ar) {
@@ -338,12 +335,12 @@ void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION) {
                 REQUIRE(ar2.non_dominates(ar));
                 std::vector<value_type> v(ar.begin(), ar.end());
                 ar2.clear();
-                for (const auto &[k, v] : v) {
+                for (const auto &[k, v2] : v) {
                     point_type k2 = k;
                     for (size_t i = 0; i < p.dimensions(); ++i) {
                         k2[i] -= (is_mini[i] ? 1 : -1);
                     }
-                    ar2.emplace(k2, v);
+                    ar2.emplace(k2, v2);
                 }
                 REQUIRE_FALSE(ar.dominates(ar2));
                 REQUIRE_FALSE(ar.strongly_dominates(ar2));
@@ -352,11 +349,11 @@ void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION) {
                 REQUIRE(ar2.strongly_dominates(ar));
                 REQUIRE_FALSE(ar2.non_dominates(ar));
                 ar2.clear();
-                for (auto &[k, v] : v) {
+                for (auto &[k, v2] : v) {
                     for (size_t i=0; i < k.dimensions(); ++i) {
                         k[i] = k[i] + (is_mini[i] ? 2 : -2);
                     }
-                    ar2.emplace(k, v);
+                    ar2.emplace(k, v2);
                 }
                 REQUIRE(ar.dominates(ar2));
                 REQUIRE(ar.strongly_dominates(ar2));
@@ -486,7 +483,7 @@ uint64_t seed() {
 }
 
 std::mt19937 &generator() {
-    static std::mt19937 g(seed());
+    static std::mt19937 g(static_cast<unsigned int>(seed()));
     return g;
 }
 
