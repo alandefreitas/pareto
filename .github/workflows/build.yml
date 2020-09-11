@@ -16,6 +16,7 @@ jobs:
             config: Release,
             args: -G "Visual Studio 16 2019" -A x64,
             sudocmd: "",
+            artifact_name: "Windows",
           }
           - {
             name: "Linux/Static/X64/Release",
@@ -23,6 +24,7 @@ jobs:
             config: Release,
             args: "-DCMAKE_C_COMPILER=/usr/bin/gcc-8 -DCMAKE_CXX_COMPILER=/usr/bin/g++-8",
             sudocmd: "sudo",
+            artifact_name: "Linux",
           }
           - {
             name: "MacOSX/Static/X64/Release",
@@ -30,6 +32,7 @@ jobs:
             config: Release,
             args: "",
             sudocmd: "sudo",
+            artifact_name: "MacOSX",
           }
     steps:
       - uses: actions/checkout@v2
@@ -39,7 +42,7 @@ jobs:
         if: github.event_name == 'pull_request'
         working-directory: ./build
         run: |
-          cmake .. ${{ matrix.config.args }} -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DBUILD_LONG_TESTS=OFF -DMAX_NUM_DIMENSIONS_PYTHON=3 -DBUILD_BINDING_FOR_ALL_STRUCTURES=ON
+          cmake .. ${{ matrix.config.args }} -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DBUILD_LONG_TESTS=ON -DMAX_NUM_DIMENSIONS_PYTHON=3 -DBUILD_BINDING_FOR_ALL_STRUCTURES=ON
       - name: Configure for push
         if: github.event_name == 'push'
         working-directory: ./build
@@ -60,10 +63,10 @@ jobs:
       - name: Archive Python Binding
         uses: actions/upload-artifact@v2
         with:
-          name: Python Bindings ${{ matrix.config.name }}
+          name: Python Binary ${{ matrix.config.artifact_name }}
           path: build/bindings/pyfront.cp*-*.*
-      - name: Archive Python Binding
+      - name: Archive Installer
         uses: actions/upload-artifact@v2
         with:
-          name: Packages ${{ matrix.config.name }}
+          name: Package Binaries ${{ matrix.config.artifact_name }}
           path: build/pareto-front-1.1.0-*.*
