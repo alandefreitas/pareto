@@ -1800,7 +1800,7 @@ namespace pareto {
 
         /// If the dimension is being set at runtime, this sets the
         /// dimension in case we don't already know it.
-        inline void maybe_adjust_dimensions(size_t s) {
+        inline void maybe_adjust_dimensions([[maybe_unused]] size_t s) {
             if constexpr (number_of_compile_dimensions == 0) {
                 if (empty() && is_minimization_.size() == 1) {
                     maybe_resize(is_minimization_, s);

@@ -44,7 +44,7 @@ namespace pareto {
     /// https://github.com/danshapero/quadtree
     /// as reference for correctness, but the design is completely different.
     /// \see https://en.wikipedia.org/wiki/Quadtree#Point_quadtree
-    template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR = default_fast_memory_pool>
+    template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR = /* default_fast_memory_pool */ std::allocator>
     class quad_tree {
     public:
         friend front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, quad_tree_tag>;

@@ -41,7 +41,7 @@ namespace pareto {
     /// queries more efficient.
     /// \see https://www.cs.cmu.edu/~ckingsf/bioinfo-lectures/kdtrees.pdf
     /// \see LOTS of kd-trees on github: https://github.com/search?l=C%2B%2B&q=kd-tree&type=Repositories
-    template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR = default_fast_memory_pool>
+    template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR = /* default_fast_memory_pool */ std::allocator>
     class kd_tree {
     public:
         friend front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, kd_tree_tag>;

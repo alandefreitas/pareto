@@ -41,7 +41,7 @@ namespace pareto {
     /// https://github.com/virtuald/r-star-tree/blob/master/RStarBoundingBox.h
     /// https://en.wikipedia.org/wiki/R*_tree
     /// But our design is completely different.
-    template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR = default_fast_memory_pool>
+    template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR = /* default_fast_memory_pool */ std::allocator>
     class r_star_tree {
     public:
         friend front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, r_star_tree_tag>;

@@ -55,7 +55,7 @@ namespace pareto {
     /// This implementation used
     /// https://github.com/nushoin/RTree/blob/master/RTree.h
     /// as reference for correctness, but the design is completely different.
-    template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR = default_fast_memory_pool>
+    template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR = /* default_fast_memory_pool */ std::allocator>
     class r_tree {
     public:
         friend front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, r_tree_tag>;
