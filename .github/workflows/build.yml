@@ -86,7 +86,7 @@ jobs:
           name: Python Binary ${{ matrix.config.artifact_name }}
           path: build/bindings/pyfront.cp*-*.*
       - name: Archive Installers
-        uses: kittaakos/upload-artifact-as-is@v1
+        uses: actions/upload-artifact@v2
         with:
-          # name: Package Binaries ${{ matrix.config.artifact_name }}
+          name: Package Binaries ${{ matrix.config.artifact_name }}
           path: build/pareto-front-1.?.?-*.*
