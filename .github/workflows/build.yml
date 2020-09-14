@@ -4,6 +4,7 @@ on:
   push:
     paths-ignore:
       - '**.md'
+      - 'README.md'
       - '.github/**'
       - '!.github/workflows/build.yml'
       - 'documentation/**'
@@ -13,6 +14,7 @@ on:
   pull_request:
     paths-ignore:
       - '**.md'
+      - 'README.md'
       - '.github/**'
       - '!.github/workflows/build.yml'
       - 'documentation/**'
@@ -30,7 +32,7 @@ jobs:
         config:
           - {
             name: "Windows/Static/X64/Release",
-            os: windows-latest,
+            os: windows-2019,
             config: Release,
             args: -G "Visual Studio 16 2019" -A x64,
             sudocmd: "",
@@ -38,7 +40,7 @@ jobs:
           }
           - {
             name: "Linux/Static/X64/Release",
-            os: ubuntu-latest,
+            os: ubuntu-18.04,
             config: Release,
             args: "-DCMAKE_C_COMPILER=/usr/bin/gcc-8 -DCMAKE_CXX_COMPILER=/usr/bin/g++-8",
             sudocmd: "sudo",
@@ -46,7 +48,7 @@ jobs:
           }
           - {
             name: "MacOSX/Static/X64/Release",
-            os: macos-latest,
+            os: macos-10.15,
             config: Release,
             args: "",
             sudocmd: "sudo",
@@ -83,8 +85,8 @@ jobs:
         with:
           name: Python Binary ${{ matrix.config.artifact_name }}
           path: build/bindings/pyfront.cp*-*.*
-      - name: Archive Installer
-        uses: actions/upload-artifact@v2
+      - name: Archive Installers
+        uses: kittaakos/upload-artifact-as-is@v1
         with:
-          name: Package Binaries ${{ matrix.config.artifact_name }}
-          path: build/pareto-front-1.1.0-*.*
+          # name: Package Binaries ${{ matrix.config.artifact_name }}
+          path: build/pareto-front-1.?.?-*.*

@@ -13,8 +13,10 @@ assignees: ''
 - [ ] *bug - compilation warning*
 - [ ] *bug - runtime error*
 - [ ] *bug - runtime warning*
+- [ ] *bug - logic error*
 
 **Describe the bug**
+<!--Please be civil. This is an environment for collaboration.-->
 
 **Steps to Reproduce**
 

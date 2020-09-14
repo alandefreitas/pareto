@@ -13,6 +13,7 @@ assignees: ''
 - [ ] *enhancement - documentation*
 
 **The problem**
+<!--Please be civil. This is an environment for collaboration.-->
 
 **The solution I'd like**
 
