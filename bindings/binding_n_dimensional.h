@@ -1,7 +1,7 @@
 #ifndef PARETO_FRONT_BINDING_N_DIMENSIONAL
 #define PARETO_FRONT_BINDING_N_DIMENSIONAL
 
-#include "instantiation/python_instantiations.h"
+#include "python_instantiations.h"
 #include <string>
 #include <chrono>
 #include <iostream>

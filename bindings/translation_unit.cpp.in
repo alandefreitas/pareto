@@ -1,4 +1,4 @@
-#include <instantiation/python_instantiations.h>
+#include "python_instantiations.h"
 #include <binding_n_dimensional.h>
 
 template void binding_for_N_dimensional<@DIMENSION@,pareto::@TREE_TYPE@_tree_tag>(py::module &m, bool binding_default);

@@ -23,33 +23,9 @@ CPMAddPackage(
 # We are going to explicitly instantiate all templates we use in the bindings
 # This is fundamental for faster compile times
 # https://isocpp.org/wiki/faq/cpp11-language-templates#extern-templates
-
-# We only instantiate these data structures if BUILD_BINDING_FOR_ALL_STRUCTURES is ON
-# These source files instantiate up to 10 dimensions with extern template
-# Anything beyond that will be instantiated later in binding_n_dimensional.h.
-# It would be possible to create a script to generate the source code
-# depending on the number of dimensions. But we assume that if you
-# have more than 10 dimensions in your problem, then you have bigger
-# problems than that
-if (BUILD_BINDING_FOR_ALL_STRUCTURES)
-    set(pyfront_tree_instantiation_sources
-            instantiation/double_object_quad_tree_instantiations.cpp
-            instantiation/double_object_r_star_tree_instantiations.cpp
-            instantiation/double_object_r_tree_instantiations.cpp
-    )
-
-    set(pyfront_front_instantiation_sources
-            instantiation/double_object_front_quad_instantiations.cpp
-            instantiation/double_object_front_r_instantiations.cpp
-            instantiation/double_object_front_r_star_instantiations.cpp
-    )
-
-    set(pyfront_archive_instantiation_sources
-            instantiation/double_object_archive_quad_instantiations.cpp
-            instantiation/double_object_archive_r_instantiations.cpp
-            instantiation/double_object_archive_r_star_instantiations.cpp
-    )
-endif()
+# For each function or template we need in the bindings, we
+# automatically generate a header file with extern template and
+# a source file instantiating this template.
 
 # The file binding_n_dimensional.h is the one with the template
 # function to create bindings for a front with N dimensions and
@@ -61,6 +37,14 @@ endif()
 # dimension and data structure. This speeds up compilation and saves
 # us some memory.
 set(EXPLICIT_TRANSLATION_UNITS)
+
+# python_instantiations.h is a automatically generated
+# header with extern templates for all data structures
+# for fronts and archives
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/python_instantiations.h
+        "#ifndef PARETO_FRONT_PYTHON_INSTANTIATIONS_H\n#define PARETO_FRONT_PYTHON_INSTANTIATIONS_H\n\n#include <pareto_front/front.h>\n#include <pareto_front/archive.h>\n#include <pybind11/pybind11.h>\n#include \"custom_equality.h\"\n\nnamespace pareto {\n"
+        )
+
 # binding_n_dimensional_extern_templates.h is a automatically generated
 # header with extern templates for binding_n_dimensional.h
 # binding_n_dimensional.h includes it
@@ -72,24 +56,70 @@ file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/binding_n_dimensional_extern_templates.h
 foreach (TREE_TYPE vector quad kd r r_star)
     # for each possible dimension
     foreach (DIMENSION RANGE 0 ${MAX_NUM_DIMENSIONS_PYTHON})
+        # if this is the first time we are looking at this dimension
+        if (TREE_TYPE STREQUAL vector)
+            # extern templates for point and query box
+            file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/python_instantiations.h
+                    "    extern template class point<double, ${DIMENSION}>;\n    extern template class query_box<double, ${DIMENSION}>;\n"
+                    )
+
+            # instantiation for point
+            file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/point_instantiation/double_point_${DIMENSION}_instantiation.cpp
+                    "#include <pareto_front/point.h>\n\nnamespace pareto {\n    template class point<double, ${DIMENSION}>;\n}\n"
+                    )
+            list(APPEND EXPLICIT_TRANSLATION_UNITS ${CMAKE_CURRENT_BINARY_DIR}/point_instantiation/double_point_${DIMENSION}_instantiation.cpp)
+
+            # instantiation for query box
+            file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/query_box_instantiation/double_query_box_${DIMENSION}_instantiation.cpp
+                    "#include <pareto_front/query_box.h>\n\nnamespace pareto {\n    template class query_box<double, ${DIMENSION}>;\n}\n"
+                    )
+            list(APPEND EXPLICIT_TRANSLATION_UNITS ${CMAKE_CURRENT_BINARY_DIR}/query_box_instantiation/double_query_box_${DIMENSION}_instantiation.cpp)
+
+        endif()
         # if we are expected to generate bindings for this dimension and structure
         if (BUILD_BINDING_FOR_ALL_STRUCTURES OR (TREE_TYPE STREQUAL kd) OR (TREE_TYPE STREQUAL vector))
             # Generate a translation unit that instantiates this binding generation function
-            message("Generating translation unit for binding_${TREE_TYPE}_${DIMENSION}_dimensional.cpp")
             configure_file(
                     translation_unit.cpp.in
-                    ${CMAKE_CURRENT_BINARY_DIR}/binding_${TREE_TYPE}_${DIMENSION}_dimensional.cpp
+                    ${CMAKE_CURRENT_BINARY_DIR}/binding_instantiation/binding_${TREE_TYPE}_${DIMENSION}_dimensional.cpp
             )
-            list(APPEND EXPLICIT_TRANSLATION_UNITS ${CMAKE_CURRENT_BINARY_DIR}/binding_${TREE_TYPE}_${DIMENSION}_dimensional.cpp)
+            list(APPEND EXPLICIT_TRANSLATION_UNITS ${CMAKE_CURRENT_BINARY_DIR}/binding_instantiation/binding_${TREE_TYPE}_${DIMENSION}_dimensional.cpp)
+
+            # Append extern template for function in header
             file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/binding_n_dimensional_extern_templates.h
                     "extern template void binding_for_N_dimensional<${DIMENSION},pareto::${TREE_TYPE}_tree_tag>(py::module &m, bool binding_default);\n"
             )
+
+            # Append extern templates for classes in header
+            file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/python_instantiations.h
+                    "    extern template class ${TREE_TYPE}_tree<double, ${DIMENSION}, pybind11::object>;\n    extern template class front<double, ${DIMENSION}, pybind11::object, ${TREE_TYPE}_tree_tag>;\n    extern template class archive<double, ${DIMENSION}, pybind11::object, ${TREE_TYPE}_tree_tag>;\n\n"
+                    )
+
+            # Generate a translation unit that instantiates the tree object
+            file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${TREE_TYPE}_instantiation/double_object_${TREE_TYPE}_tree_${DIMENSION}_instantiation.cpp
+                    "#include <pybind11/pybind11.h>\n#include \"custom_equality.h\"\n#include <pareto_front/tree/${TREE_TYPE}_tree.h>\n\nnamespace pareto {\n    template class ${TREE_TYPE}_tree<double, ${DIMENSION}, pybind11::object>;\n}\n"
+                    )
+            list(APPEND EXPLICIT_TRANSLATION_UNITS ${CMAKE_CURRENT_BINARY_DIR}/${TREE_TYPE}_instantiation/double_object_${TREE_TYPE}_tree_${DIMENSION}_instantiation.cpp)
+
+            # Generate a translation unit that instantiates the front object
+            file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/front_instantiation/double_object_front_${TREE_TYPE}_tree_${DIMENSION}_instantiation.cpp
+                    "#include <pybind11/pybind11.h>\n#include \"custom_equality.h\"\n#include <pareto_front/front.h>\n\nnamespace pareto {\n    template class front<double, ${DIMENSION}, pybind11::object, ${TREE_TYPE}_tree_tag>;\n}\n"
+                    )
+            list(APPEND EXPLICIT_TRANSLATION_UNITS ${CMAKE_CURRENT_BINARY_DIR}/front_instantiation/double_object_front_${TREE_TYPE}_tree_${DIMENSION}_instantiation.cpp)
+
+            # Generate a translation unit that instantiates the front object
+            file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/archive_instantitation/double_object_archive_${TREE_TYPE}_tree_${DIMENSION}_instantiation.cpp
+                    "#include <pybind11/pybind11.h>\n#include \"custom_equality.h\"\n#include <pareto_front/archive.h>\n\nnamespace pareto {\n    template class archive<double, ${DIMENSION}, pybind11::object, ${TREE_TYPE}_tree_tag>;\n}\n"
+                    )
+            list(APPEND EXPLICIT_TRANSLATION_UNITS ${CMAKE_CURRENT_BINARY_DIR}/archive_instantitation/double_object_archive_${TREE_TYPE}_tree_${DIMENSION}_instantiation.cpp)
         endif()
     endforeach()
 endforeach()
-message(EXPLICIT_TRANSLATION_UNITS=${EXPLICIT_TRANSLATION_UNITS})
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/binding_n_dimensional_extern_templates.h
         "\n#endif // PARETO_FRONT_BINDING_N_DIMENSIONAL_EXTERN_TEMPLATES\n"
+        )
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/python_instantiations.h
+        "}\n\n#endif // PARETO_FRONT_PYTHON_INSTANTIATIONS_H\n"
         )
 
 #######################################################
@@ -97,46 +127,23 @@ file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/binding_n_dimensional_extern_templates.h
 #######################################################
 # Create python bindings
 pybind11_add_module(pyfront
-        # header file with extern template for the instantiations we are going to use
-        instantiation/python_instantiations.h
-
-        # instantiate point
-        instantiation/double_point_instantiations.cpp
-
-        # instantiate query box
-        instantiation/double_query_box_instantiations.cpp
+        # header file with extern template for the instantiations
+        ${CMAKE_CURRENT_BINARY_DIR}/python_instantiations.h
 
         # custom equality comparison for py::object
         custom_equality.h
         custom_equality.cpp
 
-        # instantiate trees
-        instantiation/double_object_kd_tree_instantiations.cpp
-        ${pyfront_tree_instantiation_sources}
-        instantiation/double_object_vector_tree_instantiations.cpp
-
-        # instantiate fronts
-        instantiation/double_object_front_instantiations.cpp
-        instantiation/double_object_front_kd_instantiations.cpp
-        ${pyfront_front_instantiation_sources}
-        instantiation/double_object_front_vector_instantiations.cpp
-
-        # instantiate archives
-        instantiation/double_object_archive_instantiations.cpp
-        instantiation/double_object_archive_kd_instantiations.cpp
-        ${pyfront_archive_instantiation_sources}
-        instantiation/double_object_archive_vector_instantiations.cpp
-
         # template function to create one binding
         binding_n_dimensional.h
-
-        # instantiation of the function that creates strings from tags
-        tag_to_string.cpp
 
         # header with extern template for all functions
         ${CMAKE_CURRENT_BINARY_DIR}/binding_n_dimensional_extern_templates.h
 
-        # template instantiations creating the bindings
+        # instantiation of the function that creates strings from tags
+        tag_to_string.cpp
+
+        # .cpp files with template instantiations creating the bindings
         ${EXPLICIT_TRANSLATION_UNITS}
 
         # library that calls binding_n_dimensional
