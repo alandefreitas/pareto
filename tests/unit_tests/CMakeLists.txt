@@ -187,13 +187,4 @@ if (MSVC)
     target_compile_options(unit_test_pareto_archive PRIVATE /EHsc)
 endif()
 
-# Set warning levels to about the same level for MSVC, GCC, and Clang
-if (BUILD_WITH_PEDANTIC_WARNINGS)
-    if (MSVC)
-        target_compile_options(unit_test_pareto_archive PRIVATE /W4 /WX)
-    else()
-        target_compile_options(unit_test_pareto_archive PRIVATE -Wall -Wextra -pedantic -Werror)
-    endif()
-endif()
-
 catch_discover_tests(unit_test_pareto_archive)
