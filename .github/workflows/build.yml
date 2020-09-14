@@ -87,7 +87,6 @@ jobs:
       - name: Create packages
         working-directory: ./build
         run: ${{ matrix.config.sudocmd }} cpack
-        continue-on-error: true
       - name: Archive Installer Packages
         uses: actions/upload-artifact@v2
         with:
