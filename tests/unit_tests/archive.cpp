@@ -369,7 +369,7 @@ void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
 }
 
 #ifdef BUILD_LONG_TESTS
-TEST_CASE("Front - 1 dimension") {
+TEST_CASE("Archive - 1 dimension") {
     using namespace pareto;
     std::vector<uint8_t> is_mini = {0};
     test_archive<1, vector_tree_tag>(1, is_mini);
@@ -386,7 +386,7 @@ TEST_CASE("Front - 1 dimension") {
 }
 #endif
 
-TEST_CASE("Front - 2 dimensions") {
+TEST_CASE("Archive - 2 dimensions") {
     using namespace pareto;
     std::vector<uint8_t> is_mini = {0, 0};
     test_archive<2, vector_tree_tag>(2, is_mini);
@@ -446,7 +446,7 @@ TEST_CASE("Front - 2 dimensions") {
 }
 
 #ifdef BUILD_LONG_TESTS
-TEST_CASE("Front - 3 dimensions") {
+TEST_CASE("Archive - 3 dimensions") {
     using namespace pareto;
     std::vector<uint8_t> is_mini = {0, 0, 0};
     test_archive<3, vector_tree_tag>(3, is_mini);
@@ -489,7 +489,7 @@ TEST_CASE("Front - 3 dimensions") {
 
 }
 
-TEST_CASE("Front - 5 dimensions") {
+TEST_CASE("Archive - 5 dimensions") {
     using namespace pareto;
     std::vector<uint8_t> is_mini = {0, 0, 0, 0, 0};
     test_archive<5, vector_tree_tag>(5, is_mini);
@@ -545,7 +545,7 @@ TEST_CASE("Front - 5 dimensions") {
 
 }
 
-TEST_CASE("Front - 9 dimensions") {
+TEST_CASE("Archive - 9 dimensions") {
     using namespace pareto;
     std::vector<uint8_t> is_mini = {0, 0, 0, 0, 0, 0, 0, 0, 0};
     test_archive<9, vector_tree_tag>(9, is_mini);
@@ -614,7 +614,7 @@ TEST_CASE("Front - 9 dimensions") {
 
 }
 
-TEST_CASE("Front - 13 dimensions") {
+TEST_CASE("Archive - 13 dimensions") {
     using namespace pareto;
     std::vector<uint8_t> is_mini = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     test_archive<13, vector_tree_tag>(13, is_mini);
