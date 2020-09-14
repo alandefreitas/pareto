@@ -11,10 +11,10 @@
 # See the option CPM_USE_LOCAL_PACKAGES in ROOT/CMakeLists.txt
 # This is important: see One Definition Rule (ODR)
 CPMAddPackage(
-    NAME pybind11
-    GIT_REPOSITORY https://github.com/pybind/pybind11/
-    VERSION 2.5.0
-    OPTIONS "PYBIND11_TEST OFF" "PYBIND11_INSTALL OFF"
+        NAME pybind11
+        GIT_REPOSITORY https://github.com/pybind/pybind11/
+        VERSION 2.5.0
+        OPTIONS "PYBIND11_TEST OFF" "PYBIND11_INSTALL OFF"
 )
 
 #######################################################
@@ -88,7 +88,7 @@ foreach (TREE_TYPE vector quad kd r r_star)
             # Append extern template for function in header
             file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/binding_n_dimensional_extern_templates.h
                     "extern template void binding_for_N_dimensional<${DIMENSION},pareto::${TREE_TYPE}_tree_tag>(py::module &m, bool binding_default);\n"
-            )
+                    )
 
             # Append extern templates for classes in header
             file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/python_instantiations.h
@@ -148,7 +148,7 @@ pybind11_add_module(pyfront
 
         # library that calls binding_n_dimensional
         pyfront.cpp
-)
+        )
 target_link_libraries(pyfront PUBLIC pareto_front pybind11)
 
 # Change visibility
@@ -192,55 +192,78 @@ target_include_directories(pyfront PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 #######################################################
 # Install the python bindings
 if (BUILD_INSTALLER)
-    if (MSVC OR WIN32)
-        # If MSVC, CPack cannot create packages with
-        # default python directory. The default directory
-        # will be CMAKE_INSTALL_LIBDIR at first.
-        # The user is responsible for setting the best
-        # directory.
-        set(PYTHON_SITE_PACKAGES ${CMAKE_INSTALL_LIBDIR})
-    else ()
-        # Find python and the site-packages directory
-        # Find the python executable
-        if (PYTHON_EXECUTABLE)
-            # pybind11 should have found it already
-            message("PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
-        else()
-            set(PYTHON_EXECUTABLE python)
-        endif()
+    # If MSVC, CPack cannot create packages with
+    # default python directory. The default directory
+    # will be CMAKE_INSTALL_LIBDIR at first.
+    # The user is responsible for setting the best
+    # directory.
+    # Find python and the site-packages directory
+    # Find the python executable
+    if (PYTHON_EXECUTABLE)
+        # pybind11 should have found it already
+        message("PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
+    else()
+        set(PYTHON_EXECUTABLE python)
+    endif()
 
-        # Python one-line script to find the site-packages directory
-        # relative to ${CMAKE_INSTALL_PREFIX}. This script will try
-        # to find a relative path first because cpack generators
-        # cannot use absolute paths.
-        # https://stackoverflow.com/questions/7287996/python-get-relative-path-from-comparing-two-absolute-paths
-        set(PYTHON_SITE_PACKAGES_SCRIPT "from distutils.sysconfig import get_python_lib; import os; print(os.path.relpath(get_python_lib(), '${CMAKE_INSTALL_PREFIX}'));")
+    # Python one-line script to find the site-packages directory
+    # relative to ${CMAKE_INSTALL_PREFIX}. This script will try
+    # to find a relative path first because cpack generators
+    # cannot use absolute paths.
+    # https://stackoverflow.com/questions/7287996/python-get-relative-path-from-comparing-two-absolute-paths
+    set(PYTHON_SITE_PACKAGES_SCRIPT "from distutils.sysconfig import get_python_lib; import os; print(os.path.relpath(get_python_lib(), '${CMAKE_INSTALL_PREFIX}'));")
 
-        # Try to find the python site-packages directory
-        execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "${PYTHON_SITE_PACKAGES_SCRIPT}" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
+    # 1st attempt: Try to find the python site-packages directory
+    execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "${PYTHON_SITE_PACKAGES_SCRIPT}" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-        # 2st attempt
-        if (NOT PYTHON_SITE_PACKAGES)
-            execute_process(COMMAND python3 -c "${PYTHON_SITE_PACKAGES_SCRIPT}" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
-        endif()
-
-        # 3st attempt
-        if (NOT PYTHON_SITE_PACKAGES)
-            execute_process(COMMAND python2 -c "${PYTHON_SITE_PACKAGES_SCRIPT}" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
-        endif()
-
-        # Use the default lib directory if cannot find site-packages
-        if (NOT PYTHON_SITE_PACKAGES)
+    if (PYTHON_SITE_PACKAGES AND (MSVC OR WIN32))
+        # the packages in windows cannot start with "..\"
+        message("PYTHON_SITE_PACKAGES_ORIGINAL=${PYTHON_SITE_PACKAGES}")
+        if (PYTHON_SITE_PACKAGES MATCHES "^\\.\\.\\\\.*$")
             set(PYTHON_SITE_PACKAGES ${CMAKE_INSTALL_LIBDIR})
+            message("PYTHON_SITE_PACKAGES_CHANGED_TO=${PYTHON_SITE_PACKAGES}")
         endif()
+    endif()
+
+    # 2st attempt
+    if (NOT PYTHON_SITE_PACKAGES)
+        execute_process(COMMAND python3 -c "${PYTHON_SITE_PACKAGES_SCRIPT}" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
+    endif()
+
+    if (PYTHON_SITE_PACKAGES AND (MSVC OR WIN32))
+        # the packages in windows cannot start with "..\"
+        message("PYTHON_SITE_PACKAGES_ORIGINAL=${PYTHON_SITE_PACKAGES}")
+        if (PYTHON_SITE_PACKAGES MATCHES "^\\.\\.\\\\.*$")
+            set(PYTHON_SITE_PACKAGES ${CMAKE_INSTALL_LIBDIR})
+            message("PYTHON_SITE_PACKAGES_CHANGED_TO=${PYTHON_SITE_PACKAGES}")
+        endif()
+    endif()
+
+    # 3st attempt
+    if (NOT PYTHON_SITE_PACKAGES)
+        execute_process(COMMAND python2 -c "${PYTHON_SITE_PACKAGES_SCRIPT}" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
+    endif()
+
+    if (PYTHON_SITE_PACKAGES AND (MSVC OR WIN32))
+        # the packages in windows cannot start with "..\"
+        message("PYTHON_SITE_PACKAGES_ORIGINAL=${PYTHON_SITE_PACKAGES}")
+        if (PYTHON_SITE_PACKAGES MATCHES "^\\.\\.\\\\.*$")
+            set(PYTHON_SITE_PACKAGES ${CMAKE_INSTALL_LIBDIR})
+            message("PYTHON_SITE_PACKAGES_CHANGED_TO=${PYTHON_SITE_PACKAGES}")
+        endif()
+    endif()
+
+    # Use the default lib directory if cannot find site-packages
+    if (NOT PYTHON_SITE_PACKAGES)
+        set(PYTHON_SITE_PACKAGES ${CMAKE_INSTALL_LIBDIR})
     endif()
 
     message("PYTHON_SITE_PACKAGES=${PYTHON_SITE_PACKAGES}")
     message("CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 
     install(TARGETS pyfront
-            COMPONENT "Python Library"
+            COMPONENT "Python_Library"
             LIBRARY DESTINATION ${PYTHON_SITE_PACKAGES}
             ARCHIVE DESTINATION ${PYTHON_SITE_PACKAGES}
-    )
+            )
 endif()
