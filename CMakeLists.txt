@@ -137,11 +137,11 @@ if (BUILD_INSTALLER)
 
     # Install the file ParetoFrontConfig.cmake
     install(FILES
-                ${CMAKE_CURRENT_BINARY_DIR}/ParetoFrontConfig.cmake
-                ${CMAKE_CURRENT_BINARY_DIR}/ParetoFrontConfigVersion.cmake
-            COMPONENT "C++ Library"
+            ${CMAKE_CURRENT_BINARY_DIR}/ParetoFrontConfig.cmake
+            ${CMAKE_CURRENT_BINARY_DIR}/ParetoFrontConfigVersion.cmake
+            COMPONENT "CPP_Library"
             DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ParetoFront
-    )
+            )
 endif()
 
 #######################################################

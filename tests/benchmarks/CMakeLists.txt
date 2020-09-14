@@ -28,6 +28,7 @@ if (benchmark_ADDED)
     target_compile_definitions(benchmark PUBLIC -DNDEBUG)
 endif()
 
+
 #######################################################
 ### Pareto front benchmarks                         ###
 #######################################################

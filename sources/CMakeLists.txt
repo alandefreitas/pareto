@@ -9,7 +9,7 @@ if (BUILD_FRONTS_WITH_TRASE)
             GIT_TAG 607404cf4b36e0d7fcbe10ee2a2078de7c01d194
             VERSION 0.0.1
             OPTIONS
-                "trase_BUILD_OPENGL OFF"
+            "trase_BUILD_OPENGL OFF"
     )
 endif()
 
@@ -34,7 +34,7 @@ add_library(pareto_front INTERFACE)
 
 target_include_directories(pareto_front
         INTERFACE $<BUILD_INTERFACE:${PARETOFRONTS_ROOT_DIR}/sources>
-                  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 target_link_libraries(pareto_front INTERFACE hv Threads::Threads)
 if (BUILD_FRONTS_WITH_TRASE)
@@ -54,7 +54,9 @@ if (BUILD_WITH_PEDANTIC_WARNINGS)
     if (MSVC)
         target_compile_options(pareto_front INTERFACE /W4 /WX)
     else()
-        target_compile_options(pareto_front INTERFACE -Wall -Wextra -pedantic -Werror)
+        # -Wno-self-assign-overloaded has a false positive that prevents pybind11
+        # from working
+        target_compile_options(pareto_front INTERFACE -Wall -Wextra -pedantic -Werror -Wno-self-assign-overloaded)
     endif()
 endif()
 
@@ -66,24 +68,24 @@ if(BUILD_INSTALLER)
     # but includes pareto_front in the EXPORT
     install(TARGETS hv pareto_front
             EXPORT ParetoFrontTargets
-            COMPONENT "C++ Library"
+            COMPONENT "CPP_Library"
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    )
+            )
 
     # Install headers
     install(DIRECTORY ${PARETOFRONTS_ROOT_DIR}/sources/
-            COMPONENT "C++ Library"
+            COMPONENT "CPP_Library"
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
             FILES_MATCHING PATTERN "*.h"
-    )
+            )
 
     # Install cmake script that imports the targets
     install(EXPORT ParetoFrontTargets
             FILE ParetoFrontTargets.cmake
             NAMESPACE ParetoFrontTargets::
-            COMPONENT "C++ Library"
+            COMPONENT "CPP_Library"
             DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ParetoFront
-    )
+            )
 endif()
 
