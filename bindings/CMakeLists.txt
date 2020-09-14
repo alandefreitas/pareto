@@ -202,10 +202,10 @@ if (BUILD_INSTALLER)
 
     # Python one-line script to find the site-packages directory
     # relative to ${CMAKE_INSTALL_PREFIX}. This script will try
-    # to find a relative path first and use the absolute path
-    # as a second option
+    # to find a relative path first because cpack generators
+    # cannot use absolute paths.
     # https://stackoverflow.com/questions/7287996/python-get-relative-path-from-comparing-two-absolute-paths
-    set(PYTHON_SITE_PACKAGES_SCRIPT "from distutils.sysconfig import get_python_lib; import os; print(os.path.relpath(get_python_lib(), '${CMAKE_INSTALL_PREFIX}') if os.path.commonpath(['${CMAKE_INSTALL_PREFIX}', get_python_lib()]) == '${CMAKE_INSTALL_PREFIX}' else get_python_lib())")
+    set(PYTHON_SITE_PACKAGES_SCRIPT "from distutils.sysconfig import get_python_lib; import os; print(os.path.relpath(get_python_lib(), '${CMAKE_INSTALL_PREFIX}'));")
 
     # Try to find the python site-packages directory
     execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "${PYTHON_SITE_PACKAGES_SCRIPT}" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
