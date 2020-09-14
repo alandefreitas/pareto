@@ -49,6 +49,16 @@ if (BUILD_BOOST_TREE)
     target_compile_definitions(pareto_front INTERFACE BUILD_BOOST_TREE)
 endif()
 
+# Set warning levels to about the same level for MSVC, GCC, and Clang
+if (BUILD_WITH_PEDANTIC_WARNINGS)
+    if (MSVC)
+        target_compile_options(pareto_front INTERFACE /W4 /WX)
+    else()
+        target_compile_options(pareto_front INTERFACE -Wall -Wextra -pedantic -Werror)
+    endif()
+endif()
+
+
 # Install
 if(BUILD_INSTALLER)
     # Install hv and pareto_front targets
@@ -75,3 +85,4 @@ if(BUILD_INSTALLER)
             DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ParetoFront
     )
 endif()
+
