@@ -8,7 +8,7 @@
 
 std::mt19937 &generator() {
     static std::mt19937 g(
-            (std::random_device()()) | std::chrono::high_resolution_clock::now().time_since_epoch().count());
+        static_cast<unsigned int>(std::random_device()()) | static_cast<unsigned int>(std::chrono::high_resolution_clock::now().time_since_epoch().count()));
     return g;
 }
 
@@ -76,7 +76,7 @@ void calculate_hypervolume(benchmark::State &state) {
     // using point_t = typename pareto_front_t::point_type;
     double hv = 0.0;
     static std::map<size_t,double> known_hv;
-    if (dimensions == 0) {
+    if constexpr (dimensions == 0) {
         if (known_hv.find(size_t(state.range(0))) != known_hv.end()) {
             hv = known_hv[state.range(0)];
         }
@@ -98,7 +98,7 @@ void calculate_hypervolume(benchmark::State &state) {
         }
     }
 
-    if (dimensions == 0) {
+    if constexpr (dimensions == 0) {
         if (known_hv.find(size_t(state.range(0))) == known_hv.end()) {
             known_hv[state.range(0)] = hv;
         }

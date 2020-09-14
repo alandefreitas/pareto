@@ -28,7 +28,8 @@ std::string tag_to_string() {
     } else if constexpr (std::is_same_v<TAG,r_star_tree_tag>) {
         return "rstartree";
     }
-    throw std::invalid_argument("Invalid data structure tag");
+    // unreachable code:
+    // throw std::invalid_argument("Invalid data structure tag");
 }
 
 // tag_to_string() should explicitly instantiated in another .cpp
@@ -54,7 +55,7 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
     using pareto_archive_type = archive<double, N, py::object, TAG>;
     using number_type = typename pareto_front_type::number_type;
     using point_type = typename pareto_front_type::point_type;
-    using key_type = typename pareto_front_type::key_type;
+    // using key_type = typename pareto_front_type::key_type;
     using mapped_type = typename pareto_front_type::mapped_type;
     using value_type = typename pareto_front_type::value_type;
 
@@ -69,16 +70,16 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
         // default constructor
         p.def(py::init<>());
 
-        if (N == 0) {
+        if constexpr (N == 0) {
             // constructor with size and number
             p.def(py::init<size_t>());
             p.def(py::init([](size_t dim, const number_type value) {
-                return new point_type(dim, value);
+              return new point_type(dim, value);
             }));
         } else {
             // constructor with number in all dimensions
             p.def(py::init([](const number_type value) {
-                return new point_type(N, value);
+              return new point_type(N, value);
             }));
         }
 
@@ -89,24 +90,24 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
         p.def(py::init<const point_type &>());
 
         // zero dimension point constructor (dimension not defined at compile time)
-        if (N != 0) {
+        if constexpr (N != 0) {
             p.def(py::init([](const point<number_type, 0> &p2) {
-                return new point_type(p2);
+              return new point_type(p2);
             }));
         }
 
         // range constructor
         p.def(py::init([](const std::vector<number_type> &v) {
-            return new point_type(v);
+          return new point_type(v);
         }));
 
         // convenience property to get the first dimension (x)
         p.def_property("x",
                        [](const point_type &a) {
-                           return a[0];
+                         return a[0];
                        },
                        [](point_type &a, const number_type v) {
-                           a[0] = v;
+                         a[0] = v;
                        }
         );
 
@@ -114,10 +115,10 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
             // convenience property to get the second dimension (y)
             p.def_property("y",
                            [](const point_type &a) {
-                               return a[1];
+                             return a[1];
                            },
                            [](point_type &a, const number_type v) {
-                               a[1] = v;
+                             a[1] = v;
                            }
             );
         }
@@ -126,10 +127,10 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
             // convenience property to get the third dimension (z)
             p.def_property("z",
                            [](const point_type &a) {
-                               return a[2];
+                             return a[2];
                            },
                            [](point_type &a, const number_type v) {
-                               a[2] = v;
+                             a[2] = v;
                            }
             );
         }
@@ -139,85 +140,85 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
         // check dominance
         p.def("dominates",
               [](const point_type &a, const point_type &b) {
-                  return a.dominates(b);
+                return a.dominates(b);
               });
 
         p.def("dominates",
               [](const point_type &a, const point_type &b, bool is_minimization) {
-                  return a.dominates(b, is_minimization);
+                return a.dominates(b, is_minimization);
               });
 
         p.def("dominates",
               [](const point_type &a, const point_type &b, const std::vector<bool> &is_minimization) {
-                  return a.dominates(b, is_minimization);
+                return a.dominates(b, is_minimization);
               });
 
         p.def("dominates",
               [](const point_type &a, const point_type &b, const std::vector<uint8_t> &is_minimization) {
-                  return a.dominates(b, is_minimization);
+                return a.dominates(b, is_minimization);
               });
 
         p.def("dominates",
               [](const point_type &a, const point_type &b, const std::vector<int> &is_minimization) {
-                  return a.dominates(b, is_minimization);
+                return a.dominates(b, is_minimization);
               });
 
         // check strong dominance
         p.def("strongly_dominates",
               [](const point_type &a, const point_type &b) {
-                  return a.strongly_dominates(b);
+                return a.strongly_dominates(b);
               });
 
         p.def("strongly_dominates",
               [](const point_type &a, const point_type &b, bool is_minimization) {
-                  return a.strongly_dominates(b, is_minimization);
+                return a.strongly_dominates(b, is_minimization);
               });
 
         p.def("strongly_dominates",
               [](const point_type &a, const point_type &b, const std::vector<bool> &is_minimization) {
-                  return a.strongly_dominates(b, is_minimization);
+                return a.strongly_dominates(b, is_minimization);
               });
 
         p.def("strongly_dominates",
               [](const point_type &a, const point_type &b, const std::vector<uint8_t> &is_minimization) {
-                  return a.strongly_dominates(b, is_minimization);
+                return a.strongly_dominates(b, is_minimization);
               });
 
         p.def("strongly_dominates",
               [](const point_type &a, const point_type &b, const std::vector<int> &is_minimization) {
-                  return a.strongly_dominates(b, is_minimization);
+                return a.strongly_dominates(b, is_minimization);
               });
 
         // check strong dominance
         p.def("non_dominates",
               [](const point_type &a, const point_type &b) {
-                  return a.non_dominates(b);
+                return a.non_dominates(b);
               });
 
         p.def("non_dominates",
               [](const point_type &a, const point_type &b, bool is_minimization) {
-                  return a.non_dominates(b, is_minimization);
+                return a.non_dominates(b, is_minimization);
               });
 
         p.def("non_dominates",
               [](const point_type &a, const point_type &b, const std::vector<bool> &is_minimization) {
-                  return a.non_dominates(b, is_minimization);
+                return a.non_dominates(b, is_minimization);
               });
 
         p.def("non_dominates",
               [](const point_type &a, const point_type &b, const std::vector<uint8_t> &is_minimization) {
-                  return a.non_dominates(b, is_minimization);
+                return a.non_dominates(b, is_minimization);
               });
 
         p.def("non_dominates",
               [](const point_type &a, const point_type &b, const std::vector<int> &is_minimization) {
-                  return a.non_dominates(b, is_minimization);
+                return a.non_dominates(b, is_minimization);
               });
 
         // distance
         p.def("distance",
               [](const point_type &a, const point_type &b) {
-                  return a.distance(b);
+                return a.distance(b);
               });
 
         // distance
@@ -250,31 +251,31 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
         // operator[]
         p.def("__getitem__",
               [](const point_type &a, size_t n) {
-                  return a[n];
+                return a[n];
               }
         );
 
         p.def("__setitem__", [](point_type& p, size_t n, number_type v) {
-            std::cout << "setting point at position " << n << " with value " << v << std::endl;
-            p[n] = v;
-            std::cout << "p[n] = " << p[n] << std::endl;
+          std::cout << "setting point at position " << n << " with value " << v << std::endl;
+          p[n] = v;
+          std::cout << "p[n] = " << p[n] << std::endl;
         });
 
         // iterators
         p.def("__iter__", [](const point_type &s) {
-            return py::make_iterator(s.begin(), s.end());
+          return py::make_iterator(s.begin(), s.end());
         }, py::keep_alive<0, 1>());
 
         p.def("__iter__", [](point_type &s) {
-            return py::make_iterator(s.begin(), s.end());
+          return py::make_iterator(s.begin(), s.end());
         }, py::keep_alive<0, 1>());
 
         // print the point
         p.def("__repr__",
               [](const point_type &a) {
-                  std::stringstream ss;
-                  ss << a;
-                  return ss.str();
+                std::stringstream ss;
+                ss << a;
+                return ss.str();
               }
         );
     }
@@ -304,39 +305,39 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
     pf.def(py::init<const std::vector<value_type>&,std::vector<uint8_t>>());
     pf.def(py::init<const std::vector<value_type>&,std::initializer_list<bool>>());
     pf.def(py::init([](py::iterator &iter) {
-        auto p = new pareto_front_type();
-        while (iter != py::iterator::sentinel()) {
-            p->emplace(iter->template cast<value_type>());
-            ++iter;
-        }
-        return p;
+      auto p = new pareto_front_type();
+      while (iter != py::iterator::sentinel()) {
+          p->emplace(iter->template cast<value_type>());
+          ++iter;
+      }
+      return p;
     }));
 
     pf.def(py::init([](py::iterator &iter, bool is_minimization) {
-        auto p = new pareto_front_type(is_minimization);
-        while (iter != py::iterator::sentinel()) {
-            p->emplace(iter->template cast<value_type>());
-            ++iter;
-        }
-        return p;
+      auto p = new pareto_front_type(is_minimization);
+      while (iter != py::iterator::sentinel()) {
+          p->emplace(iter->template cast<value_type>());
+          ++iter;
+      }
+      return p;
     }));
 
-    pf.def(py::init([](pareto_front_type &a, py::iterator &iter, std::vector<uint8_t> is_minimization) {
-        auto p = new pareto_front_type(is_minimization);
-        while (iter != py::iterator::sentinel()) {
-            p->emplace(iter->template cast<value_type>());
-            ++iter;
-        }
-        return p;
+    pf.def(py::init([](py::iterator &iter, const std::vector<uint8_t>& is_minimization) {
+      auto p = new pareto_front_type(is_minimization);
+      while (iter != py::iterator::sentinel()) {
+          p->emplace(iter->template cast<value_type>());
+          ++iter;
+      }
+      return p;
     }));
 
-    pf.def(py::init([](pareto_front_type &a, py::iterator &iter, std::initializer_list<bool> is_minimization) {
-        auto p = new pareto_front_type(is_minimization);
-        while (iter != py::iterator::sentinel()) {
-            p->emplace(iter->template cast<value_type>());
-            ++iter;
-        }
-        return p;
+    pf.def(py::init([](py::iterator &iter, std::initializer_list<bool> is_minimization) {
+      auto p = new pareto_front_type(is_minimization);
+      while (iter != py::iterator::sentinel()) {
+          p->emplace(iter->template cast<value_type>());
+          ++iter;
+      }
+      return p;
     }));
 
     // Copy/move constructors
@@ -344,43 +345,43 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
 
     // Helper functions to construct appropriate point types in python
     pf.def("point", [](const pareto_front_type &s){
-        return point_type(s.dimensions());
+      return point_type(s.dimensions());
     });
 
-    pf.def("point", [](const pareto_front_type &s, const std::vector<double>& v) {
-        return point_type(v.begin(), v.end());
+    pf.def("point", [](const std::vector<double>& v) {
+      return point_type(v.begin(), v.end());
     });
 
-    pf.def("point", [](pareto_front_type &s, std::initializer_list<double> v){
-        return point_type(v);
+    pf.def("point", [](std::initializer_list<double> v){
+      return point_type(v);
     });
 
-    pf.def("point", [](pareto_front_type &s, const point_type& p){
-        return point_type(p);
+    pf.def("point", [](const point_type& p){
+      return point_type(p);
     });
 
-    if (N != 0) {
-        pf.def("point", [](pareto_front_type &s, const point<number_type,0> &p2){
-            return point_type(p2);
+    if constexpr (N != 0) {
+        pf.def("point", [](const point<number_type,0> &p2){
+          return point_type(p2);
         });
     }
 
     // Iterators
     pf.def("__iter__", [](const pareto_front_type &s) {
-        return py::make_iterator(s.begin(), s.end());
-        }, py::keep_alive<0, 1>());
+      return py::make_iterator(s.begin(), s.end());
+    }, py::keep_alive<0, 1>());
 
     pf.def("__iter__", [](pareto_front_type &s) {
-        return py::make_iterator(s.begin(), s.end());
-        }, py::keep_alive<0, 1>());
+      return py::make_iterator(s.begin(), s.end());
+    }, py::keep_alive<0, 1>());
 
     pf.def("__reversed__", [](const pareto_front_type &s) {
-        return py::make_iterator(s.rbegin(), s.rend());
-        }, py::keep_alive<0, 1>());
+      return py::make_iterator(s.rbegin(), s.rend());
+    }, py::keep_alive<0, 1>());
 
     pf.def("__reversed__", [](pareto_front_type &s) {
-        return py::make_iterator(s.rbegin(), s.rend());
-        }, py::keep_alive<0, 1>());
+      return py::make_iterator(s.rbegin(), s.rend());
+    }, py::keep_alive<0, 1>());
 
     // Non-modifying functions
     pf.def("empty", &pareto_front_type::empty);
@@ -389,81 +390,81 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
     pf.def("__len__", &pareto_front_type::size);
 
     pf.def("dimensions", [](const pareto_front_type& a) {
-        return a.dimensions();
+      return a.dimensions();
     });
 
-    if (N == 0) {
+    if constexpr (N == 0) {
         pf.def("dimensions", [](pareto_front_type &a, size_t s) {
-            a.dimensions(s);
+          a.dimensions(s);
         });
     }
 
     pf.def("is_minimization", [](const pareto_front_type& a) {
-        return a.is_minimization();
+      return a.is_minimization();
     });
 
     pf.def("is_minimization", [](const pareto_front_type& a, size_t index) {
-        return a.is_minimization(index);
+      return a.is_minimization(index);
     });
 
     pf.def("is_maximization", [](const pareto_front_type& a) {
-        return a.is_maximization();
+      return a.is_maximization();
     });
 
     pf.def("is_maximization", [](const pareto_front_type& a, size_t index) {
-        return a.is_maximization(index);
+      return a.is_maximization(index);
     });
 
     // Reference points
     pf.def("ideal", [](const pareto_front_type& a, size_t index) {
-        return a.ideal(index);
+      return a.ideal(index);
     });
 
     pf.def("ideal", [](const pareto_front_type& a) {
-        return a.ideal();
+      return a.ideal();
     });
 
     pf.def("dimension_ideal", [](const pareto_front_type &s, size_t d) {
-        auto it = s.dimension_ideal(d);
-        if (it != s.end()) {
-            return *it;
-        } else {
-            return value_type();
-        }
+      auto it = s.dimension_ideal(d);
+      if (it != s.end()) {
+          return *it;
+      } else {
+          return value_type();
+      }
     });
 
     pf.def("nadir", [](const pareto_front_type& a, size_t index) {
-        return a.nadir(index);
+      return a.nadir(index);
     });
 
     pf.def("nadir", [](const pareto_front_type& a) {
-        return a.nadir();
+      return a.nadir();
     });
 
     pf.def("dimension_nadir", [](const pareto_front_type &s, size_t d) {
-        auto it = s.dimension_nadir(d);
-        if (it != s.end()) {
-            return *it;
-        } else {
-            return value_type();
-        }
+      auto it = s.dimension_nadir(d);
+      if (it != s.end()) {
+          return *it;
+      } else {
+          return value_type();
+      }
     });
 
     pf.def("worst", [](const pareto_front_type& a, size_t index) {
-        return a.worst(index);
+      return a.worst(index);
     });
 
     pf.def("worst", [](const pareto_front_type& a) {
-        return a.worst();
+      return a.worst();
     });
 
     pf.def("dimension_worst", [](const pareto_front_type &s, size_t d) {
-        auto it = s.dimension_worst(d);
-        if (it != s.end()) {
-            return *it;
-        } else {
-            return value_type();
-        }
+      auto it = s.dimension_worst(d);
+      if (it != s.end()) {
+          return *it;
+      } else {
+          return value_type();
+      }
     });
 
     // Search
@@ -480,43 +481,43 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
     pf.def("__contains__", [](pareto_front_type &s, point_type p) { return s.find(p) != s.end(); });
 
     pf.def("get", [](const pareto_front_type &s, point_type p) {
-        auto it = s.find(p);
-        if (it != s.end()){
-            return *it;
-        } else {
-            throw std::invalid_argument("Element is not is the pareto front");
-        }});
+      auto it = s.find(p);
+      if (it != s.end()){
+          return *it;
+      } else {
+          throw std::invalid_argument("Element is not is the pareto front");
+      }});
 
     pf.def("__getitem__", [](const pareto_front_type &s, point_type p) {
-        auto it = s.find(p);
-        if (it != s.end()) {
-            return it->second;
-        } else {
-            throw std::invalid_argument("Element is not is the pareto front");
-        }
+      auto it = s.find(p);
+      if (it != s.end()) {
+          return it->second;
+      } else {
+          throw std::invalid_argument("Element is not is the pareto front");
+      }
     });
 
     pf.def("__getitem__", [](const pareto_front_type &s, std::initializer_list<number_type> p) {
-        auto it = s.find(point_type(p));
-        if (it != s.end()) {
-            return it->second;
-        } else {
-            throw std::invalid_argument("Element is not is the pareto front");
-        }
+      auto it = s.find(point_type(p));
+      if (it != s.end()) {
+          return it->second;
+      } else {
+          throw std::invalid_argument("Element is not is the pareto front");
+      }
     });
 
     pf.def("__getitem__", [](const pareto_front_type &s, const std::vector<number_type>& v) {
-        auto it = s.find(point_type(v.begin(), v.end()));
-        if (it != s.end()) {
-            return it->second;
-        } else {
-            throw std::invalid_argument("Element is not is the pareto front");
-        }
+      auto it = s.find(point_type(v.begin(), v.end()));
+      if (it != s.end()) {
+          return it->second;
+      } else {
+          throw std::invalid_argument("Element is not is the pareto front");
+      }
     });
 
-    pf.def("__getitem__", [](const pareto_front_type &s, const py::object& o) {
-        std::cout << "getting item?" << o << std::endl;
-    });
+//    pf.def("__getitem__", [](const pareto_front_type &s, const py::object& o) {
+//        std::cout << "getting item?" << o << std::endl;
+//    });
 
     // Operators
     pf.def(py::self == py::self);
@@ -524,27 +525,27 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
 
     // Insert item dictionary
     pf.def("insert", [](pareto_front_type &a, const value_type &v) {
-        a.insert(v);
+      a.insert(v);
     });
 
     pf.def("insert", [](pareto_front_type &a, const point_type &p, const mapped_type m) {
-        a.insert(std::make_pair(p,m));
+      a.insert(std::make_pair(p,m));
     });
 
     pf.def("emplace", [](pareto_front_type &a, const point_type &p, const mapped_type m) {
-        a.emplace(p,m);
+      a.emplace(p,m);
     });
 
     pf.def("insert", [](pareto_front_type &a, const std::vector<number_type> &p, const mapped_type m) {
-        a.insert(std::make_pair(point_type(p.begin(), p.end()),m));
+      a.insert(std::make_pair(point_type(p.begin(), p.end()),m));
     });
 
     pf.def("insert", [](pareto_front_type &a, const std::vector<value_type> &v) {
-        a.insert(v.begin(), v.end());
+      a.insert(v.begin(), v.end());
     });
 
     pf.def("insert", [](pareto_front_type &a, std::initializer_list<value_type> v) {
-        a.insert(v);
+      a.insert(v);
     });
 
     pf.def("insert", [](pareto_front_type &a, const std::vector<std::pair<std::vector<number_type>, mapped_type>> &v) {
@@ -554,105 +555,105 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
     });
 
     pf.def("insert", [](pareto_front_type &a, py::iterator &iter) {
-        while (iter != py::iterator::sentinel()) {
-            a.emplace(iter->template cast<value_type>());
-            ++iter;
-        }
+      while (iter != py::iterator::sentinel()) {
+          a.emplace(iter->template cast<value_type>());
+          ++iter;
+      }
     });
 
     pf.def("__setitem__", [](pareto_front_type &s, point_type p, mapped_type v) {
-        s.erase(p);
-        s.insert(std::make_pair(p, v));
+      s.erase(p);
+      s.insert(std::make_pair(p, v));
     });
 
     pf.def("__setitem__", [](pareto_front_type &s, std::vector<number_type> p, mapped_type v) {
-        s.erase(point_type(p));
-        s.insert(std::make_pair(point_type(p), v));
+      s.erase(point_type(p));
+      s.insert(std::make_pair(point_type(p), v));
     });
 
     // Erase item
     pf.def("erase", [](pareto_front_type &a, const value_type &p) {
-        a.erase(p.first);
+      a.erase(p.first);
     });
 
     pf.def("erase", [](pareto_front_type &a, const point_type &p) {
-        a.erase(p);
+      a.erase(p);
     });
 
     pf.def("erase", [](pareto_front_type &a, py::iterator &iter) {
-        while (iter != py::iterator::sentinel()) {
-            a.erase(iter->template cast<point_type>());
-            ++iter;
-        }
+      while (iter != py::iterator::sentinel()) {
+          a.erase(iter->template cast<point_type>());
+          ++iter;
+      }
     });
 
     pf.def("__delitem__", [](pareto_front_type &s, point_type p) {
-        s.erase(p);
+      s.erase(p);
     });
 
     pf.def("__delitem__", [](pareto_front_type &s, std::vector<number_type> p) {
-        s.erase(point_type(p));
+      s.erase(point_type(p));
     });
 
     pf.def("clear", &pareto_front_type::clear);
 
     // Merge fronts
     pf.def("merge", [](pareto_front_type &a, pareto_front_type &b) {
-        a.merge(b);
+      a.merge(b);
     });
 
     // Swap fronts
     pf.def("swap", [](pareto_front_type &a, pareto_front_type &b) {
-        a.swap(b);
+      a.swap(b);
     });
 
     // Queries
     pf.def("find_intersection", [](const pareto_front_type &s, const point_type& min_corner, const point_type& max_corner) {
-               return py::make_iterator(s.find_intersection(min_corner, max_corner), s.end());
-           }, py::keep_alive<0, 1>());
+      return py::make_iterator(s.find_intersection(min_corner, max_corner), s.end());
+    }, py::keep_alive<0, 1>());
 
     pf.def("get_intersection", [](const pareto_front_type &s, point_type min_corner, point_type max_corner) {
-        return std::vector<value_type>(s.find_intersection(min_corner, max_corner), s.end());
+      return std::vector<value_type>(s.find_intersection(min_corner, max_corner), s.end());
     });
 
     pf.def("find_within", [](const pareto_front_type &s, const point_type& min_corner, const point_type& max_corner) {
-               return py::make_iterator(s.find_within(min_corner, max_corner), s.end());
-           }, py::keep_alive<0, 1>());
+      return py::make_iterator(s.find_within(min_corner, max_corner), s.end());
+    }, py::keep_alive<0, 1>());
 
     pf.def("get_within", [](const pareto_front_type &s, point_type min_corner, point_type max_corner) {
-        return std::vector<value_type>(s.find_within(min_corner, max_corner), s.end());
+      return std::vector<value_type>(s.find_within(min_corner, max_corner), s.end());
     });
 
     pf.def("find_disjoint", [](const pareto_front_type &s, const point_type& min_corner, const point_type& max_corner) {
-               return py::make_iterator(s.find_disjoint(min_corner, max_corner), s.end());
-           }, py::keep_alive<0, 1>());
+      return py::make_iterator(s.find_disjoint(min_corner, max_corner), s.end());
+    }, py::keep_alive<0, 1>());
 
     pf.def("get_disjoint", [](const pareto_front_type &s, point_type min_corner, point_type max_corner) {
-        return std::vector<value_type>(s.find_disjoint(min_corner, max_corner), s.end());
+      return std::vector<value_type>(s.find_disjoint(min_corner, max_corner), s.end());
     });
 
     pf.def("find_nearest", [](const pareto_front_type &s, const point_type& p) {
-               return py::make_iterator(s.find_nearest(p), s.end());
-           }, py::keep_alive<0, 1>());
+      return py::make_iterator(s.find_nearest(p), s.end());
+    }, py::keep_alive<0, 1>());
 
     pf.def("get_nearest", [](const pareto_front_type &s, point_type p) {
-        return *s.find_nearest(p);
+      return *s.find_nearest(p);
     });
 
     pf.def("find_nearest_exclusive", [](const pareto_front_type &s, const point_type& p) {
-               return py::make_iterator(s.find_nearest_exclusive(p), s.end());
-           }, py::keep_alive<0, 1>());
+      return py::make_iterator(s.find_nearest_exclusive(p), s.end());
+    }, py::keep_alive<0, 1>());
 
     pf.def("get_nearest_exclusive", [](const pareto_front_type &s, point_type p) {
-        return std::vector<value_type>(s.find_nearest_exclusive(p), s.end());
+      return std::vector<value_type>(s.find_nearest_exclusive(p), s.end());
     });
 
     pf.def("find_nearest", [](const pareto_front_type &s, point_type p, size_t k) {
-               return py::make_iterator(s.find_nearest(p, k), s.end());
-           }, py::keep_alive<0, 1>());
+      return py::make_iterator(s.find_nearest(p, k), s.end());
+    }, py::keep_alive<0, 1>());
 
     pf.def("get_nearest", [](const pareto_front_type &s, point_type p, size_t k) {
-        return std::vector<value_type>(s.find_nearest(p, k), s.end());
+      return std::vector<value_type>(s.find_nearest(p, k), s.end());
     });
 
     // Compare fronts
@@ -704,9 +705,9 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
 
     pf.def("__repr__",
            [](const pareto_front_type &a) {
-               std::stringstream ss;
-               ss << a;
-               return ss.str();
+             std::stringstream ss;
+             ss << a;
+             return ss.str();
            }
     );
 
@@ -738,40 +739,40 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
     ar.def(py::init<size_t, const std::vector<value_type>&,bool>());
     ar.def(py::init<size_t, const std::vector<value_type>&,std::vector<uint8_t>>());
     ar.def(py::init<size_t, const std::vector<value_type>&,std::initializer_list<bool>>());
-    ar.def(py::init([](pareto_archive_type &a, size_t max_size, py::iterator &iter) {
-        auto p = new pareto_archive_type(max_size);
-        while (iter != py::iterator::sentinel()) {
-            p->emplace(iter->template cast<value_type>());
-            ++iter;
-        }
-        return p;
+    ar.def(py::init([](size_t max_size, py::iterator &iter) {
+      auto p = new pareto_archive_type(max_size);
+      while (iter != py::iterator::sentinel()) {
+          p->emplace(iter->template cast<value_type>());
+          ++iter;
+      }
+      return p;
     }));
 
-    ar.def(py::init([](pareto_archive_type &a, size_t max_size, py::iterator &iter, bool is_minimization) {
-        auto p = new pareto_archive_type(max_size, is_minimization);
-        while (iter != py::iterator::sentinel()) {
-            p->emplace(iter->template cast<value_type>());
-            ++iter;
-        }
-        return p;
+    ar.def(py::init([](size_t max_size, py::iterator &iter, bool is_minimization) {
+      auto p = new pareto_archive_type(max_size, is_minimization);
+      while (iter != py::iterator::sentinel()) {
+          p->emplace(iter->template cast<value_type>());
+          ++iter;
+      }
+      return p;
     }));
 
-    ar.def(py::init([](pareto_archive_type &a, size_t max_size, py::iterator &iter, std::vector<uint8_t> is_minimization) {
-        auto p = new pareto_archive_type(max_size, is_minimization);
-        while (iter != py::iterator::sentinel()) {
-            p->emplace(iter->template cast<value_type>());
-            ++iter;
-        }
-        return p;
+    ar.def(py::init([](size_t max_size, py::iterator &iter, const std::vector<uint8_t>& is_minimization) {
+      auto p = new pareto_archive_type(max_size, is_minimization);
+      while (iter != py::iterator::sentinel()) {
+          p->emplace(iter->template cast<value_type>());
+          ++iter;
+      }
+      return p;
     }));
 
-    ar.def(py::init([](pareto_archive_type &a, size_t max_size, py::iterator &iter, std::initializer_list<bool> is_minimization) {
-        auto p = new pareto_archive_type(max_size, is_minimization);
-        while (iter != py::iterator::sentinel()) {
-            p->emplace(iter->template cast<value_type>());
-            ++iter;
-        }
-        return p;
+    ar.def(py::init([](size_t max_size, py::iterator &iter, std::initializer_list<bool> is_minimization) {
+      auto p = new pareto_archive_type(max_size, is_minimization);
+      while (iter != py::iterator::sentinel()) {
+          p->emplace(iter->template cast<value_type>());
+          ++iter;
+      }
+      return p;
     }));
 
     // Copy/move constructors
@@ -779,43 +780,43 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
 
     // Helper functions to construct appropriate point types in python
     ar.def("point", [](const pareto_archive_type &s){
-        return point_type(s.dimensions());
+      return point_type(s.dimensions());
     });
 
-    ar.def("point", [](const pareto_archive_type &s, const std::vector<double>& v) {
-        return point_type(v.begin(), v.end());
+    ar.def("point", [](const std::vector<double>& v) {
+      return point_type(v.begin(), v.end());
     });
 
-    ar.def("point", [](pareto_archive_type &s, std::initializer_list<double> v){
-        return point_type(v);
+    ar.def("point", [](std::initializer_list<double> v){
+      return point_type(v);
     });
 
-    ar.def("point", [](pareto_archive_type &s, const point_type& p){
-        return point_type(p);
+    ar.def("point", [](const point_type& p){
+      return point_type(p);
     });
 
-    if (N != 0) {
-        ar.def("point", [](pareto_archive_type &s, const point<number_type,0> &p2){
-            return point_type(p2);
+    if constexpr (N != 0) {
+        ar.def("point", [](const point<number_type,0> &p2){
+          return point_type(p2);
         });
     }
 
     // Iterators
     ar.def("__iter__", [](const pareto_archive_type &s) {
-        return py::make_iterator(s.begin(), s.end());
-        }, py::keep_alive<0, 1>());
+      return py::make_iterator(s.begin(), s.end());
+    }, py::keep_alive<0, 1>());
 
     ar.def("__iter__", [](pareto_archive_type &s) {
-        return py::make_iterator(s.begin(), s.end());
-        }, py::keep_alive<0, 1>());
+      return py::make_iterator(s.begin(), s.end());
+    }, py::keep_alive<0, 1>());
 
     ar.def("__reversed__", [](const pareto_archive_type &s) {
-        return py::make_iterator(s.rbegin(), s.rend());
-        }, py::keep_alive<0, 1>());
+      return py::make_iterator(s.rbegin(), s.rend());
+    }, py::keep_alive<0, 1>());
 
     ar.def("__reversed__", [](pareto_archive_type &s) {
-        return py::make_iterator(s.rbegin(), s.rend());
-        }, py::keep_alive<0, 1>());
+      return py::make_iterator(s.rbegin(), s.rend());
+    }, py::keep_alive<0, 1>());
 
     // Non-modifying functions
     ar.def("empty", &pareto_archive_type::empty);
@@ -824,78 +825,78 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
     ar.def("__len__", &pareto_archive_type::size);
 
     ar.def("dimensions", [](const pareto_archive_type& a) {
-        return a.dimensions();
+      return a.dimensions();
     });
     ar.def("dimensions", [](pareto_archive_type& a, size_t s) {
-        a.dimensions(s);
+      a.dimensions(s);
     });
 
     ar.def("is_minimization", [](const pareto_archive_type& a) {
-        return a.is_minimization();
+      return a.is_minimization();
     });
 
     ar.def("is_minimization", [](const pareto_archive_type& a, size_t index) {
-        return a.is_minimization(index);
+      return a.is_minimization(index);
     });
 
     ar.def("is_maximization", [](const pareto_archive_type& a) {
-        return a.is_maximization();
+      return a.is_maximization();
     });
 
     ar.def("is_maximization", [](const pareto_archive_type& a, size_t index) {
-        return a.is_maximization(index);
+      return a.is_maximization(index);
     });
 
     // Reference points
     ar.def("ideal", [](const pareto_archive_type& a, size_t index) {
-        return a.ideal(index);
+      return a.ideal(index);
     });
 
     ar.def("ideal", [](const pareto_archive_type& a) {
-        return a.ideal();
+      return a.ideal();
     });
 
     ar.def("dimension_ideal", [](const pareto_archive_type &s, size_t d) {
-        auto it = s.dimension_ideal(d);
-        if (it != s.end()) {
-            return *it;
-        } else {
-            return value_type();
-        }
+      auto it = s.dimension_ideal(d);
+      if (it != s.end()) {
+          return *it;
+      } else {
+          return value_type();
+      }
     });
 
     ar.def("nadir", [](const pareto_archive_type& a, size_t index) {
-        return a.nadir(index);
+      return a.nadir(index);
     });
 
     ar.def("nadir", [](const pareto_archive_type& a) {
-        return a.nadir();
+      return a.nadir();
     });
 
     ar.def("dimension_nadir", [](const pareto_archive_type &s, size_t d) {
-        auto it = s.dimension_nadir(d);
-        if (it != s.end()) {
-            return *it;
-        } else {
-            return value_type();
-        }
+      auto it = s.dimension_nadir(d);
+      if (it != s.end()) {
+          return *it;
+      } else {
+          return value_type();
+      }
     });
 
     ar.def("worst", [](const pareto_archive_type& a, size_t index) {
-        return a.worst(index);
+      return a.worst(index);
     });
 
     ar.def("worst", [](const pareto_archive_type& a) {
-        return a.worst();
+      return a.worst();
     });
 
     ar.def("dimension_worst", [](const pareto_archive_type &s, size_t d) {
-        auto it = s.dimension_worst(d);
-        if (it != s.end()) {
-            return *it;
-        } else {
-            return value_type();
-        }
+      auto it = s.dimension_worst(d);
+      if (it != s.end()) {
+          return *it;
+      } else {
+          return value_type();
+      }
     });
 
     // Search
@@ -912,43 +913,43 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
     ar.def("__contains__", [](pareto_archive_type &s, point_type p) { return s.find(p) != s.end(); });
 
     ar.def("get", [](const pareto_archive_type &s, point_type p) {
-        auto it = s.find(p);
-        if (it != s.end()){
-            return *it;
-        } else {
-            throw std::invalid_argument("Element is not is the pareto archive");
-        }});
+      auto it = s.find(p);
+      if (it != s.end()){
+          return *it;
+      } else {
+          throw std::invalid_argument("Element is not is the pareto archive");
+      }});
 
     ar.def("__getitem__", [](const pareto_archive_type &s, point_type p) {
-        auto it = s.find(p);
-        if (it != s.end()) {
-            return it->second;
-        } else {
-            throw std::invalid_argument("Element is not is the pareto archive");
-        }
+      auto it = s.find(p);
+      if (it != s.end()) {
+          return it->second;
+      } else {
+          throw std::invalid_argument("Element is not is the pareto archive");
+      }
     });
 
     ar.def("__getitem__", [](const pareto_archive_type &s, std::initializer_list<number_type> p) {
-        auto it = s.find(point_type(p));
-        if (it != s.end()) {
-            return it->second;
-        } else {
-            throw std::invalid_argument("Element is not is the pareto archive");
-        }
+      auto it = s.find(point_type(p));
+      if (it != s.end()) {
+          return it->second;
+      } else {
+          throw std::invalid_argument("Element is not is the pareto archive");
+      }
     });
 
     ar.def("__getitem__", [](const pareto_archive_type &s, const std::vector<number_type>& v) {
-        auto it = s.find(point_type(v.begin(), v.end()));
-        if (it != s.end()) {
-            return it->second;
-        } else {
-            throw std::invalid_argument("Element is not is the pareto archive");
-        }
+      auto it = s.find(point_type(v.begin(), v.end()));
+      if (it != s.end()) {
+          return it->second;
+      } else {
+          throw std::invalid_argument("Element is not is the pareto archive");
+      }
     });
 
-    ar.def("__getitem__", [](const pareto_archive_type &s, const py::object& o) {
-        std::cout << "getting item?" << o << std::endl;
-    });
+//    ar.def("__getitem__", [](const pareto_archive_type &s, const py::object& o) {
+//        std::cout << "getting item?" << o << std::endl;
+//    });
 
     // Operators
     ar.def(py::self == py::self);
@@ -956,27 +957,27 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
 
     // Insert item dictionary
     ar.def("insert", [](pareto_archive_type &a, const value_type &v) {
-        a.insert(v);
+      a.insert(v);
     });
 
     ar.def("insert", [](pareto_archive_type &a, const point_type &p, const mapped_type m) {
-        a.insert(std::make_pair(p,m));
+      a.insert(std::make_pair(p,m));
     });
 
     ar.def("emplace", [](pareto_archive_type &a, const point_type &p, const mapped_type m) {
-        a.emplace(p,m);
+      a.emplace(p,m);
     });
 
     ar.def("insert", [](pareto_archive_type &a, const std::vector<number_type> &p, const mapped_type m) {
-        a.insert(std::make_pair(point_type(p.begin(), p.end()),m));
+      a.insert(std::make_pair(point_type(p.begin(), p.end()),m));
     });
 
     ar.def("insert", [](pareto_archive_type &a, const std::vector<value_type> &v) {
-        a.insert(v.begin(), v.end());
+      a.insert(v.begin(), v.end());
     });
 
     ar.def("insert", [](pareto_archive_type &a, std::initializer_list<value_type> v) {
-        a.insert(v);
+      a.insert(v);
     });
 
     ar.def("insert", [](pareto_archive_type &a, const std::vector<std::pair<std::vector<number_type>, mapped_type>> &v) {
@@ -986,44 +987,44 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
     });
 
     ar.def("insert", [](pareto_archive_type &a, py::iterator &iter) {
-        while (iter != py::iterator::sentinel()) {
-            a.emplace(iter->template cast<value_type>());
-            ++iter;
-        }
+      while (iter != py::iterator::sentinel()) {
+          a.emplace(iter->template cast<value_type>());
+          ++iter;
+      }
     });
 
     ar.def("__setitem__", [](pareto_archive_type &s, point_type p, mapped_type v) {
-        s.erase(p);
-        s.insert(std::make_pair(p, v));
+      s.erase(p);
+      s.insert(std::make_pair(p, v));
     });
 
     ar.def("__setitem__", [](pareto_archive_type &s, std::vector<number_type> p, mapped_type v) {
-        s.erase(point_type(p));
-        s.insert(std::make_pair(point_type(p), v));
+      s.erase(point_type(p));
+      s.insert(std::make_pair(point_type(p), v));
     });
 
     // Erase item
     ar.def("erase", [](pareto_archive_type &a, const value_type &p) {
-        a.erase(p.first);
+      a.erase(p.first);
     });
 
     ar.def("erase", [](pareto_archive_type &a, const point_type &p) {
-        a.erase(p);
+      a.erase(p);
     });
 
     ar.def("erase", [](pareto_archive_type &a, py::iterator &iter) {
-        while (iter != py::iterator::sentinel()) {
-            a.erase(iter->template cast<point_type>());
-            ++iter;
-        }
+      while (iter != py::iterator::sentinel()) {
+          a.erase(iter->template cast<point_type>());
+          ++iter;
+      }
     });
 
     ar.def("__delitem__", [](pareto_archive_type &s, point_type p) {
-        s.erase(p);
+      s.erase(p);
     });
 
     ar.def("__delitem__", [](pareto_archive_type &s, std::vector<number_type> p) {
-        s.erase(point_type(p));
+      s.erase(point_type(p));
     });
 
     ar.def("resize", &pareto_archive_type::resize);
@@ -1032,61 +1033,61 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
 
     // Merge archives
     ar.def("merge", [](pareto_archive_type &a, pareto_archive_type &b) {
-        a.merge(b);
+      a.merge(b);
     });
 
     // Swap archives
     ar.def("swap", [](pareto_archive_type &a, pareto_archive_type &b) {
-        a.swap(b);
+      a.swap(b);
     });
 
     // Queries
     ar.def("find_intersection", [](const pareto_archive_type &s, const point_type& min_corner, const point_type& max_corner) {
-               return py::make_iterator(s.find_intersection(min_corner, max_corner), s.end());
-           }, py::keep_alive<0, 1>());
+      return py::make_iterator(s.find_intersection(min_corner, max_corner), s.end());
+    }, py::keep_alive<0, 1>());
 
     ar.def("get_intersection", [](const pareto_archive_type &s, point_type min_corner, point_type max_corner) {
-        return std::vector<value_type>(s.find_intersection(min_corner, max_corner), s.end());
+      return std::vector<value_type>(s.find_intersection(min_corner, max_corner), s.end());
     });
 
     ar.def("find_within", [](const pareto_archive_type &s, const point_type& min_corner, const point_type& max_corner) {
-               return py::make_iterator(s.find_within(min_corner, max_corner), s.end());
-           }, py::keep_alive<0, 1>());
+      return py::make_iterator(s.find_within(min_corner, max_corner), s.end());
+    }, py::keep_alive<0, 1>());
 
     ar.def("get_within", [](const pareto_archive_type &s, point_type min_corner, point_type max_corner) {
-        return std::vector<value_type>(s.find_within(min_corner, max_corner), s.end());
+      return std::vector<value_type>(s.find_within(min_corner, max_corner), s.end());
     });
 
     ar.def("find_disjoint", [](const pareto_archive_type &s, const point_type& min_corner, const point_type& max_corner) {
-               return py::make_iterator(s.find_disjoint(min_corner, max_corner), s.end());
-           }, py::keep_alive<0, 1>());
+      return py::make_iterator(s.find_disjoint(min_corner, max_corner), s.end());
+    }, py::keep_alive<0, 1>());
 
     ar.def("get_disjoint", [](const pareto_archive_type &s, point_type min_corner, point_type max_corner) {
-        return std::vector<value_type>(s.find_disjoint(min_corner, max_corner), s.end());
+      return std::vector<value_type>(s.find_disjoint(min_corner, max_corner), s.end());
     });
 
     ar.def("find_nearest", [](const pareto_archive_type &s, const point_type& p) {
-               return py::make_iterator(s.find_nearest(p), s.end());
-           }, py::keep_alive<0, 1>());
+      return py::make_iterator(s.find_nearest(p), s.end());
+    }, py::keep_alive<0, 1>());
 
     ar.def("get_nearest", [](const pareto_archive_type &s, point_type p) {
-        return *s.find_nearest(p);
+      return *s.find_nearest(p);
     });
 
     ar.def("find_nearest_exclusive", [](const pareto_archive_type &s, const point_type& p) {
-               return py::make_iterator(s.find_nearest_exclusive(p), s.end());
-           }, py::keep_alive<0, 1>());
+      return py::make_iterator(s.find_nearest_exclusive(p), s.end());
+    }, py::keep_alive<0, 1>());
 
     ar.def("get_nearest_exclusive", [](const pareto_archive_type &s, point_type p) {
-        return std::vector<value_type>(s.find_nearest_exclusive(p), s.end());
+      return std::vector<value_type>(s.find_nearest_exclusive(p), s.end());
     });
 
     ar.def("find_nearest", [](const pareto_archive_type &s, point_type p, size_t k) {
-               return py::make_iterator(s.find_nearest(p, k), s.end());
-           }, py::keep_alive<0, 1>());
+      return py::make_iterator(s.find_nearest(p, k), s.end());
+    }, py::keep_alive<0, 1>());
 
     ar.def("get_nearest", [](const pareto_archive_type &s, point_type p, size_t k) {
-        return std::vector<value_type>(s.find_nearest(p, k), s.end());
+      return std::vector<value_type>(s.find_nearest(p, k), s.end());
     });
 
     // Compare archives
@@ -1111,66 +1112,66 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
     ar.def("hypervolume", [](const pareto_archive_type &s, const point_type& reference, size_t sample_size) { return s.hypervolume(reference, sample_size); });
 
     ar.def("coverage",  [](const pareto_archive_type &a, const pareto_front_type& b) {
-        return a.coverage(b);
+      return a.coverage(b);
     });
     ar.def("coverage",  [](const pareto_archive_type &a, const pareto_archive_type& b) {
-        return a.coverage(b);
+      return a.coverage(b);
     });
 
     ar.def("coverage_ratio",  [](const pareto_archive_type &a, const pareto_front_type& b) {
-        return a.coverage_ratio(b);
+      return a.coverage_ratio(b);
     });
     ar.def("coverage_ratio",  [](const pareto_archive_type &a, const pareto_archive_type& b) {
-        return a.coverage_ratio(b);
+      return a.coverage_ratio(b);
     });
 
     ar.def("gd",  [](const pareto_archive_type &a, const pareto_front_type& b) {
-        return a.gd(b);
+      return a.gd(b);
     });
     ar.def("gd",  [](const pareto_archive_type &a, const pareto_archive_type& b) {
-        return a.gd(b);
+      return a.gd(b);
     });
 
     ar.def("std_gd",  [](const pareto_archive_type &a, const pareto_front_type& b) {
-        return a.std_gd(b);
+      return a.std_gd(b);
     });
     ar.def("std_gd",  [](const pareto_archive_type &a, const pareto_archive_type& b) {
-        return a.std_gd(b);
+      return a.std_gd(b);
     });
 
     ar.def("igd",  [](const pareto_archive_type &a, const pareto_front_type& b) {
-        return a.igd(b);
+      return a.igd(b);
     });
     ar.def("igd",  [](const pareto_archive_type &a, const pareto_archive_type& b) {
-        return a.igd(b);
+      return a.igd(b);
     });
 
     ar.def("std_igd",  [](const pareto_archive_type &a, const pareto_front_type& b) {
-        return a.std_igd(b);
+      return a.std_igd(b);
     });
     ar.def("std_igd",  [](const pareto_archive_type &a, const pareto_archive_type& b) {
-        return a.std_igd(b);
+      return a.std_igd(b);
     });
 
     ar.def("hausdorff",  [](const pareto_archive_type &a, const pareto_front_type& b) {
-        return a.hausdorff(b);
+      return a.hausdorff(b);
     });
     ar.def("hausdorff",  [](const pareto_archive_type &a, const pareto_archive_type& b) {
-        return a.hausdorff(b);
+      return a.hausdorff(b);
     });
 
     ar.def("igd_plus",  [](const pareto_archive_type &a, const pareto_front_type& b) {
-        return a.igd_plus(b);
+      return a.igd_plus(b);
     });
     ar.def("igd_plus",  [](const pareto_archive_type &a, const pareto_archive_type& b) {
-        return a.igd_plus(b);
+      return a.igd_plus(b);
     });
 
     ar.def("std_igd_plus",  [](const pareto_archive_type &a, const pareto_front_type& b) {
-        return a.std_igd_plus(b);
+      return a.std_igd_plus(b);
     });
     ar.def("std_igd_plus",  [](const pareto_archive_type &a, const pareto_archive_type& b) {
-        return a.std_igd_plus(b);
+      return a.std_igd_plus(b);
     });
 
     ar.def("uniformity", &pareto_archive_type::uniformity);
@@ -1190,9 +1191,9 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
 
     ar.def("__repr__",
            [](const pareto_archive_type &a) {
-               std::stringstream ss;
-               ss << a;
-               return ss.str();
+             std::stringstream ss;
+             ss << a;
+             return ss.str();
            }
     );
 }

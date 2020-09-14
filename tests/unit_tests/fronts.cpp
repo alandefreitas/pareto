@@ -12,10 +12,10 @@ bool next_combination(uint8_t_vector_iterator first,
                       uint8_t_vector_iterator last, uint8_t max_value = 0x01);
 
 template <size_t COMPILE_DIMENSION,
-          typename TAG = pareto::default_tag<COMPILE_DIMENSION>>
+    typename TAG = pareto::default_tag<COMPILE_DIMENSION>>
 void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
                 const std::vector<uint8_t> &is_mini = {0x00}) {
-    const size_t test_dimension =
+    size_t test_dimension =
         COMPILE_DIMENSION != 0 ? COMPILE_DIMENSION : RUNTIME_DIMENSION;
     // create a string to make section names unique
     // see: https://github.com/catchorg/Catch2/issues/816
@@ -89,44 +89,44 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
     }
 
     auto random_point = [&]() {
-        point_type p(test_dimension);
-        std::generate(p.begin(), p.end(), randn);
-        return p;
+      point_type p(test_dimension);
+      std::generate(p.begin(), p.end(), randn);
+      return p;
     };
 
     auto random_value = [&]() {
-        auto v = std::make_pair<point_type, unsigned>(random_point(), randi());
-        return v;
+      auto v = std::make_pair<point_type, unsigned>(random_point(), randi());
+      return v;
     };
 
     auto random_pareto_front = [&]() {
-        pareto_front_t pf(is_mini);
-        point_type p1(test_dimension);
-        point_type p2(test_dimension);
-        for (size_t i = 0; i < test_dimension; ++i) {
-            p1[i] = 2.5 + 1. * i;
-            p2[i] = 1.5 + test_dimension - 1. * i;
-        }
-        // 1.31336, 0.887686, -1.35926
-        pf.insert(std::make_pair(p1, 2));
-        pf.insert(std::make_pair(p2, 3));
-        // size_t s = pf.size();
-        pf.emplace(random_value());
-        std::vector v = {random_value(), random_value(), random_value()};
-        pf.insert(v.begin(), v.end());
-        auto r = pf.insert(random_value());
-        value_type v2 = random_value();
-        r = pf.insert(std::move(v2));
-        r = pf.insert(std::make_pair(random_point(), randi()));
-        unsigned m = randi();
-        r = pf.insert(std::make_pair(random_point(), std::move(m)));
-        std::vector v3 = {random_value(), random_value(), random_value()};
-        pf.insert(v3.begin(), v3.end());
-        pf.insert({random_value(), random_value(), random_value()});
-        for (size_t i = 0; i < 1000 / test_dimension; ++i) {
-            pf.insert(random_value());
-        }
-        return pf;
+      pareto_front_t pf(is_mini);
+      point_type p1(test_dimension);
+      point_type p2(test_dimension);
+      for (size_t i = 0; i < test_dimension; ++i) {
+          p1[i] = 2.5 + 1. * i;
+          p2[i] = 1.5 + test_dimension - 1. * i;
+      }
+      // 1.31336, 0.887686, -1.35926
+      pf.insert(std::make_pair(p1, 2));
+      pf.insert(std::make_pair(p2, 3));
+      // size_t s = pf.size();
+      pf.emplace(random_value());
+      std::vector v = {random_value(), random_value(), random_value()};
+      pf.insert(v.begin(), v.end());
+      auto r = pf.insert(random_value());
+      value_type v2 = random_value();
+      r = pf.insert(std::move(v2));
+      r = pf.insert(std::make_pair(random_point(), randi()));
+      unsigned m = randi();
+      r = pf.insert(std::make_pair(random_point(), std::move(m)));
+      std::vector v3 = {random_value(), random_value(), random_value()};
+      pf.insert(v3.begin(), v3.end());
+      pf.insert({random_value(), random_value(), random_value()});
+      for (size_t i = 0; i < 1000 / test_dimension; ++i) {
+          pf.insert(random_value());
+      }
+      return pf;
     };
 
     SECTION("Container functions and iterators " + section_name) {
@@ -154,7 +154,7 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         REQUIRE(pf.dimensions() == test_dimension);
     }
 
-    // Erasing items
+        // Erasing items
     SECTION("Erasing " + section_name) {
         auto pf = random_pareto_front();
         auto pf2 = pf;
@@ -325,12 +325,12 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         REQUIRE(pf2.non_dominates(pf));
         std::vector<value_type> v(pf.begin(), pf.end());
         pf2.clear();
-        for (const auto &[k, v] : v) {
+        for (const auto &[k, v2] : v) {
             point_type k2 = k;
             for (size_t i = 0; i < p.dimensions(); ++i) {
                 k2[i] -= (is_mini[i] ? 1 : -1);
             }
-            pf2.emplace(k2, v);
+            pf2.emplace(k2, v2);
         }
         REQUIRE_FALSE(pf.dominates(pf2));
         REQUIRE_FALSE(pf.strongly_dominates(pf2));
@@ -339,11 +339,11 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         REQUIRE(pf2.strongly_dominates(pf));
         REQUIRE_FALSE(pf2.non_dominates(pf));
         pf2.clear();
-        for (auto &[k, v] : v) {
+        for (auto &[k, v2] : v) {
             for (size_t i = 0; i < k.dimensions(); ++i) {
                 k[i] = k[i] + (is_mini[i] ? 2 : -2);
             }
-            pf2.emplace(k, v);
+            pf2.emplace(k, v2);
         }
         REQUIRE(pf.dominates(pf2));
         REQUIRE(pf.strongly_dominates(pf2));
@@ -696,7 +696,7 @@ uint64_t seed() {
 }
 
 std::mt19937 &generator() {
-    static std::mt19937 g(seed());
+    static std::mt19937 g(static_cast<unsigned int>(seed()));
     return g;
 }
 

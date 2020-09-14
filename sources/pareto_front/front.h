@@ -38,11 +38,11 @@ namespace pareto {
     struct r_star_tree_tag {};
 
 #ifdef BUILD_BOOST_TREE
-  template <class nt, size_t ncd, class mt>
+    template <class nt, size_t ncd, class mt>
   using default_type_for_boost_tree_tag = boost_tree<nt,ncd,mt>;
 #else
-  template <class nt, size_t ncd, class mt>
-  using default_type_for_boost_tree_tag = r_tree<nt,ncd,mt>;
+    template <class nt, size_t ncd, class mt>
+    using default_type_for_boost_tree_tag = r_tree<nt,ncd,mt>;
 #endif
 
     constexpr bool minimization = true;
@@ -58,10 +58,10 @@ namespace pareto {
 
     template<typename NUMBER_TYPE = double, size_t NUMBER_OF_DIMENSIONS = 2, typename ELEMENT_TYPE = unsigned, typename TAG = default_tag<NUMBER_OF_DIMENSIONS>>
     class front {
-    public:
+      public:
         friend archive<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, TAG>;
         using self_type =
-            front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, TAG>;
+        front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, TAG>;
         using number_type = NUMBER_TYPE;
         static constexpr size_t number_of_compile_dimensions = NUMBER_OF_DIMENSIONS;
 
@@ -78,31 +78,31 @@ namespace pareto {
         using size_type = size_t;
 
         using internal_type =
+        std::conditional_t<
+            std::is_same_v<TAG, vector_tree_tag>,
+            vector_tree<number_type, number_of_compile_dimensions, mapped_type>,
+            std::conditional_t<
+                std::is_same_v<TAG, quad_tree_tag>,
+                quad_tree<number_type, number_of_compile_dimensions, mapped_type>,
                 std::conditional_t<
-                    std::is_same_v<TAG, vector_tree_tag>,
-                    vector_tree<number_type, number_of_compile_dimensions, mapped_type>,
+                    std::is_same_v<TAG, kd_tree_tag>,
+                    kd_tree<number_type, number_of_compile_dimensions, mapped_type>,
                     std::conditional_t<
-                        std::is_same_v<TAG, quad_tree_tag>,
-                        quad_tree<number_type, number_of_compile_dimensions, mapped_type>,
+                        std::is_same_v<TAG, boost_tree_tag>,
+                        std::conditional_t<number_of_compile_dimensions == 0,
+                            r_tree<number_type, number_of_compile_dimensions, mapped_type>,
+                            default_type_for_boost_tree_tag<number_type, number_of_compile_dimensions, mapped_type>
+                        >,
                         std::conditional_t<
-                            std::is_same_v<TAG, kd_tree_tag>,
-                            kd_tree<number_type, number_of_compile_dimensions, mapped_type>,
-                            std::conditional_t<
-                                std::is_same_v<TAG, boost_tree_tag>,
-                                std::conditional_t<number_of_compile_dimensions == 0,
-                                    r_tree<number_type, number_of_compile_dimensions, mapped_type>,
-                                    default_type_for_boost_tree_tag<number_type, number_of_compile_dimensions, mapped_type>
-                                >,
-                                std::conditional_t<
-                                    std::is_same_v<TAG, r_tree_tag>,
-                                    r_tree<number_type, number_of_compile_dimensions, mapped_type>,
-                                    // r*-tree is the only option left
-                                    r_star_tree<number_type, number_of_compile_dimensions, mapped_type>
-                                >
-                            >
+                            std::is_same_v<TAG, r_tree_tag>,
+                            r_tree<number_type, number_of_compile_dimensions, mapped_type>,
+                            // r*-tree is the only option left
+                            r_star_tree<number_type, number_of_compile_dimensions, mapped_type>
                         >
                     >
-                >;
+                >
+            >
+        >;
 
 
         /// Is the internal type using the fast allocator
@@ -117,14 +117,14 @@ namespace pareto {
         using const_iterator = typename internal_type::const_iterator;
 
         using internal_minimization_type = std::conditional_t<number_of_compile_dimensions == 0,
-                std::vector<uint8_t>, std::array<uint8_t, number_of_compile_dimensions>>;
+            std::vector<uint8_t>, std::array<uint8_t, number_of_compile_dimensions>>;
 
         using difference_type = typename internal_type::difference_type;
 
-    public /* constructors */:
+      public /* constructors */:
         /// \brief Create an empty pareto set / minimization
-      front()
-        : front(true) {}
+        front()
+            : front(true) {}
 
         /// \brief Create an empty pareto set and determine whether it is minimization
         /// Create an array indicating minimization/maximization for each dimension
@@ -145,7 +145,7 @@ namespace pareto {
 
         /// \brief Create an empty pareto set and determine whether each dimension is minimization
         explicit front(const std::vector<uint8_t>& is_minimization) {
-            if (number_of_compile_dimensions > 0) {
+            if constexpr (number_of_compile_dimensions > 0) {
                 if (number_of_compile_dimensions != is_minimization_.size()) {
                     throw std::invalid_argument("Number of minimization directions should match the dimension");
                 }
@@ -156,7 +156,7 @@ namespace pareto {
 
         /// \brief Create an empty pareto set and determine whether each dimension is minimization
         explicit front(const std::array<uint8_t, number_of_compile_dimensions>& is_minimization) {
-            if (number_of_compile_dimensions > 0) {
+            if constexpr (number_of_compile_dimensions > 0) {
                 if (number_of_compile_dimensions != is_minimization_.size()) {
                     throw std::invalid_argument("Number of minimization directions should match the dimension");
                 }
@@ -169,7 +169,7 @@ namespace pareto {
         /// Only archives should use this constructor to avoid one allocator
         /// per front because our fast allocator is not stateless.
         front(const internal_minimization_type& is_minimization, std::shared_ptr<node_allocator_type>& external_allocator)
-                : data_(external_allocator) {
+            : data_(external_allocator) {
             if constexpr (number_of_compile_dimensions > 0) {
                 if (number_of_compile_dimensions != is_minimization_.size()) {
                     throw std::invalid_argument("Number of minimization directions should match the dimension");
@@ -208,51 +208,51 @@ namespace pareto {
         /// \brief Create a pareto set from a list of value pairs
         /// Each pair has a point and a value
         explicit front(std::initializer_list<value_type> il)
-                : front(il.begin(), il.end()) {}
+            : front(il.begin(), il.end()) {}
 
         /// \brief Create a pareto set from a list of value pairs and determine whether dimensions are minimization
         front(std::initializer_list<value_type> il, bool is_minimization)
-                : front(il.begin(), il.end(), is_minimization) {}
+            : front(il.begin(), il.end(), is_minimization) {}
 
         /// \brief Create a pareto set from a list of value pairs and determine whether each dimension is minimization
         front(std::initializer_list<value_type> il, std::vector<uint8_t> is_minimization)
-                : front(il.begin(), il.end(), is_minimization) {}
+            : front(il.begin(), il.end(), is_minimization) {}
 
         /// \brief Create a pareto set from a list of value pairs and determine whether each dimension is minimization
         front(std::initializer_list<value_type> il, std::initializer_list<bool> is_minimization)
-        : front(il.begin(), il.end(), init_list_to_vector(is_minimization)) {}
+            : front(il.begin(), il.end(), init_list_to_vector(is_minimization)) {}
 
         /// \brief Create a pareto set from a list of value pairs
         front(const std::vector<value_type>& v)
-                : front(v.begin(), v.end()) {}
+            : front(v.begin(), v.end()) {}
 
         /// \brief Create a pareto set from a list of value pairs and determine whether dimensions are minimization
         front(const std::vector<value_type>& v, bool is_minimization)
-                : front(v.begin(), v.end(), is_minimization) {}
+            : front(v.begin(), v.end(), is_minimization) {}
 
         /// \brief Create a pareto set from a list of value pairs and determine whether each dimension is minimization
         front(const std::vector<value_type>& v, std::vector<uint8_t> is_minimization)
-                : front(v.begin(), v.end(), is_minimization) {}
+            : front(v.begin(), v.end(), is_minimization) {}
 
         /// \brief Create a pareto set from a list of value pairs and determine whether each dimension is minimization
         front(const std::vector<value_type>& v, std::initializer_list<bool> is_minimization)
-                : front(v.begin(), v.end(), init_list_to_vector(is_minimization)) {}
+            : front(v.begin(), v.end(), init_list_to_vector(is_minimization)) {}
 
         /// \brief Create a pareto set from a list of value pairs
         template<class InputIterator>
         front(InputIterator first, InputIterator last)
-                : front(first, last, true) {}
+            : front(first, last, true) {}
 
         /// \brief Create a pareto set from a list of value pairs and determine whether it is minimization
         template<class InputIterator>
         front(InputIterator first, InputIterator last, bool is_minimization)
-        : front(first, last, std::vector<uint8_t>(std::max(number_of_compile_dimensions,size_t(1)),is_minimization)) {}
+            : front(first, last, std::vector<uint8_t>(std::max(number_of_compile_dimensions,size_t(1)),is_minimization)) {}
 
         /// \brief Create a pareto set from a list of value pairs and determine whether each dimension is minimization
         template<class InputIterator>
         front(InputIterator first, InputIterator last, std::vector<uint8_t> is_minimization)
-                : data_(first, last) {
-            if (number_of_compile_dimensions != 0) {
+            : data_(first, last) {
+            if constexpr (number_of_compile_dimensions != 0) {
                 if (is_minimization.size() != number_of_compile_dimensions) {
                     throw std::invalid_argument("The size specified at compile time does not match the number of minimization directions");
                 }
@@ -262,7 +262,7 @@ namespace pareto {
             clear_dominated();
         }
 
-    public /* iterators */:
+      public /* iterators */:
         const_iterator begin() const noexcept {
             return data_.begin();
         }
@@ -295,7 +295,7 @@ namespace pareto {
             return std::reverse_iterator(data_.begin());
         }
 
-    public /* capacity */:
+      public /* capacity */:
         bool empty() const noexcept {
             return data_.empty();
         }
@@ -367,7 +367,7 @@ namespace pareto {
             }
         }
 
-    public /* element access */:
+      public /* element access */:
         mapped_type& operator[](const key_type& k) {
             auto it = find(k);
             if (it != end()) {
@@ -441,21 +441,21 @@ namespace pareto {
             }
         }
 
-    public /* relational operators */:
+      public /* relational operators */:
         bool operator==(const front &rhs) const {
             return is_minimization_ == rhs.is_minimization_ &&
-            std::equal(data_.begin(), data_.end(), rhs.data_.begin(), rhs.data_.end(), [](const auto& a, const auto& b) {
-                return a.first == b.first && mapped_type_custom_equality_operator(a.second,b.second);
-            });
+                   std::equal(data_.begin(), data_.end(), rhs.data_.begin(), rhs.data_.end(), [](const auto& a, const auto& b) {
+                     return a.first == b.first && mapped_type_custom_equality_operator(a.second,b.second);
+                   });
         }
 
         bool operator!=(const front &rhs) const {
             return is_minimization_ != rhs.is_minimization_ || !std::equal(data_.begin(), data_.end(), rhs.data_.begin(), rhs.data_.end(), [](const auto& a, const auto& b) {
-                return a.first == b.first && mapped_type_custom_equality_operator(a.second,b.second);
+              return a.first == b.first && mapped_type_custom_equality_operator(a.second,b.second);
             });;
         }
 
-    public /* modifiers */:
+      public /* modifiers */:
         /// Emplace becomes insert becomes the rtree does not have
         /// an emplace function
         template<class... Args>
@@ -579,7 +579,7 @@ namespace pareto {
             m.is_minimization_.swap(is_minimization_);
         }
 
-    public /* pareto operations */:
+      public /* pareto operations */:
         /// Find points in a box
         const_iterator find_intersection(const point_type& min_corner, const point_type& max_corner) const {
             return data_.begin_intersection(min_corner, max_corner);
@@ -809,7 +809,7 @@ namespace pareto {
             // for each element in the reference front
             for (const auto& item: reference_front) {
                 auto min_it = std::min_element(begin(), end(), [&](const auto& a, const auto &b) {
-                    return a.first.distance_to_dominated_box(item.first, is_minimization_) < b.first.distance_to_dominated_box(item.first, is_minimization_); });
+                  return a.first.distance_to_dominated_box(item.first, is_minimization_) < b.first.distance_to_dominated_box(item.first, is_minimization_); });
                 distances += min_it->first.distance_to_dominated_box(item.first, is_minimization_);
             }
             return distances/reference_front.size();
@@ -820,7 +820,7 @@ namespace pareto {
             double std_dev = 0.;
             for (const auto& item: reference_front) {
                 auto min_it = std::min_element(begin(), end(), [&](const auto& a, const auto &b) {
-                    return a.first.distance_to_dominated_box(item.first, is_minimization_) < b.first.distance_to_dominated_box(item.first, is_minimization_); });
+                  return a.first.distance_to_dominated_box(item.first, is_minimization_) < b.first.distance_to_dominated_box(item.first, is_minimization_); });
                 auto distance = min_it->first.distance_to_dominated_box(item.first, is_minimization_);
                 std_dev += pow(distance - _igd_plus, 2.);
             }
@@ -1043,7 +1043,7 @@ namespace pareto {
         /// \see http://www.cs.nott.ac.uk/~pszjds/research/files/dls_emo2009_1.pdf
         bool dominates(const point_type& p) const {
             const_iterator it = data_.begin_intersection(ideal(), p, [&p,this](const value_type& x) {
-                return x.first.dominates(p, is_minimization_);});
+              return x.first.dominates(p, is_minimization_);});
             return it != end();
         }
 
@@ -1052,7 +1052,7 @@ namespace pareto {
         /// that is strictly better than b in all objectives.
         bool strongly_dominates(const point_type& p) const {
             const_iterator it = data_.begin_intersection(ideal(), p, [&p,this](const value_type& x) {
-                return x.first.strongly_dominates(p, is_minimization_);});
+              return x.first.strongly_dominates(p, is_minimization_);});
             return it != end();
         }
 
@@ -1073,7 +1073,7 @@ namespace pareto {
         bool is_partially_dominated_by(const point_type& p) const {
             // get points in the intersection between worst and p that p dominates
             const_iterator it = data_.begin_intersection(worst(), p, [&p,this](const value_type& x) {
-                return p.dominates(x.first, is_minimization_);});
+              return p.dominates(x.first, is_minimization_);});
             // if there's someone p dominates, then it's partially dominated by p
             return it != end();
         }
@@ -1092,7 +1092,7 @@ namespace pareto {
             // p dominates all points inside this intersection
             // get points in the intersection between worst and p that p dominates
             it = data_.begin_intersection(worst(), p, [&p,this](const value_type& x) {
-                return !p.dominates(x.first, is_minimization_);});
+              return !p.dominates(x.first, is_minimization_);});
             // if there's someone p dominates, then it's partially dominated by p
             return it == end();
         }
@@ -1430,7 +1430,7 @@ namespace pareto {
         }
 #endif
 
-    private /* functions */:
+      private /* functions */:
         /// \brief Clear solutions are dominated by p
         /// Pareto-optimal front is the set F consisting of
         /// all non-dominated solutions x in the whole
@@ -1448,7 +1448,7 @@ namespace pareto {
             if (!empty()) {
                 // Query
                 const_iterator it = data_.begin_intersection(p, worst(), [&p, this](const value_type& x) {
-                    return p.dominates(x.first, is_minimization_);
+                  return p.dominates(x.first, is_minimization_);
                 });
                 // erase these elements
                 return erase(it, end());
@@ -1496,11 +1496,11 @@ namespace pareto {
                 return boost::geometry::distance(p1, p2);
             } else {
 #endif
-                double dist = 0.;
-                for (size_t i = 0; i < dimensions(); ++i) {
-                    dist += pow(p1[i] - p2[i], 2);
-                }
-                return sqrt(dist);
+            double dist = 0.;
+            for (size_t i = 0; i < dimensions(); ++i) {
+                dist += pow(p1[i] - p2[i], 2);
+            }
+            return sqrt(dist);
 #ifdef BUILD_BOOST_TREE
             }
 #endif
@@ -1513,12 +1513,12 @@ namespace pareto {
                 return boost::geometry::distance(p, boost_box);
             } else {
 #endif
-                double dist = 0.0;
-                for (size_t i = 0; i < dimensions(); ++i) {
-                    double di = std::max(std::max(b.first()[i] - p[i], p[i] - b.second()[i]), 0.0);
-                    dist += di * di;
-                }
-                return sqrt(dist);
+            double dist = 0.0;
+            for (size_t i = 0; i < dimensions(); ++i) {
+                double di = std::max(std::max(b.first()[i] - p[i], p[i] - b.second()[i]), 0.0);
+                dist += di * di;
+            }
+            return sqrt(dist);
 #ifdef BUILD_BOOST_TREE
             }
 #endif
@@ -1526,7 +1526,7 @@ namespace pareto {
 
         static std::mt19937 &generator() {
             static std::mt19937 g(
-                    static_cast<unsigned int>(static_cast<uint64_t>(std::random_device()()) | std::chrono::high_resolution_clock::now().time_since_epoch().count()));
+                static_cast<unsigned int>(static_cast<uint64_t>(std::random_device()()) | std::chrono::high_resolution_clock::now().time_since_epoch().count()));
             return g;
         }
 
@@ -1570,7 +1570,7 @@ namespace pareto {
             }
         }
 
-    private:
+      private:
         /// \brief r-tree representing the pareto points
         internal_type data_;
 
