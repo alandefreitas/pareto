@@ -139,7 +139,9 @@ if (BUILD_INSTALLER)
     install(FILES
                 ${CMAKE_CURRENT_BINARY_DIR}/ParetoFrontConfig.cmake
                 ${CMAKE_CURRENT_BINARY_DIR}/ParetoFrontConfigVersion.cmake
-            DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ParetoFront)
+            COMPONENT "C++ Library"
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ParetoFront
+    )
 endif()
 
 #######################################################

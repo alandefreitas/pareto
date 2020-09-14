@@ -192,37 +192,47 @@ target_include_directories(pyfront PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 #######################################################
 # Install the python bindings
 if (BUILD_INSTALLER)
-    # Find the python executable
-    if (PYTHON_EXECUTABLE)
-        # pybind11 should have found it already
-        message("PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
-    else()
-        set(PYTHON_EXECUTABLE python)
-    endif()
-
-    # Python one-line script to find the site-packages directory
-    # relative to ${CMAKE_INSTALL_PREFIX}. This script will try
-    # to find a relative path first because cpack generators
-    # cannot use absolute paths.
-    # https://stackoverflow.com/questions/7287996/python-get-relative-path-from-comparing-two-absolute-paths
-    set(PYTHON_SITE_PACKAGES_SCRIPT "from distutils.sysconfig import get_python_lib; import os; print(os.path.relpath(get_python_lib(), '${CMAKE_INSTALL_PREFIX}'));")
-
-    # Try to find the python site-packages directory
-    execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "${PYTHON_SITE_PACKAGES_SCRIPT}" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-    # 2st attempt
-    if (NOT PYTHON_SITE_PACKAGES)
-        execute_process(COMMAND python3 -c "${PYTHON_SITE_PACKAGES_SCRIPT}" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
-    endif()
-
-    # 3st attempt
-    if (NOT PYTHON_SITE_PACKAGES)
-        execute_process(COMMAND python2 -c "${PYTHON_SITE_PACKAGES_SCRIPT}" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
-    endif()
-
-    # Use the default lib directory if cannot find site-packages
-    if (NOT PYTHON_SITE_PACKAGES)
+    if (MSVC OR WIN32)
+        # If MSVC, CPack cannot create packages with
+        # default python directory. The default directory
+        # will be CMAKE_INSTALL_LIBDIR at first.
+        # The user is responsible for setting the best
+        # directory.
         set(PYTHON_SITE_PACKAGES ${CMAKE_INSTALL_LIBDIR})
+    else ()
+        # Find python and the site-packages directory
+        # Find the python executable
+        if (PYTHON_EXECUTABLE)
+            # pybind11 should have found it already
+            message("PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
+        else()
+            set(PYTHON_EXECUTABLE python)
+        endif()
+
+        # Python one-line script to find the site-packages directory
+        # relative to ${CMAKE_INSTALL_PREFIX}. This script will try
+        # to find a relative path first because cpack generators
+        # cannot use absolute paths.
+        # https://stackoverflow.com/questions/7287996/python-get-relative-path-from-comparing-two-absolute-paths
+        set(PYTHON_SITE_PACKAGES_SCRIPT "from distutils.sysconfig import get_python_lib; import os; print(os.path.relpath(get_python_lib(), '${CMAKE_INSTALL_PREFIX}'));")
+
+        # Try to find the python site-packages directory
+        execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "${PYTHON_SITE_PACKAGES_SCRIPT}" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+        # 2st attempt
+        if (NOT PYTHON_SITE_PACKAGES)
+            execute_process(COMMAND python3 -c "${PYTHON_SITE_PACKAGES_SCRIPT}" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
+        endif()
+
+        # 3st attempt
+        if (NOT PYTHON_SITE_PACKAGES)
+            execute_process(COMMAND python2 -c "${PYTHON_SITE_PACKAGES_SCRIPT}" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
+        endif()
+
+        # Use the default lib directory if cannot find site-packages
+        if (NOT PYTHON_SITE_PACKAGES)
+            set(PYTHON_SITE_PACKAGES ${CMAKE_INSTALL_LIBDIR})
+        endif()
     endif()
 
     message("PYTHON_SITE_PACKAGES=${PYTHON_SITE_PACKAGES}")

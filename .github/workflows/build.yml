@@ -71,6 +71,13 @@ jobs:
       - name: Build
         working-directory: ./build
         run: cmake --build . -j 2 --config ${{ matrix.config.config }}
+      - name: Archive Python Binding
+        uses: actions/upload-artifact@v2
+        with:
+          name: Python Binary ${{ matrix.config.artifact_name }}
+          path: |
+            build/bindings/pyfront.cp*-*.*
+            build/bindings/Release/pyfront.cp*-*.*
       - name: Test
         working-directory: ./build
         run: ctest -j 2 -C Release
@@ -81,17 +88,12 @@ jobs:
         working-directory: ./build
         run: ${{ matrix.config.sudocmd }} cpack
         continue-on-error: true
-      - name: Archive Python Binding
-        uses: actions/upload-artifact@v2
-        with:
-          name: Python Binary ${{ matrix.config.artifact_name }}
-          path: build/bindings/pyfront.cp*-*.*
-      - name: Archive Installers
+      - name: Archive Installer Packages
         uses: actions/upload-artifact@v2
         with:
           name: Binary Packages ${{ matrix.config.artifact_name }}
           path: build/pareto-front-1.?.?-*.*
-      - name: Archive Installers as is
+      - name: Archive Installer Packages as is
         uses: kittaakos/upload-artifact-as-is@v0
         with:
           path: build/pareto-front-1.?.?-*.*

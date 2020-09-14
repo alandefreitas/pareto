@@ -82,6 +82,7 @@ if(BUILD_INSTALLER)
     install(EXPORT ParetoFrontTargets
             FILE ParetoFrontTargets.cmake
             NAMESPACE ParetoFrontTargets::
+            COMPONENT "C++ Library"
             DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ParetoFront
     )
 endif()
