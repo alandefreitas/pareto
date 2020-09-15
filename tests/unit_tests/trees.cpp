@@ -213,7 +213,7 @@ void test_tree() {
         std::vector<value_type> previous_tree_elements(t.begin(), t.end());
         std::sort(previous_tree_elements.begin(), previous_tree_elements.end());
         std::cout << "Erasing v.first: " << v3.first << std::endl;
-        REQUIRE(t.erase(v) == 1);
+        REQUIRE(t.erase(v3) == 1);
         std::vector<value_type> current_tree_elements(t.begin(), t.end());
         std::sort(current_tree_elements.begin(), current_tree_elements.end());
         auto lb = std::lower_bound(previous_tree_elements.begin(), previous_tree_elements.end(), v3);
@@ -224,6 +224,7 @@ void test_tree() {
                 std::cout << "[" << previous_tree_elements[i2].first << ", ";
                 std::cout << current_tree_elements[i2].first << "], " << std::endl;
             }
+            // the tree after erasing does not have the elements it should
             REQUIRE(false);
         }
     }
