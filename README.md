@@ -1,115 +1,46 @@
 # 🦎 Pareto Fronts and Archives / C++ and Python 📉🤔
 
-This is a container representing a data structure to cache and query multi-dimensional Pareto fronts and archives with its most expensive operations in O(n log n) time. Pareto fronts can be used to cache objects in any situation where there is a trade-off between the quality of multiple objectives. Whenever the front pushes an element better than the other in all dimensions, the dominated points are automatically removed from the set. In a Pareto archive, whenever the front pushes an element better than the other in all dimensions, the dominated points are moved to higher fronts in the archive.
-
 <div style="text-align:center">
 <img src="documentation/img/front2d_b.svg" alt="" data-canonical-src="2-dimensional front" width="800" height="200" />
 </div>
 
-* [Functions](#functions)
-* [Design goals](#design-goals)
-* [Examples](#examples)
-    * [Constructing fronts](#constructing-fronts)
-    * [Insertion](#insertion)
-    * [Reference points](#reference-points)
-    * [Iterators](#iterators)
-    * [Queries](#queries)
-    * [Dominance](#dominance)
-    * [Indicators](#indicators)
-    * [Archives](#archives)
-* [Benchmarks](#benchmarks)
-    * [Constructor](#constructor)
-    * [Insert](#insert)
-    * [Delete](#delete)
-    * [Test dominance](#test-dominance)
-    * [Query and iterate](#query-and-iterate)
-    * [Nearest points](#nearest-points)
-    * [IGD indicator](#igd-indicator)
-    * [Hypervolume](#hypervolume)
-    * [Operations](#operations)
-    * [Data structures](#data-structures)
-* [Limitations](#limitations)
-* [Integration](#integration)
-    * [Python](#python)
-    * [C++](#c++)
-    * [CMake (manual download)](#cmake-manual-download)
-    * [CMake (automatic download)](#cmake-automatic-download)
-    * [Other build systems](#other-build-systems)
-* [Thanks](#thanks)
-* [References](#references)
+<!--The problem-->
+Containers for Pareto fronts and archives can store objects simultaneously sorted according to multiple criteria. These fronts can conceptually represent any situation where there is a trade-off between the quality of multiple objectives.   
 
-## Functions
+<!--Why it's interesting-->
+Whenever we push an element to a front, all other elements that might be worse in all dimensions (the dominated points) are automatically removed from the set. A Pareto archive is a set of fronts for caching objects. Whenever we push an element better than the some others in all dimensions, the dominated objects are cached in higher archive fronts. 
 
-Besides the usual container functions (`size()`, `empty()`, `clear()`, `begin()`, `end()`, etc), it includes the functions and extra objects for:
+<!--Why it's not solved yet-->
+While there are many libraries for multi-objective optimization, there are no libraries focused on efficient container types for storing these fronts in general applications.
 
-| Data Structures | Queries       | Reference Points | Dominance   | Indicators   | Bindings |
-|-----------------|---------------|------------------|-------------|--------------|----------|
-| Pareto Front    | Intersection  | Ideal            | Point/point | Convergence  | C++      |
-| Pareto Archive  | Disjunction   | Nadir            | Front/point | Distribution | Python   |
-| Linear Lists    | k-nearest     | Worst            | Front/front | Cardinality  |          |
-| Quadtrees       | Points within |                  |             | Spread       |          |
-| kd-trees        |               |                  |             | Correlation  |          |
-| R-trees         |               |                  |             |              |          |
-| R*-trees        |               |                  |             |              |          |
+<!--What this library does-->
+This library provides a STL-like container representing a data structure to cache and query multi-dimensional Pareto fronts and archives with its most expensive operations in <img src="https://render.githubusercontent.com/render/math?math=O(n\logn)"> time.
 
-- List of Indicators
-    - Convergence and Distribution
-        - Exact Hypervolume
-        - Monte-Carlo Hypervolume Approximation
-    - Cardinality
-        - Coverage of two sets (C-metric)
-        - Coverage Ratio
-    - Convergence
-        - Generational Distance (GD)
-        - Standard Deviation from the Generational Distance (STDGD)
-        - Inverted Generational Distance (IGD)
-        - Standard Deviation from the Inverted Generational Distance (STDIGD)
-        - Averaged Hausdorff Distance
-        - Inverted Modified Generational Distance (IGD<sup>+</sup>)
-        - Standard Deviation from the Inverted Modified Generational Distance (STDIGD<sup>+</sup>)
-    - Distribution and spread
-        - Uniformity
-        - Average Distance
-        - Average Nearest Distance
-        - Average Crowding Distance
-    - Objective Correlation
-        - Direct Conflict
-        - Maxmin Conflict
-        - Non-parametric Conflict
+Some use cases are to store objects with the best values according to the following trade-offs:
 
-Assuming the well-known $O(m \log n)$ average time complexity for search, insertion, and delete in trees, the following table presents the time complexity for these operations.
-
-| Operation | Front | Archive |
-|-----|------|---------|
-|  Space                     |      O(n)                                  |      O(n) |
-|  Search                    |      O(m log n)         |      O(log m + m log n) |
-|  Insert                    |      O(m log n)              |      O(n m log n) |
-|  Delete                    |      O(m log n)              |      O(n m log n) |
-|  Allocation                |      O(1)                                  |      O(1) |
-|  Deallocation              |      O(1)                                  |      O(1) |
-|  Extreme value             |      O(1)                                  |      O(1) |
-|  Extreme element           |      O(m log n)                    |      O(m log n) |
-|  Extreme point             |      O(m)                                  |      O(m) |
-|  Next Nearest Element      |      O(m log n)                  |      O(n m log n) |
-|  Next Query Element        |      O(m log n)                    |      O(m log n) |
-|  Front Dominance           |      O(m log n)                    |      O(m log n) |
-|  Exact hypervolume         |      O(n^{m-2} log n)        |      O(n^{m-2} log n) |
-|  Monte-Carlo hypervolume   |      O(s m log n)                |      O(s m log n) |
-|  C-metric                  |      O(n m log n)                |      O(n m log n) |
-|  Generational Distance     |      O(n m log n)                |      O(n m log n) |
-|  Objective conflict        |      O(mn)                                |      O(mn) |
+* Quality vs. robustness
+* Mean quality vs. standard deviation
+* Model accuracy vs. model complexity
+* Efficiency vs. price vs. quality
+* Return vs. risk
+* Trust vs. speed
+  
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Design goals
 
-- Intuitive syntax: Get anything with one line of code. Interface like any other native data structure.
-- Easy integration: C++ and Python.
-- Speed: spatial indexes. No pairwise comparisons on linear lists.
-- Efficient memory allocation to make small fronts efficient.
-- Lots of unit tests and benchmarks.
+- Intuitive syntax: interface like any other native data structure.
+- Lots of indicators: get statistics with one line of code. 
+- Easy integration: C++ and Python interfaces.
+- Speed: spatial indexes. No pairwise comparisons on linear lists (unless you want to).
+- Efficient memory allocation to make small fronts competitive with linear lists.
+- Stability: lots of unit tests, benchmarks, and continuous integration.
 
 ## Examples
 
-For very quick complete examples, see the directory [examples](./examples/).
+For very complete examples, see the directory [examples](./examples/).
 
 ### Constructing fronts
 
@@ -131,22 +62,25 @@ This is a 2-dimensional front with a few elements:
 
 ![2-dimensional front](documentation/img/front2d_b.svg)
 
-Note that the dimension is defined at compile-time. The default constructor will choose an appropriate spatial index to represent the front. Also, each point in space is associated with an object. In your application, `unsigned` will probably be replaced by a pointer to an object that has the `double` attributes. 
+If you need to actually plot these fronts, have a look at [Matplot++](https://github.com/alandefreitas/matplotplusplus) or [Matplotlib](https://matplotlib.org). In particular, have a look at Scatter Plots for two-dimensional fronts, Plot matrices for three-dimensional fronts, or Parallel Coordinate Plots for many-objective fronts.
+                                                                   
+Note that the front dimension is defined at compile-time. Using the results from our benchmarks (See Section [Benchmarks](#benchmarks)), the default constructor will choose an appropriate spatial index to represent the front. Also, like a C++ `map` or a Python `dict`, each point in space is associated with an object. In your application, `unsigned` would probably be replaced by a pointer to an object that has the `double` attributes. 
 
 If the dimensions are not supposed to be minimized, we can define one optimization direction for each dimension:
 
 ```python
-pf = front(['minimization', 'maximization'])print(pf)
+pf = front(['minimization', 'maximization'])
+print(pf)
 print(len(pf), 'elements in the front')
 if pf:
-print('Front is not empty')
+    print('Front is not empty')
 print(pf.dimensions(), 'dimensions')
 print('All' if pf.is_minimization() else 'Not all', 'dimensions are minimization')
 print('Dimension 0 is', 'minimization' if pf.is_minimization(0) else 'not minimization')
 print('Dimension 1 is', 'maximization' if pf.is_maximization(1) else 'not maximization')
 ```
 
-In C++, the examples assume `std::cout` and `std::endl` are visible in the current namespace:
+In C++, the following examples assume `std::cout` and `std::endl` are visible in the current namespace:
 
 ```cpp
 front<double, 2, unsigned> pf({minimization, maximization});
@@ -161,7 +95,7 @@ cout << "Dimension 0 is " << (pf.is_minimization(0) ? "minimization" : "not mini
 cout << "Dimension 1 is " << (pf.is_maximization(1) ? "maximization" : "not maximization") << endl;
 ```
 
-This is a 2-dimensional front if we set all directions to `maximization`: 
+If we set all directions to `maximization`, this is what a 2-dimensional front looks like: 
 
 ![2-dimensional front](documentation/img/front2d.svg)
 
@@ -207,11 +141,11 @@ pf.erase({-2.31613, -0.219302});
 pf.clear();
 ```
 
-We use `operator()` for C++ because the `operator[]` does not allow more than one element. We can use `operator[point_type]` though. The insertion operator will already remove any points that are worse than the new point in all dimensions.
+We use `operator()` for C++ because the `operator[]` does not allow more than one element. We can use `operator[front::point_type]` though. The insertion operator will already remove any points that are worse than the new point in all dimensions.
 
 ### Reference points
 
-We can find all extreme values in O(1) time, and iterators to the extreme elements in O(m \log n) time.
+We can find any extreme value in <img src="https://render.githubusercontent.com/render/math?math=O(1)"> time, and iterators to the extreme elements in <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)"> time.
 
 ```python
 print('Ideal point:', pf.ideal())
@@ -233,7 +167,7 @@ cout << "Nadir point in dimension 1: " << pf.dimension_nadir(1)->first << endl;
 
 ### Iterators
 
-The elements can be accessed through iterators and reverse iterators:
+We can access the elements with iterators and reverse iterators:
 
 ```python
 for [point, value] in pf:
@@ -295,7 +229,7 @@ cout << it->first << " -> " << it->second << endl;
 
 ### Dominance
 
-A solution `x1` dominates `x^2` if it `x1` is better than `x2` in at least one dimension:
+A solution `x1` (weakly) dominates `x2` if it `x1` is 1) better than `x2` in at least one dimension and 2) not worse than `x2` in any dimension:
 
 ![Point/point dominance](documentation/img/point_dominance.svg)
 
@@ -317,7 +251,7 @@ cout << (p1.strongly_dominates(p2) ? "p1 strongly dominates p2" : "p1 does not s
 cout << (p1.non_dominates(p2) ? "p1 non-dominates p2" : "p1 does not non-dominate p2") << endl;
 ```
 
-The `point` function and the `point_type` alias are shortcuts to obtain the appropriate point type for a front.
+The `point` function (Python) and the `point_type` alias (C++) are shortcuts to obtain the appropriate point type for a front (remember the front dimensions are defined at compile-time).
 
 We can also check for dominance between fronts and points:
 
@@ -368,7 +302,7 @@ cout << (pf.is_completely_dominated_by(pf2) ? "pf is completely dominated by pf2
 
 Indicators can measure several front attributes, such as cardinality, convergence, distribution, and spread. Correlation indicators can estimate the relationship between objectives in a set.
 
-The most important indicator of a front quality is probably its hypervolume, as it measures both convergence and distribution quality:
+The most popular indicator of a front quality is its hypervolume, as it measures both convergence and distribution quality:
 
 ```python
 print('Exact hypervolume:', pf.hypervolume(pf.nadir()))
@@ -380,7 +314,7 @@ cout << "Exact hypervolume: " << pf.hypervolume(pf.nadir()) << endl;
 cout << "Hypervolume approximation (10000 samples): " << pf.hypervolume(pf.nadir(), 10000) << endl;
 ```
 
-Cardinality indicators compare two fronts and indicate how many points in one front are non-dominated by point in the other.
+Cardinality indicators compare two fronts and indicate how many points in one front are non-dominated by points in the other front.
 
 ```python
 print('C-metric:', pf.coverage(pf2))
@@ -466,57 +400,141 @@ ar = pyfront.archive(2, 100)
 archive<double, 2, unsigned> ar(100);
 ```
 
-The archive interface has the same functions as the front interface: insertion, removal, and searching operations identify the proper front for the elements; functions for indicators and dominance relationships use the first front as reference.
+The archive interface has the same functions as the front interface: insertion, removal, and searching operations identify the proper front for the elements; functions for indicators and dominance relationships use the first fronts as reference.
+
+## Functions
+
+Besides the usual container functions (`size()`, `empty()`, `clear()`, `begin()`, `end()`, etc), these containers include functions and extra objects for:
+
+| Data Structures | Queries       | Reference Points | Dominance   | Indicators   | Bindings |
+|-----------------|---------------|------------------|-------------|--------------|----------|
+| Pareto Front    | Intersection  | Ideal            | Point/point | Convergence  | C++      |
+| Pareto Archive  | Disjunction   | Nadir            | Front/point | Distribution | Python   |
+| Linear Lists    | k-nearest     | Worst            | Front/front | Cardinality  |          |
+| Quadtrees       | Points within |                  |             | Spread       |          |
+| kd-trees        |               |                  |             | Correlation  |          |
+| R-trees         |               |                  |             |              |          |
+| R*-trees        |               |                  |             |              |          |
+
+- List of Indicators
+    - Convergence and Distribution
+        - Exact Hypervolume
+        - Monte-Carlo Hypervolume Approximation
+    - Cardinality
+        - Coverage of two sets (C-metric)
+        - Coverage Ratio
+    - Convergence
+        - Generational Distance (GD)
+        - Standard Deviation from the Generational Distance (STDGD)
+        - Inverted Generational Distance (IGD)
+        - Standard Deviation from the Inverted Generational Distance (STDIGD)
+        - Averaged Hausdorff Distance
+        - Inverted Modified Generational Distance (IGD<sup>+</sup>)
+        - Standard Deviation from the Inverted Modified Generational Distance (STDIGD<sup>+</sup>)
+    - Distribution and spread
+        - Uniformity
+        - Average Distance
+        - Average Nearest Distance
+        - Average Crowding Distance
+    - Objective Correlation
+        - Direct Conflict
+        - Maxmin Conflict
+        - Non-parametric Conflict
+
+Assuming the well-known $O(m \log n)$ average time complexity for search, insertion, and delete in trees, the following table presents the time complexity for these operations.
+
+<img src="https://render.githubusercontent.com/render/math?math=O(sm\log%20n)">
+
+| Operation | Front | Archive |
+|-----|------|---------|
+|  Space                     |      <img src="https://render.githubusercontent.com/render/math?math=O(n)">                                  |      <img src="https://render.githubusercontent.com/render/math?math=O(n)"> |
+|  Search                    |      <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)">         |      <img src="https://render.githubusercontent.com/render/math?math=O(\log%20m%2Bm\log%20n)"> |
+|  Insert                    |      <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)">              |      <img src="https://render.githubusercontent.com/render/math?math=O(nm\log%20n)"> |
+|  Delete                    |      <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)">              |      <img src="https://render.githubusercontent.com/render/math?math=O(nm\log%20n)"> |
+|  Allocation                |      <img src="https://render.githubusercontent.com/render/math?math=O(1)">                                  |      <img src="https://render.githubusercontent.com/render/math?math=O(1)"> |
+|  Deallocation              |      <img src="https://render.githubusercontent.com/render/math?math=O(1)">                                  |      <img src="https://render.githubusercontent.com/render/math?math=O(1)"> |
+|  Extreme value             |      <img src="https://render.githubusercontent.com/render/math?math=O(1)">                                  |      <img src="https://render.githubusercontent.com/render/math?math=O(1)"> |
+|  Extreme element           |      <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)">                    |      <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)"> |
+|  Extreme point             |      <img src="https://render.githubusercontent.com/render/math?math=O(m)">                                  |      <img src="https://render.githubusercontent.com/render/math?math=O(m)"> |
+|  Next Nearest Element      |      <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)">                  |      <img src="https://render.githubusercontent.com/render/math?math=O(nm\log%20n)"> |
+|  Next Query Element        |      <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)">                    |      <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)"> |
+|  Front Dominance           |      <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)">                    |      <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)"> |
+|  Exact hypervolume         |      <img src="https://render.githubusercontent.com/render/math?math=O(n^{m-2}\log%20n)">        |      <img src="https://render.githubusercontent.com/render/math?math=O(n^{m-2}\log%20n)"> |
+|  Monte-Carlo hypervolume   |      <img src="https://render.githubusercontent.com/render/math?math=O(sm\log%20n)">                |      <img src="https://render.githubusercontent.com/render/math?math=O(sm\log%20n)"> |
+|  C-metric                  |      <img src="https://render.githubusercontent.com/render/math?math=O(nm\log%20n)">                |      <img src="https://render.githubusercontent.com/render/math?math=O(nm\log%20n)"> |
+|  Generational Distance     |      <img src="https://render.githubusercontent.com/render/math?math=O(nm\log%20n)">                |      <img src="https://render.githubusercontent.com/render/math?math=O(nm\log%20n)"> |
+|  Objective conflict        |      <img src="https://render.githubusercontent.com/render/math?math=O(mn)">                                |      <img src="https://render.githubusercontent.com/render/math?math=O(mn)"> |
+
 
 ## Benchmarks
 
-The object will choose an appropriate data structure according the the parameters. Here are some benchmarks comparing these data structures. We use the notation `L`, `Q`, `K`, `B`, `R`, and `*` for Lists, Quadtrees, $k$-d trees, Boost.Geomtry R-trees, Point R-trees, and R*-Trees.
+The default tag for fronts and archives is converted to an appropriate data structure according the the parameters. This section presents some benchmarks comparing these data structures. We use the notation `L`, `Q`, `K`, `B`, `R`, and `*` for Lists, Quadtrees, $k$-d trees, Boost.Geomtry R-trees, Point R-trees, and R*-Trees. The tree data structures in the benchmark used a [memory pool allocator](sources/pareto_front/memory_pool.h). If using this code in production, it is more prudent to use `std::pmr::unsynchronized_pool_resource`, `std::allocator`, or execute *many* tests to make sure `pareto::fast_memory_pool` is works properly on your system.
 
-### Constructor
+<details>
+    <summary>Constructor</summary>
 
 ![Construct (n=50)](documentation/img/construct_n_50.png)
 ![Construct (n=500)](documentation/img/construct_n_500.png)
 ![Construct (n=5000)](documentation/img/construct_n_5000.png)
 
-### Insert
+</details>
+
+<details>
+    <summary>Insert</summary>
 
 ![Insertion (n=50)](documentation/img/insertion_n_50.png)
 ![Insertion (n=500)](documentation/img/insertion_n_500.png)
 ![Insertion (n=5000)](documentation/img/insertion_n_5000.png)
 
-### Delete
+</details>
+
+<details>
+    <summary>Delete</summary>
 
 ![Removal (n=50)](documentation/img/removal_n_50.png)
 ![Removal (n=500)](documentation/img/removal_n_500.png)
 ![Removal (n=5000)](documentation/img/removal_n_5000.png)
 
-### Test dominance
+</details>
+
+<details>
+    <summary>Test dominance</summary>
 
 ![Check dominance (n=50)](documentation/img/check_dominance_n_50.png)
 ![Check dominance (n=500)](documentation/img/check_dominance_n_500.png)
 ![Check dominance (n=5000)](documentation/img/check_dominance_n_5000.png)
 
-### Query and iterate
+</details>
+
+<details>
+    <summary>Query and iterate</summary>
 
 ![Query and iterate (n=50)](documentation/img/query_n_50.png)
 ![Query and iterate (n=500)](documentation/img/query_n_500.png)
 ![Query and iterate (n=5000)](documentation/img/query_n_5000.png)
 
-### Nearest points
+</details>
+
+<details>
+    <summary>Nearest points</summary>
 
 ![Find nearest 5 and iterate (n=50)](documentation/img/nearest_n_50.png)
 ![Find nearest 5 and iterate (n=500)](documentation/img/nearest_n_500.png)
 ![Find nearest 5 and iterate (n=5000)](documentation/img/nearest_n_5000.png)
 
-### IGD indicator
+</details>
+
+<details>
+    <summary>IGD indicator</summary>
 
 ![IGD (n=50)](documentation/img/igd_n_50.png)
 ![IGD (n=500)](documentation/img/igd_n_500.png)
 ![IGD (n=5000)](documentation/img/igd_n_5000.png)
 
-### Hypervolume
+</details>
 
-#### Time
+<details>
+    <summary>Hypervolume: Time</summary>
 
 ![Hypervolume (m=1)](documentation/img/hypervolume_m_1.png)
 ![Hypervolume (m=2)](documentation/img/hypervolume_m_2.png)
@@ -524,17 +542,26 @@ The object will choose an appropriate data structure according the the parameter
 ![Hypervolume (m=5)](documentation/img/hypervolume_m_5.png)
 ![Hypervolume (m=9)](documentation/img/hypervolume_m_9.png)
 
-#### Gap from the exact hypervolume
+</details>
+
+<details>
+    <summary>Hypervolume: Gap from the exact hypervolume</summary>
 
 ![Hypervolume Gap](documentation/img/hypervolume_gap.png)
 
-### Operations
+</details>
+
+<details>
+    <summary>Operations</summary>
 
 ![Operation Averages (n=50)](documentation/img/op_averages_n_50.png)
 ![Operation Averages (n=500)](documentation/img/op_averages_n_500.png)
 ![Operation Averages (n=5000)](documentation/img/op_averages_n_5000.png)
 
-### Data structures
+</details>
+
+<details>
+    <summary>Data structures</summary>
 
 ![Data Structure Averages (n=50,m=1)](documentation/img/structure_averages_n_50_m_1.png)
 ![Data Structure Averages (n=50,m=2)](documentation/img/structure_averages_n_50_m_2.png)
@@ -555,56 +582,261 @@ The object will choose an appropriate data structure according the the parameter
 ![Data Structure Averages (n=5000,m=9)](documentation/img/structure_averages_n_5000_m_9.png)
 ![Data Structure Averages (n=5000,m=13)](documentation/img/structure_averages_n_5000_m_13.png)
 
-## Limitations
-
-One limitation of the library interface is that the most efficient data structures have their dimension defined at compile-time. This is not an inconvenience to C++ users but it makes it impossible to have Python bindings for all front dimensions in compile-time. 
-
-Our solution was to include the fronts with m=1,...,10 dimensions set at compile-time in our Python bindings. For each data structure, we provide a subsidiary implementation that has its dimension determined at runtime. The Python bindings fallback to this special implementation whenever m>10. 
-
-This value can be altered when compiling the library. Change the value of `max_num_dimensions` in [pyfront.cpp](bindings/pyfront.cpp) if you want to change that. The higher this value, the larger the final binary.
+</details>
 
 ## Integration
 
-### Python
+### Packages
 
-Check if you have [Cmake](http://cmake.org) 3.14+ installed:
+Get one of binary packages from the [release section](https://github.com/alandefreitas/pareto-front/releases). 
+
+* Python Binary <OS>: this is only the binary for Python. Copy this file to your site-packages directory.
+* pareto-front-<version>-<OS>.<package extension>: these packages contain the Python bindings and the C++ library.
+* Binary Packages <OS>: these packages contain all packages for a given OS.
+
+If using one the installers, make sure you install the Python bindings to your site-packages directory (this is the default directory for most packages). You can find your site-packages directory with:
 
 ```bash
-cmake -version
+python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib());"
+``` 
+
+These binaries refer to the last release version. If you need a more recent version of pareto-front, you can download the [binary packages from the CI artifacts](https://github.com/alandefreitas/pareto-front/actions?query=workflow%3AParetoFront+event%3Apush) or build the library [from the source files](#build-from-source). 
+
+Once the package is installed, you can use the Python library with
+
+```
+import pyfront
+```
+ 
+or link your C++ program to the library and include the directories where you installed pareto-front. 
+
+Unless you changed the default options, the C++ library is likely to be in `/usr/local/` (Linux / Mac OS) or `C:/Program Files/` (Windows).
+
+If you are using CMake, you can then find pareto-front with the usual `find_package` command:
+
+```cmake
+find_package(ParetoFront REQUIRED)
+# ...
+target_link_libraries(my_target PUBLIC pareto_front)
 ```
 
-Install or update [Cmake](http://cmake.org) 3.14+ if needed.
- 
-Compile the library with:
+CMake should be able to locate the `ParetoFrontConfig.cmake` script automatically if you installed the library under `/usr/local/` (Linux / Mac OS) or `C:/Program Files/` (Windows). Otherwise, you need to include your installation directory in `CMAKE_MODULE_PATH` first: 
+
+```cmake
+list(APPEND CMAKE_MODULE_PATH put/your/installation/directory/here)
+find_package(ParetoFront REQUIRED)
+# ...
+target_link_libraries(my_target PUBLIC pareto_front)
+```
+
+### Build from source
+
+#### Dependencies
+
+This section lists the dependencies you need before installing pareto-front from source. The build script will try to find all these dependencies for you:
+
+* C++17
+* CMake 3.14 or higher
+* Python 3.6.9 or higher (for the Python bindings)
+
+<details>
+    <summary>Instructions: Linux/Ubuntu/GCC</summary>
+    
+Check your GCC version
+
+```bash
+g++ --version
+```
+
+The output should have something like
+
+```console
+g++-8 (Ubuntu 8.4.0-1ubuntu1~18.04) 8.4.0
+```
+
+If you see a version before GCC-8, update it with
+
+```bash
+sudo apt update
+sudo apt install gcc-8
+sudo apt install g++-8
+```
+
+To update to any other version, like GCC-9 or GCC-10:
+
+```bash
+sudo apt install build-essential
+sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+sudo apt-get update
+sudo apt install g++-10
+```
+
+Once you installed a newer version of GCC, you can link it to `update-alternatives`. For instance, if you have GCC-7 and GCC-10, you can link them with:
+
+```bash
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 7
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 7
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 10
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 10
+```
+
+You can now use `update-alternatives` to set you default `gcc` and `g++`:
+
+```bash
+update-alternatives --config g++
+update-alternatives --config gcc
+```
+
+Check your CMake version:
+
+```bash
+cmake --version
+```
+
+If it's older than CMake 3.14, update it with
+
+```bash
+sudo apt upgrade cmake
+```
+
+or download the most recent version from [cmake.org](https://cmake.org/).
+
+[Later](#build-the-examples) when running CMake, make sure you are using GCC-8 or higher by appending the following options:
+
+```bash
+-DCMAKE_C_COMPILER=/usr/bin/gcc-8 -DCMAKE_CXX_COMPILER=/usr/bin/g++-8
+```
+
+If building the Python bindings, check your Python version:
+
+```bash
+python3 --version
+```
+
+If it's older than Python 3.6.9, update it with `apt-get` or download the lastest release version from https://www.python.org/downloads/ . If using an installer, make sure you add the application directory to your PATH environment variable.
+
+</details>
+
+<details>
+    <summary>Instructions: Mac Os/Clang</summary>
+
+Check your Clang version:
+
+```bash
+clang --version
+```
+
+The output should have something like
+
+```console
+Apple clang version 11.0.0 (clang-1100.0.33.8)
+```
+
+If you see a version before Clang 11, update XCode in the App Store or update clang with homebrew. 
+
+Check your CMake version:
+
+```bash
+cmake --version
+```
+
+If it's older than CMake 3.14, update it with
+
+```bash
+sudo brew upgrade cmake
+```
+
+or download the most recent version from [cmake.org](https://cmake.org/).
+
+If the last command fails because you don't have [Homebrew](https://brew.sh) on your computer, you can install it with
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+```
+
+or you can follow the instructions in [https://brew.sh](https://brew.sh).
+
+If building the Python bindings, check your Python version:
+
+```bash
+python3 --version
+```
+
+If it's older than Python 3.6.9, update it
+
+```bash
+sudo brew upgrade python3
+```
+
+or download the latest release version from https://www.python.org/downloads/ . If using an installer, make sure you add the application directory to your PATH environment variable.
+
+</details>
+
+<details>
+    <summary>Instructions: Windows/MSVC</summary>
+    
+* Make sure you have a recent version of [Visual Studio](https://visualstudio.microsoft.com)
+* Download Git from [https://git-scm.com/download/win](https://git-scm.com/download/win) and install it
+* Download CMake from [https://cmake.org/download/](https://cmake.org/download/) and install it
+* Download Python from [https://www.python.org/downloads/](https://www.python.org/downloads/) and install it
+
+If using the Python installer, make sure you add the application directory to your PATH environment variable.
+
+</details>
+
+#### Build the Examples
+
+This will build the examples in the `build/examples` directory:
 
 ```bash
 mkdir build
-cd build
-cmake ..
-cmake --build .
+cmake -version
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-O2"
+cmake --build . -j 2 --config Release
 ```
 
-This should get you a library `pyfront.*` in the `build/bindings` directory. Put that library anywhere in your `PYTHONPATH` or your project directory and you're good to go:
+On windows, replace `-O2` with `/O2`.
 
-```python
-import pyfront
-``` 
+#### Installing pareto-front from Source
 
-### C++
-
-### CMake (manual download)
-
-Check if you have [Cmake](http://cmake.org) 3.14+ installed:
+This will install pareto-front on your system:
 
 ```bash
+mkdir build
 cmake -version
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-O2" -DBUILD_EXAMPLES=OFF -DBUILD_TESTS=OFF 
+cmake --build . -j 2 --config Release
+cmake --install .
 ```
 
-Download the whole project and add the subdirectory to your Cmake project:
+On windows, replace `-O2` with `/O2`. You might need `sudo` for this last command.
+
+#### Building the packages
+
+This will create the binary packages you can use to install pareto-front on your system:
+
+```bash
+mkdir build
+cmake -version
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-O2" -DBUILD_EXAMPLES=OFF -DBUILD_TESTS=OFF
+cmake --build . -j 2 --config Release
+cmake --install .
+cpack .
+```
+
+On windows, replace `-O2` with `/O2`. You might need `sudo` for this last command.
+
+### CMake targets
+
+#### Find it as a CMake Package
+
+If you have the library installed, you can call
 
 ```cmake
-add_subdirectory(pareto_front)
+find_package(ParetoFront)
 ```
+
+from your CMake build script. 
 
 When creating your executable, link the library to the targets you want:
 
@@ -617,9 +849,56 @@ Add this header to your source files:
 
 ```cpp
 #include <pareto_front/front.h>
-```   
+```
 
-### CMake (automatic download)
+Or to use Pareto archives:
+
+```cpp
+#include <pareto_front/archives.h>
+```
+
+#### Use it as a CMake subdirectory
+
+You can use pareto-front directly in CMake projects without installing it. Check if you have [Cmake](http://cmake.org) 3.14+ installed:
+
+```bash
+cmake -version
+```
+
+Clone the whole project
+ 
+```bash
+git clone https://github.com/alandefreitas/pareto-front/
+```
+
+and add the subdirectory to your CMake project:
+
+```cmake
+add_subdirectory(pareto-front)
+```
+
+When creating your executable, link the library to the targets you want:
+
+```
+add_executable(my_target main.cpp)
+target_link_libraries(my_target PUBLIC pareto-front)
+```
+
+Add this header to your source files:
+
+```cpp
+#include <pareto_front/front.h>
+```
+
+Or to use Pareto archives:
+
+```cpp
+#include <pareto_front/archives.h>
+```
+
+However, it's always recommended to look for ParetoFront with `find_package` before including it as a subdirectory. Otherwise, we can get [ODR errors](https://en.wikipedia.org/wiki/One_Definition_Rule) in larger projects. 
+
+#### CMake with Automatic Download
 
 Check if you have [Cmake](http://cmake.org) 3.14+ installed:
 
@@ -631,30 +910,94 @@ Install [CPM.cmake](https://github.com/TheLartians/CPM.cmake) and then:
 
 ```cmake
 CPMAddPackage(
-    NAME pareto_front
-    GITHUB_REPOSITORY alandefreitas/pareto_front
+    NAME ParetoFront
+    GITHUB_REPOSITORY alandefreitas/pareto-front
+    GIT_TAG origin/master # or whatever tag you want
 )
 # ...
-target_link_libraries(my_target PUBLIC pareto_front)
+target_link_libraries(my_target PUBLIC pareto-front)
 ```
 
-### Other build systems 
-
-If you're not using Cmake, your project needs to include the headers and compile all source files in `sources` directory. You can then include the library with:
+Then add this header to your source files:
 
 ```cpp
-#include <pareto_front/pareto_front.h>
+#include <pareto_front/front.h>
 ```
+
+Or to use Pareto archives:
+
+```cpp
+#include <pareto_front/archives.h>
+```
+
+However, it's always recommended to look for ParetoFront with `find_package` before including it as a subdirectory. You can use:
+
+```
+option(CPM_USE_LOCAL_PACKAGES "Try `find_package` before downloading dependencies" ON)
+```
+
+to let CPM.cmake do that for you. Otherwise, we can get [ODR errors](https://en.wikipedia.org/wiki/One_Definition_Rule) in larger projects.
+
+### Other build systems
+
+If you want to use it in another build system you can either install the library (Section [*Installing*](#installing)) or you have to somehow rewrite the build script.
+
+If you want to rewrite the build script, your project needs to 1) include the headers and compile all source files in the [`sources`](sources) directory, and 2) link the dependencies described in [`sources/CMakeLists.txt`](sources/CMakeLists.txt).
+
+Then add this header to your source files:
+
+Then add this header to your source files:
+
+```cpp
+#include <pareto_front/front.h>
+```
+
+Or to use Pareto archives:
+
+```cpp
+#include <pareto_front/archives.h>
+```
+
+## Limitations
+
+One limitation of the library interface is that the most efficient data structures have their dimension defined at compile-time. This is not an inconvenience to C++ users but it makes it impossible to have Python bindings for all front dimensions defined at compile-time. 
+
+Our solution was to include the fronts with <img src="https://render.githubusercontent.com/render/math?math=m=1,...,10"> dimensions set at compile-time in our Python bindings. For each data structure, we provide a extra implementation that has its dimension determined at runtime. The Python bindings fallback to this special implementation whenever <img src="https://render.githubusercontent.com/render/math?math=m>10">. 
+
+This value can be altered when compiling the library:
+ 
+```bash
+mkdir build
+cmake -version
+cmake .. -DMAX_NUM_DIMENSIONS_PYTHON=20 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-O2"
+cmake --build . -j 2 --config Release
+```
+
+ Change the value of `MAX_NUM_DIMENSIONS_PYTHON` to whatever number of dimensions you need in compile-time. The higher this value, the larger the final binary. However, you shouldn't usually need to change this value. The rationale is that, due to the [curse of dimensionality](https://en.wikipedia.org/wiki/Curse_of_dimensionality), if you have a problem with more than 10 dimensions, if you have bigger problems than whether the dimension is set at compile or run-time. 
+
+## Contributing
+
+There are many ways in which you can contribute to this library:
+
+* Testing the library in new environments <sup>see [1](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22cross-platform+issue+-+windows%22), [2](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22cross-platform+issue+-+linux%22), [3](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22cross-platform+issue+-+macos%22) </sup>
+* Contributing with interesting examples <sup>see [1](examples)</sup>
+* Including new indicators <sup>see [1](#indicators)</sup>
+* Improving this documentation <sup>see [1](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22enhancement+-+documentation%22) </sup>
+* New spacial data structures <sup>see [1](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22enhancement+-+data+structures%22) </sup>
+* Finding bugs in general <sup>see [1](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug+-+compilation+error%22), [2](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug+-+compilation+warning%22), [3](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug+-+runtime+error%22), [4](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug+-+runtime+warning%22) </sup>
+* Whatever idea seems interesting to you
 
 ## Thanks
 
 We would like to thank the developers of these libraries:
 
-- [Boost.Geometry package](https://github.com/boostorg/geometry)
-- [Trase library](https://github.com/trase-cpp/trase)
-- [hv-2.0rc2/hv.h for calculating hyper-volumes](https://ieeexplore.ieee.org/document/1688440)
+- [Boost.Geometry package](https://github.com/boostorg/geometry): we use Boost.Geometry for our benchmarks
+- [Trase library](https://github.com/trase-cpp/trase): we used this library to generate the plots for the first version of this library
+- [hv-2.0rc2/hv.h for calculating hyper-volumes](https://ieeexplore.ieee.org/document/1688440): we use this implementation to calculate exact hypervolumes in high dimensions.
 
 ## References
+
+These are some references we used for this work:
 
 * J. Blank and K. Deb, pymoo:
 Multi-objective Optimization in Python, IEEE Access,
