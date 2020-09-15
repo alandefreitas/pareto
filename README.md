@@ -223,7 +223,7 @@ All iterators can contain a list of predicates that limit iterators to query res
 -   `intersects`: return only elements that intersect a given query box.
 -   `within`: return only elements within a given query box. This is the same as `intersects` but it excludes the borders.
 -   `disjoint`: return only elements that do not intersect a given query box.
--   `nearest`: return only the $k$ nearest elements to a reference point or query box.
+-   `nearest`: return only the <img src="https://render.githubusercontent.com/render/math?math=k"> nearest elements to a reference point or query box.
 -   `satisfies`: return only elements that pass a predicate provided by the user.
 
 ```python
@@ -470,9 +470,7 @@ Besides the usual container functions (`size()`, `empty()`, `clear()`, `begin()`
         - Maxmin Conflict
         - Non-parametric Conflict
 
-Assuming the well-known $O(m \log n)$ average time complexity for search, insertion, and delete in trees, the following table presents the time complexity for these operations.
-
-<img src="https://render.githubusercontent.com/render/math?math=O(sm\log%20n)">
+Assuming the well-known <img src="https://render.githubusercontent.com/render/math?math=O(m\log+n)"> average time complexity for search, insertion, and delete in trees, the following table presents the time complexity for these operations.
 
 | Operation | Front | Archive |
 |-----|------|---------|
@@ -497,7 +495,7 @@ Assuming the well-known $O(m \log n)$ average time complexity for search, insert
 
 ## Benchmarks
 
-The default tag for fronts and archives is converted to an appropriate data structure according to the front or archive parameters. This section presents some benchmarks comparing these data structures. We use the notation `L`, `Q`, `K`, `B`, `R`, and `*` for Lists, Quadtrees, $k$-d trees, Boost.Geomtry R-trees, Point R-trees, and R*-Trees. The tree data structures in the benchmark used a [memory pool allocator](sources/pareto_front/memory_pool.h) for faster allocation. This is intented to make trees more competitive with linear lists for small fronts. If using this code in production, it is more prudent to use [`std::pmr::unsynchronized_pool_resource`](https://en.cppreference.com/w/cpp/memory/unsynchronized_pool_resource/unsynchronized_pool_resource) (if your compiler supports it), [`std::allocator`](https://en.cppreference.com/w/cpp/memory/allocator) (if you want to be conservative), or execute *many* tests to make sure [`pareto::fast_memory_pool`](sources/pareto_front/memory_pool.h) works properly on your system.
+The default tag for fronts and archives is converted to an appropriate data structure according to the front or archive parameters. This section presents some benchmarks comparing these data structures. We use the notation `L`, `Q`, `K`, `B`, `R`, and `*` for Lists, Quadtrees, <img src="https://render.githubusercontent.com/render/math?math=k">-d trees, Boost.Geomtry R-trees, Point R-trees, and R*-Trees. The tree data structures in the benchmark used a [memory pool allocator](sources/pareto_front/memory_pool.h) for faster allocation. This is intented to make trees more competitive with linear lists for small fronts. If using this code in production, it is more prudent to use [`std::pmr::unsynchronized_pool_resource`](https://en.cppreference.com/w/cpp/memory/unsynchronized_pool_resource/unsynchronized_pool_resource) (if your compiler supports it), [`std::allocator`](https://en.cppreference.com/w/cpp/memory/allocator) (if you want to be conservative), or execute *many* tests to make sure [`pareto::fast_memory_pool`](sources/pareto_front/memory_pool.h) works properly on your system.
 
 <details>
     <summary>Constructor</summary>
