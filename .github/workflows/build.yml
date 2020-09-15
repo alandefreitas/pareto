@@ -38,6 +38,7 @@ jobs:
             get_core_cmd: "WMIC CPU Get DeviceID,NumberOfCores,NumberOfLogicalProcessors",
             sudocmd: "",
             artifact_name: "Windows",
+            cores: 2,
           }
           - {
             name: "Linux/Static/X64/Release",
@@ -47,6 +48,7 @@ jobs:
             get_core_cmd: "lscpu",
             sudocmd: "sudo",
             artifact_name: "Linux",
+            cores: 2,
           }
           - {
             name: "MacOSX/Static/X64/Release",
@@ -56,6 +58,7 @@ jobs:
             get_core_cmd: "system_profiler SPHardwareDataType",
             sudocmd: "sudo",
             artifact_name: "MacOSX",
+            cores: 4,
           }
     steps:
       - uses: actions/checkout@v2
@@ -76,7 +79,7 @@ jobs:
           cmake .. ${{ matrix.config.args }} -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DBUILD_LONG_TESTS=ON -DMAX_NUM_DIMENSIONS_PYTHON=10 -DBUILD_BINDING_FOR_ALL_STRUCTURES=ON
       - name: Build
         working-directory: ./build
-        run: cmake --build . -j 2 --config ${{ matrix.config.config }}
+        run: cmake --build . -j ${{ matrix.config.cores }} --config ${{ matrix.config.config }}
       - name: Archive Python Binding
         uses: actions/upload-artifact@v2
         with:
@@ -86,7 +89,7 @@ jobs:
             build/bindings/Release/pyfront.cp*-*.*
       - name: Test
         working-directory: ./build
-        run: ctest -j 2 -C Release
+        run: ctest -j ${{ matrix.config.cores }} -C Release
       - name: Install
         working-directory: ./build
         run: ${{ matrix.config.sudocmd }} cmake --install .

@@ -14,16 +14,19 @@ Whenever we push an element to a front, all other elements that might be worse i
 While there are many libraries for multi-objective optimization, there are no libraries focused on efficient container types for storing these fronts in general applications.
 
 <!--What this library does-->
-This library provides a STL-like container representing a data structure to cache and query multi-dimensional Pareto fronts and archives with its most expensive operations in <img src="https://render.githubusercontent.com/render/math?math=O(n\logn)"> time.
+This library provides a STL-like container representing a data structure to cache and query multi-dimensional Pareto fronts and archives with its most expensive operations in <img src="https://render.githubusercontent.com/render/math?math=O(n+\log+n)"> time.
 
 Some use cases are to store objects with the best values according to the following trade-offs:
 
-* Quality vs. robustness
-* Mean quality vs. standard deviation
-* Model accuracy vs. model complexity
-* Efficiency vs. price vs. quality
-* Return vs. risk
-* Trust vs. speed
+* Machine Learning: Model accuracy vs. model complexity
+* Approximation algorithms: error vs. time
+* Product design: investment vs. profit vs. safety 
+* P2P networks: latency vs. trust 
+* Robust optimization: quality vs. sensitivity / robustness  
+* Design: Mean quality vs. standard deviation
+* Systems control: Performance vs. price vs. quality
+* Portfolio optimization: expected return vs. risk
+* [More applications](https://en.wikipedia.org/wiki/Multi-objective_optimization#Examples_of_applications)
   
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -58,15 +61,15 @@ Some use cases are to store objects with the best values according to the follow
 ## Design goals
 
 - Intuitive syntax: interface like any other native data structure.
-- Lots of indicators: get statistics with one line of code. 
+- Lots of indicators: calculate statistics with one line of code. 
 - Easy integration: C++ and Python interfaces.
-- Speed: spatial indexes. No pairwise comparisons on linear lists (unless you want to).
+- Performance: spatial indexes. No pairwise comparisons on linear lists (unless you want to).
 - Efficient memory allocation to make small fronts competitive with linear lists.
 - Stability: lots of unit tests, benchmarks, and continuous integration.
 
 ## Examples
 
-For very complete examples, see the directory [examples](./examples/).
+For complete examples, see the directory [examples](./examples/).
 
 ### Constructing fronts
 
@@ -171,7 +174,7 @@ We use `operator()` for C++ because the `operator[]` does not allow more than on
 
 ### Reference points
 
-We can find any extreme value in <img src="https://render.githubusercontent.com/render/math?math=O(1)"> time, and iterators to the extreme elements in <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)"> time.
+We can find any extreme value in <img src="https://render.githubusercontent.com/render/math?math=O(1)"> time, and iterators to the extreme elements in <img src="https://render.githubusercontent.com/render/math?math=O(m\log+n)"> time.
 
 ```python
 print('Ideal point:', pf.ideal())
@@ -474,17 +477,17 @@ Assuming the well-known $O(m \log n)$ average time complexity for search, insert
 | Operation | Front | Archive |
 |-----|------|---------|
 |  Space                     |      <img src="https://render.githubusercontent.com/render/math?math=O(n)">                                  |      <img src="https://render.githubusercontent.com/render/math?math=O(n)"> |
-|  Search                    |      <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)">         |      <img src="https://render.githubusercontent.com/render/math?math=O(\log%20m%2Bm\log%20n)"> |
-|  Insert                    |      <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)">              |      <img src="https://render.githubusercontent.com/render/math?math=O(nm\log%20n)"> |
-|  Delete                    |      <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)">              |      <img src="https://render.githubusercontent.com/render/math?math=O(nm\log%20n)"> |
+|  Search                    |      <img src="https://render.githubusercontent.com/render/math?math=O(m\log+n)">         |      <img src="https://render.githubusercontent.com/render/math?math=O(\log%20m%2Bm\log%20n)"> |
+|  Insert                    |      <img src="https://render.githubusercontent.com/render/math?math=O(m\log+n)">              |      <img src="https://render.githubusercontent.com/render/math?math=O(nm\log%20n)"> |
+|  Delete                    |      <img src="https://render.githubusercontent.com/render/math?math=O(m\log+n)">              |      <img src="https://render.githubusercontent.com/render/math?math=O(nm\log%20n)"> |
 |  Allocation                |      <img src="https://render.githubusercontent.com/render/math?math=O(1)">                                  |      <img src="https://render.githubusercontent.com/render/math?math=O(1)"> |
 |  Deallocation              |      <img src="https://render.githubusercontent.com/render/math?math=O(1)">                                  |      <img src="https://render.githubusercontent.com/render/math?math=O(1)"> |
 |  Extreme value             |      <img src="https://render.githubusercontent.com/render/math?math=O(1)">                                  |      <img src="https://render.githubusercontent.com/render/math?math=O(1)"> |
-|  Extreme element           |      <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)">                    |      <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)"> |
+|  Extreme element           |      <img src="https://render.githubusercontent.com/render/math?math=O(m\log+n)">                    |      <img src="https://render.githubusercontent.com/render/math?math=O(m\log+n)"> |
 |  Extreme point             |      <img src="https://render.githubusercontent.com/render/math?math=O(m)">                                  |      <img src="https://render.githubusercontent.com/render/math?math=O(m)"> |
-|  Next Nearest Element      |      <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)">                  |      <img src="https://render.githubusercontent.com/render/math?math=O(nm\log%20n)"> |
-|  Next Query Element        |      <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)">                    |      <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)"> |
-|  Front Dominance           |      <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)">                    |      <img src="https://render.githubusercontent.com/render/math?math=O(m\logn)"> |
+|  Next Nearest Element      |      <img src="https://render.githubusercontent.com/render/math?math=O(m\log+n)">                  |      <img src="https://render.githubusercontent.com/render/math?math=O(nm\log%20n)"> |
+|  Next Query Element        |      <img src="https://render.githubusercontent.com/render/math?math=O(m\log+n)">                    |      <img src="https://render.githubusercontent.com/render/math?math=O(m\log+n)"> |
+|  Front Dominance           |      <img src="https://render.githubusercontent.com/render/math?math=O(m\log+n)">                    |      <img src="https://render.githubusercontent.com/render/math?math=O(m\log+n)"> |
 |  Exact hypervolume         |      <img src="https://render.githubusercontent.com/render/math?math=O(n^{m-2}\log%20n)">        |      <img src="https://render.githubusercontent.com/render/math?math=O(n^{m-2}\log%20n)"> |
 |  Monte-Carlo hypervolume   |      <img src="https://render.githubusercontent.com/render/math?math=O(sm\log%20n)">                |      <img src="https://render.githubusercontent.com/render/math?math=O(sm\log%20n)"> |
 |  C-metric                  |      <img src="https://render.githubusercontent.com/render/math?math=O(nm\log%20n)">                |      <img src="https://render.githubusercontent.com/render/math?math=O(nm\log%20n)"> |
@@ -494,7 +497,7 @@ Assuming the well-known $O(m \log n)$ average time complexity for search, insert
 
 ## Benchmarks
 
-The default tag for fronts and archives is converted to an appropriate data structure according the the parameters. This section presents some benchmarks comparing these data structures. We use the notation `L`, `Q`, `K`, `B`, `R`, and `*` for Lists, Quadtrees, $k$-d trees, Boost.Geomtry R-trees, Point R-trees, and R*-Trees. The tree data structures in the benchmark used a [memory pool allocator](sources/pareto_front/memory_pool.h). If using this code in production, it is more prudent to use `std::pmr::unsynchronized_pool_resource`, `std::allocator`, or execute *many* tests to make sure `pareto::fast_memory_pool` is works properly on your system.
+The default tag for fronts and archives is converted to an appropriate data structure according to the front or archive parameters. This section presents some benchmarks comparing these data structures. We use the notation `L`, `Q`, `K`, `B`, `R`, and `*` for Lists, Quadtrees, $k$-d trees, Boost.Geomtry R-trees, Point R-trees, and R*-Trees. The tree data structures in the benchmark used a [memory pool allocator](sources/pareto_front/memory_pool.h) for faster allocation. This is intented to make trees more competitive with linear lists for small fronts. If using this code in production, it is more prudent to use [`std::pmr::unsynchronized_pool_resource`](https://en.cppreference.com/w/cpp/memory/unsynchronized_pool_resource/unsynchronized_pool_resource) (if your compiler supports it), [`std::allocator`](https://en.cppreference.com/w/cpp/memory/allocator) (if you want to be conservative), or execute *many* tests to make sure [`pareto::fast_memory_pool`](sources/pareto_front/memory_pool.h) works properly on your system.
 
 <details>
     <summary>Constructor</summary>

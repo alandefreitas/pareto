@@ -8,9 +8,13 @@ assignees: ''
 ---
 
 **Feature category**
-- [ ] *enhancement - code*
+- [ ] *enhancement - indicators*
+- [ ] *enhancement - data structures*
+- [ ] *enhancement - bindings*
 - [ ] *enhancement - build system*
 - [ ] *enhancement - documentation*
+- [ ] *enhancement - query types*
+- [ ] *enhancement - dominance types*
 
 **The problem**
 <!--Please be civil. This is an environment for collaboration.-->
