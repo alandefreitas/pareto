@@ -637,7 +637,7 @@ import pyfront
  
 or link your C++ program to the library and include the directories where you installed pareto-front. 
 
-Unless you changed the default options, the C++ library is likely to be in `/usr/local/` (Linux / Mac OS) or `C:/Program Files/` (Windows).
+Unless you changed the default options, the C++ library is likely to be in `/usr/local/` (Linux / Mac OS) or `C:/Program Files/` (Windows). The installer will try to find the directory where you usually keep your  libraries but that's not always perfect.
 
 If you are using CMake, you can then find pareto-front with the usual `find_package` command:
 
@@ -1013,6 +1013,16 @@ There are many ways in which you can contribute to this library:
 * New spacial data structures <sup>see [1](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22enhancement+-+data+structures%22) </sup>
 * Finding bugs in general <sup>see [1](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug+-+compilation+error%22), [2](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug+-+compilation+warning%22), [3](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug+-+runtime+error%22), [4](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug+-+runtime+warning%22) </sup>
 * Whatever idea seems interesting to you
+
+If contributing with code, please leave the pedantic mode ON (`-DBUILD_WITH_PEDANTIC_WARNINGS=ON`).
+
+<details>
+    <summary>Example: CLion</summary>
+    
+![CLion Settings with Pedantic Mode](./documentation/img/pedantic_clion.png)
+    
+</details>
+
 
 ## Thanks
 
