@@ -14,8 +14,8 @@ include(GNUInstallDirs)
 # Note that CPM will try to find the packages locally before downloading them
 # This avoids ODR problems
 option(CPM_USE_LOCAL_PACKAGES "Try `find_package` before downloading dependencies" ON)
-
 include(cmake/CPM.cmake)
+
 # Check if this a master project or a subdirectory of another project
 if (${CMAKE_CURRENT_SOURCE_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
     set(MASTER_PROJECT ON)
@@ -61,15 +61,6 @@ message("MAX_NUM_DIMENSIONS_PYTHON=${MAX_NUM_DIMENSIONS_PYTHON}")
 option(BUILD_BINDING_FOR_ALL_STRUCTURES "Make all data structures available in the Python bindings" ON)
 
 option(BUILD_FRONTS_WITH_TRASE "Trase includes functions to plot pareto fronts. These were only used for the documentation." OFF)
-
-option(OPTIMIZE_RELEASE_CODE_BY_DEFAULT "Turn on optimization flags by default if we are in Release" ON)
-if (OPTIMIZE_RELEASE_CODE_BY_DEFAULT)
-    if (MSVC)
-        set(CMAKE_CXX_FLAGS_RELEASE "/O2")
-    else()
-        set(CMAKE_CXX_FLAGS_RELEASE "-O2")
-    endif()
-endif()
 
 option(BUILD_WITH_PEDANTIC_WARNINGS "Use pedantic warnings. This is useful for developers because many of these warnings will be in continuous integration anyway." ${DEBUG_MODE})
 option(BUILD_WITH_UTF8 "Accept utf-8 in MSVC by default." ON)
