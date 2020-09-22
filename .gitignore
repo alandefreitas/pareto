@@ -1,11 +1,48 @@
+# Build directories
+build
 cmake-build-debug
 cmake-build-release
 cmake-build-*
-codealike.json
-.idea
-gh-md-toc
 build*/
-CMakeLists.txt.user
 out
-CMakeSettings.json
+
+# IDE settings
+.idea
+codealike.json
 .vs
+CMakeLists.txt.user
+CMakeSettings.json
+gh-md-toc
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
