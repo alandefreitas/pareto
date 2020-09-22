@@ -44,7 +44,7 @@ Some use cases are to store objects with the best values according to the follow
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-<details markdown="1">
+<details>
 <summary>Table of Contents</summary>
 
 - [Design goals](#design-goals)
