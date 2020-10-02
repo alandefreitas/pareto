@@ -4,32 +4,11 @@
 [![Latest Release](https://img.shields.io/github/release/alandefreitas/pareto-front.svg?label=Download)](https://GitHub.com/alandefreitas/pareto-front/releases/)
 [![Website lbesson.bitbucket.org](https://img.shields.io/website-up-down-green-red/http/alandefreitas.github.io/pareto-front.svg?label=Documentation)](https://alandefreitas.github.io/pareto-front/)
 
-![Two-dimensional front](documentation/img/front2d_b.svg)
+![Two-dimensional front](docs/img/front2d_b.svg)
 
-<!--The problem-->
-Containers for Pareto fronts and archives can store objects simultaneously sorted according to multiple criteria. These fronts can conceptually represent any situation where there is a trade-off between the quality of multiple objectives.   
-
-<!--Why it's interesting-->
-Whenever we push an element to a front, all other elements that might be worse in all dimensions (the dominated points) are automatically removed from the set. A Pareto archive is a set of fronts for caching objects. Whenever we push an element better than the some others in all dimensions, the dominated objects are cached in higher archive fronts. 
-
-<!--Why it's not solved yet-->
-While there are many libraries for multi-objective optimization, there are no libraries focused on efficient container types for storing these fronts in general applications.
-
-<!--What this library does-->
+Containers based on Pareto efficiency simultaneously consider many criteria where we cannot improve one criterion without making at least one other criterion worse off. New elements can either replace elements that are worse at all criteria or send them to a higher-level archive front. While there are many libraries for multi-objective optimization, there are no libraries focused on efficient container types for storing these fronts in general applications.
 This library provides a STL-like container representing a data structure to cache and query multi-dimensional Pareto fronts and archives with its most expensive operations in <img src="https://render.githubusercontent.com/render/math?math=O(n+\log+n)"> time.
 
-Some use cases are to store objects with the best values according to the following trade-offs:
-
-* Machine Learning: Model accuracy vs. model complexity
-* Approximation algorithms: error vs. time
-* Product design: investment vs. profit vs. safety 
-* P2P networks: latency vs. trust 
-* Robust optimization: quality vs. sensitivity / robustness  
-* Design: Mean quality vs. standard deviation
-* Systems control: Performance vs. price vs. quality
-* Portfolio optimization: expected return vs. risk
-* [More...](https://en.wikipedia.org/wiki/Multi-objective_optimization#Examples_of_applications)
-  
 <!-- https://github.com/bradvin/social-share-urls -->
 [![Facebook](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+Facebook&logo=facebook)](https://www.facebook.com/sharer/sharer.php?t=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python&u=https://github.com/alandefreitas/pareto-front/)
 [![QZone](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+QZone&logo=qzone)](http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=https://github.com/alandefreitas/pareto-front/&title=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python&summary=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
@@ -72,6 +51,20 @@ Some use cases are to store objects with the best values according to the follow
 </details>
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
+## Use cases
+
+Some use cases are to store objects with their best values according to the following trade-offs:
+
+* Machine Learning: Model accuracy vs. model complexity
+* Approximation algorithms: error vs. time
+* Product design: investment vs. profit vs. safety 
+* P2P networks: latency vs. trust 
+* Robust optimization: quality vs. sensitivity / robustness  
+* Design: Mean quality vs. standard deviation
+* Systems control: Performance vs. price vs. quality
+* Portfolio optimization: expected return vs. risk
+* [More...](https://en.wikipedia.org/wiki/Multi-objective_optimization#Examples_of_applications)
+
 ## Design goals
 
 - Intuitive syntax: interface like any other native data structure.
@@ -103,7 +96,7 @@ front<double, 2, unsigned> pf;
 
 This is a 2-dimensional front with a few elements:
 
-![2-dimensional front](documentation/img/front2d_b.svg)
+![2-dimensional front](docs/img/front2d_b.svg)
 
 If you need to actually plot these fronts, have a look at [Matplot++](https://github.com/alandefreitas/matplotplusplus) or [Matplotlib](https://matplotlib.org). In particular, have a look at Scatter Plots for two-dimensional fronts, Plot matrices for three-dimensional fronts, or Parallel Coordinate Plots for many-objective fronts.
                                                                    
@@ -140,7 +133,7 @@ cout << "Dimension 1 is " << (pf.is_maximization(1) ? "maximization" : "not maxi
 
 If we set all directions to `maximization`, this is what a 2-dimensional front looks like: 
 
-![2-dimensional front](documentation/img/front2d.svg)
+![2-dimensional front](docs/img/front2d.svg)
 
 The interface permits choosing a specific data structure for the front through tags:
 
@@ -274,7 +267,7 @@ cout << it->first << " -> " << it->second << endl;
 
 A solution `x1` (weakly) dominates `x2` if it `x1` is 1) better than `x2` in at least one dimension and 2) not worse than `x2` in any dimension:
 
-![Point/point dominance](documentation/img/point_dominance.svg)
+![Point/point dominance](docs/img/point_dominance.svg)
 
 We can check the dominance relationships between points with:
 
@@ -298,7 +291,7 @@ The `point` function (Python) and the `point_type` alias (C++) are shortcuts to 
 
 We can also check for dominance between fronts and points:
 
-![Front/point dominance](documentation/img/pareto_dominance.svg)
+![Front/point dominance](docs/img/pareto_dominance.svg)
 
 ```python
 print('pf dominates p2' if pf.dominates(p2) else 'pf does not dominate p2')
@@ -514,114 +507,114 @@ The default tag for fronts and archives is converted to an appropriate data stru
 <details>
     <summary>Constructor</summary>
 
-![Construct (n=50)](documentation/img/construct_n_50.png)
-![Construct (n=500)](documentation/img/construct_n_500.png)
-![Construct (n=5000)](documentation/img/construct_n_5000.png)
+![Construct (n=50)](docs/img/construct_n_50.png)
+![Construct (n=500)](docs/img/construct_n_500.png)
+![Construct (n=5000)](docs/img/construct_n_5000.png)
 
 </details>
 
 <details>
     <summary>Insert</summary>
 
-![Insertion (n=50)](documentation/img/insertion_n_50.png)
-![Insertion (n=500)](documentation/img/insertion_n_500.png)
-![Insertion (n=5000)](documentation/img/insertion_n_5000.png)
+![Insertion (n=50)](docs/img/insertion_n_50.png)
+![Insertion (n=500)](docs/img/insertion_n_500.png)
+![Insertion (n=5000)](docs/img/insertion_n_5000.png)
 
 </details>
 
 <details>
     <summary>Delete</summary>
 
-![Removal (n=50)](documentation/img/removal_n_50.png)
-![Removal (n=500)](documentation/img/removal_n_500.png)
-![Removal (n=5000)](documentation/img/removal_n_5000.png)
+![Removal (n=50)](docs/img/removal_n_50.png)
+![Removal (n=500)](docs/img/removal_n_500.png)
+![Removal (n=5000)](docs/img/removal_n_5000.png)
 
 </details>
 
 <details>
     <summary>Test dominance</summary>
 
-![Check dominance (n=50)](documentation/img/check_dominance_n_50.png)
-![Check dominance (n=500)](documentation/img/check_dominance_n_500.png)
-![Check dominance (n=5000)](documentation/img/check_dominance_n_5000.png)
+![Check dominance (n=50)](docs/img/check_dominance_n_50.png)
+![Check dominance (n=500)](docs/img/check_dominance_n_500.png)
+![Check dominance (n=5000)](docs/img/check_dominance_n_5000.png)
 
 </details>
 
 <details>
     <summary>Query and iterate</summary>
 
-![Query and iterate (n=50)](documentation/img/query_n_50.png)
-![Query and iterate (n=500)](documentation/img/query_n_500.png)
-![Query and iterate (n=5000)](documentation/img/query_n_5000.png)
+![Query and iterate (n=50)](docs/img/query_n_50.png)
+![Query and iterate (n=500)](docs/img/query_n_500.png)
+![Query and iterate (n=5000)](docs/img/query_n_5000.png)
 
 </details>
 
 <details>
     <summary>Nearest points</summary>
 
-![Find nearest 5 and iterate (n=50)](documentation/img/nearest_n_50.png)
-![Find nearest 5 and iterate (n=500)](documentation/img/nearest_n_500.png)
-![Find nearest 5 and iterate (n=5000)](documentation/img/nearest_n_5000.png)
+![Find nearest 5 and iterate (n=50)](docs/img/nearest_n_50.png)
+![Find nearest 5 and iterate (n=500)](docs/img/nearest_n_500.png)
+![Find nearest 5 and iterate (n=5000)](docs/img/nearest_n_5000.png)
 
 </details>
 
 <details>
     <summary>IGD indicator</summary>
 
-![IGD (n=50)](documentation/img/igd_n_50.png)
-![IGD (n=500)](documentation/img/igd_n_500.png)
-![IGD (n=5000)](documentation/img/igd_n_5000.png)
+![IGD (n=50)](docs/img/igd_n_50.png)
+![IGD (n=500)](docs/img/igd_n_500.png)
+![IGD (n=5000)](docs/img/igd_n_5000.png)
 
 </details>
 
 <details>
     <summary>Hypervolume: Time</summary>
 
-![Hypervolume (m=1)](documentation/img/hypervolume_m_1.png)
-![Hypervolume (m=2)](documentation/img/hypervolume_m_2.png)
-![Hypervolume (m=3)](documentation/img/hypervolume_m_3.png)
-![Hypervolume (m=5)](documentation/img/hypervolume_m_5.png)
-![Hypervolume (m=9)](documentation/img/hypervolume_m_9.png)
+![Hypervolume (m=1)](docs/img/hypervolume_m_1.png)
+![Hypervolume (m=2)](docs/img/hypervolume_m_2.png)
+![Hypervolume (m=3)](docs/img/hypervolume_m_3.png)
+![Hypervolume (m=5)](docs/img/hypervolume_m_5.png)
+![Hypervolume (m=9)](docs/img/hypervolume_m_9.png)
 
 </details>
 
 <details>
     <summary>Hypervolume: Gap from the exact hypervolume</summary>
 
-![Hypervolume Gap](documentation/img/hypervolume_gap.png)
+![Hypervolume Gap](docs/img/hypervolume_gap.png)
 
 </details>
 
 <details>
     <summary>Operations</summary>
 
-![Operation Averages (n=50)](documentation/img/op_averages_n_50.png)
-![Operation Averages (n=500)](documentation/img/op_averages_n_500.png)
-![Operation Averages (n=5000)](documentation/img/op_averages_n_5000.png)
+![Operation Averages (n=50)](docs/img/op_averages_n_50.png)
+![Operation Averages (n=500)](docs/img/op_averages_n_500.png)
+![Operation Averages (n=5000)](docs/img/op_averages_n_5000.png)
 
 </details>
 
 <details>
     <summary>Data structures</summary>
 
-![Data Structure Averages (n=50,m=1)](documentation/img/structure_averages_n_50_m_1.png)
-![Data Structure Averages (n=50,m=2)](documentation/img/structure_averages_n_50_m_2.png)
-![Data Structure Averages (n=50,m=3)](documentation/img/structure_averages_n_50_m_3.png)
-![Data Structure Averages (n=50,m=5)](documentation/img/structure_averages_n_50_m_5.png)
-![Data Structure Averages (n=50,m=9)](documentation/img/structure_averages_n_50_m_9.png)
-![Data Structure Averages (n=50,m=13)](documentation/img/structure_averages_n_50_m_13.png)
-![Data Structure Averages (n=500,m=1)](documentation/img/structure_averages_n_500_m_1.png)
-![Data Structure Averages (n=500,m=2)](documentation/img/structure_averages_n_500_m_2.png)
-![Data Structure Averages (n=500,m=3)](documentation/img/structure_averages_n_500_m_3.png)
-![Data Structure Averages (n=500,m=5)](documentation/img/structure_averages_n_500_m_5.png)
-![Data Structure Averages (n=500,m=9)](documentation/img/structure_averages_n_500_m_9.png)
-![Data Structure Averages (n=500,m=13)](documentation/img/structure_averages_n_500_m_13.png)
-![Data Structure Averages (n=5000,m=1)](documentation/img/structure_averages_n_5000_m_1.png)
-![Data Structure Averages (n=5000,m=2)](documentation/img/structure_averages_n_5000_m_2.png)
-![Data Structure Averages (n=5000,m=3)](documentation/img/structure_averages_n_5000_m_3.png)
-![Data Structure Averages (n=5000,m=5)](documentation/img/structure_averages_n_5000_m_5.png)
-![Data Structure Averages (n=5000,m=9)](documentation/img/structure_averages_n_5000_m_9.png)
-![Data Structure Averages (n=5000,m=13)](documentation/img/structure_averages_n_5000_m_13.png)
+![Data Structure Averages (n=50,m=1)](docs/img/structure_averages_n_50_m_1.png)
+![Data Structure Averages (n=50,m=2)](docs/img/structure_averages_n_50_m_2.png)
+![Data Structure Averages (n=50,m=3)](docs/img/structure_averages_n_50_m_3.png)
+![Data Structure Averages (n=50,m=5)](docs/img/structure_averages_n_50_m_5.png)
+![Data Structure Averages (n=50,m=9)](docs/img/structure_averages_n_50_m_9.png)
+![Data Structure Averages (n=50,m=13)](docs/img/structure_averages_n_50_m_13.png)
+![Data Structure Averages (n=500,m=1)](docs/img/structure_averages_n_500_m_1.png)
+![Data Structure Averages (n=500,m=2)](docs/img/structure_averages_n_500_m_2.png)
+![Data Structure Averages (n=500,m=3)](docs/img/structure_averages_n_500_m_3.png)
+![Data Structure Averages (n=500,m=5)](docs/img/structure_averages_n_500_m_5.png)
+![Data Structure Averages (n=500,m=9)](docs/img/structure_averages_n_500_m_9.png)
+![Data Structure Averages (n=500,m=13)](docs/img/structure_averages_n_500_m_13.png)
+![Data Structure Averages (n=5000,m=1)](docs/img/structure_averages_n_5000_m_1.png)
+![Data Structure Averages (n=5000,m=2)](docs/img/structure_averages_n_5000_m_2.png)
+![Data Structure Averages (n=5000,m=3)](docs/img/structure_averages_n_5000_m_3.png)
+![Data Structure Averages (n=5000,m=5)](docs/img/structure_averages_n_5000_m_5.png)
+![Data Structure Averages (n=5000,m=9)](docs/img/structure_averages_n_5000_m_9.png)
+![Data Structure Averages (n=5000,m=13)](docs/img/structure_averages_n_5000_m_13.png)
 
 </details>
 
@@ -987,8 +980,6 @@ If you want to rewrite the build script, your project needs to 1) include the he
 
 Then add this header to your source files:
 
-Then add this header to your source files:
-
 ```cpp
 #include <pareto_front/front.h>
 ```
@@ -1033,7 +1024,7 @@ If contributing with code, please leave the pedantic mode ON (`-DBUILD_WITH_PEDA
 <details>
     <summary>Example: CLion</summary>
     
-![CLion Settings with Pedantic Mode](./documentation/img/pedantic_clion.png)
+![CLion Settings with Pedantic Mode](docs/img/pedantic_clion.png)
     
 </details>
 

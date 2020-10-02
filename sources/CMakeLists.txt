@@ -1,3 +1,6 @@
+#######################################################
+### Dependencies                                    ###
+#######################################################
 # - Trase library
 # This is a package for svg plots
 # We only use this for the documentation
@@ -29,7 +32,9 @@ endif()
 
 find_package(Threads)
 
-# Pareto front container
+#######################################################
+### Library                                         ###
+#######################################################
 add_library(pareto_front INTERFACE)
 
 target_include_directories(pareto_front
@@ -61,7 +66,9 @@ if (BUILD_WITH_PEDANTIC_WARNINGS)
 endif()
 
 
-# Install
+#######################################################
+### Installer                                       ###
+#######################################################
 if(BUILD_INSTALLER)
     # Install hv and pareto_front targets
     # Because pareto_front is INTERFACE, this installs no artifacts
