@@ -29,3 +29,14 @@ if (MSVC)
     target_compile_options(example_archive3d PRIVATE /EHsc)
 endif()
 
+find_package(Matplot++)
+if (Matplot++_FOUND)
+    add_executable(example_matplotpp matplotpp_example.cpp)
+    target_link_libraries(example_matplotpp pareto_front Matplot++::matplot)
+    if (MSVC)
+        # MSVC requires this flag if the code uses C++ exception handling
+        target_compile_options(example_matplotpp PRIVATE /EHsc)
+    endif()
+endif()
+
+
