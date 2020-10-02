@@ -810,6 +810,14 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
       return py::make_iterator(s.begin(), s.end());
     }, py::keep_alive<0, 1>());
 
+    ar.def("fronts", [](const pareto_archive_type &s) {
+      return py::make_iterator(s.begin_front(), s.end_front());
+    }, py::keep_alive<0, 1>());
+
+    ar.def("fronts", [](pareto_archive_type &s) {
+      return py::make_iterator(s.begin_front(), s.end_front());
+    }, py::keep_alive<0, 1>());
+
     ar.def("__reversed__", [](const pareto_archive_type &s) {
       return py::make_iterator(s.rbegin(), s.rend());
     }, py::keep_alive<0, 1>());
