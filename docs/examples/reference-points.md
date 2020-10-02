@@ -31,5 +31,4 @@ cout << "Nadir point in dimension 1: " << pf.dimension_nadir(1)->first << endl;
 
 
 
-
 <!-- Generated with mdsplit: https://github.com/alandefreitas/mdsplit -->

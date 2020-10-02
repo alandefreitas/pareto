@@ -33,5 +33,4 @@ We use `operator()` for C++ because the `operator[]` does not allow more than on
 
 
 
-
 <!-- Generated with mdsplit: https://github.com/alandefreitas/mdsplit -->

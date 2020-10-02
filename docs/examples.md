@@ -10,7 +10,6 @@ has_toc: false
 For complete examples, see the directory [examples](https://github.com/alandefreitas/pareto-front/blob/master/examples).
 
 
-
 - [Constructing fronts](examples/constructing-fronts.md)
 - [Insertion](examples/insertion.md)
 - [Reference points](examples/reference-points.md)

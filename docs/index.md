@@ -30,7 +30,6 @@ This library provides a STL-like container representing a data structure to cach
 
 
 
-
 - [Use cases](use-cases.md)
 - [Design goals](design-goals.md)
 - [Examples](examples.md)

@@ -86,5 +86,4 @@ front<double, 2, unsigned, r_star_tree_tag> pf;
 
 
 
-
 <!-- Generated with mdsplit: https://github.com/alandefreitas/mdsplit -->
