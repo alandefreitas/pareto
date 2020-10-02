@@ -9,6 +9,6 @@ aux_links:
   "ParetoFront on GitHub":
     - "//github.com/alandefreitas/pareto-front"
 
-aux_links_new_tab: true
+aux_links_new_tab: false
 
 footer_content: "Copyright &copy; Alan Freitas. Distributed by an <a href=\"https://github.com/alandefreitas/pareto-front/tree/master/LICENSE.txt\">MIT license.</a>"
