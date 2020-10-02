@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Queries
-nav_order: 5
+nav_order: 6
 has_children: false
 parent: Examples
 has_toc: false

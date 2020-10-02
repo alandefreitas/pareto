@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Insertion
-nav_order: 2
+nav_order: 3
 has_children: false
 parent: Examples
 has_toc: false

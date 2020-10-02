@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Dominance
-nav_order: 6
+nav_order: 7
 has_children: false
 parent: Examples
 has_toc: false

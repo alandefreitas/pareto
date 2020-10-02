@@ -26,9 +26,7 @@ This is a 2-dimensional front with a few elements:
 
 ![2-dimensional front](../img/front2d_b.svg)
 
-If you need to actually plot these fronts, have a look at [Matplot++](https://github.com/alandefreitas/matplotplusplus) or [Matplotlib](https://matplotlib.org). In particular, have a look at Scatter Plots for two-dimensional fronts, Plot matrices for three-dimensional fronts, or Parallel Coordinate Plots for many-objective fronts.
-                                                                   
-Note that the front dimension is defined at compile-time. Using the results from our benchmarks (See Section [Benchmarks](../benchmarks.md)), the default constructor will choose an appropriate spatial index to represent the front. Also, like a C++ `map` or a Python `dict`, each point in space is associated with an object. In your application, `unsigned` would probably be replaced by a pointer to an object that has the `double` attributes. 
+If you need to plot these fronts, [`examples/matplotpp_example.cpp`](https://github.com/alandefreitas/pareto-front/blob/master/examples/matplotpp_example.cpp) includes an example that uses [Matplot++](https://github.com/alandefreitas/matplotplusplus). In Python, you can use [Matplotlib](https://matplotlib.org).
 
 If the dimensions are not supposed to be minimized, we can define one optimization direction for each dimension:
 
@@ -63,25 +61,17 @@ If we set all directions to `maximization`, this is what a 2-dimensional front l
 
 ![2-dimensional front](../img/front2d.svg)
 
-The interface permits choosing a specific data structure for the front through tags:
+And these are the combinations for two-dimensional fronts:
 
-```python
-pf = pyfront.front('list', 2)
-pf = pyfront.front('quadtree', 2)
-pf = pyfront.front('kdtree', 2)
-pf = pyfront.front('boostrtree', 2)
-pf = pyfront.front('rtree', 2)
-pf = pyfront.front('rstartree', 2)
-```
+![2-dimensional front](../img/front2d_directions.svg)
 
-```cpp
-front<double, 2, unsigned, vector_tree_tag> pf;
-front<double, 2, unsigned, quad_tree_tag> pf;
-front<double, 2, unsigned, kd_tree_tag> pf;
-front<double, 2, unsigned, boost_tree_tag> pf;
-front<double, 2, unsigned, r_tree_tag> pf;
-front<double, 2, unsigned, r_star_tree_tag> pf;
-```
+In more than two dimensions, we usually represent the fronts with parallel coordinates:
+
+![2-dimensional front](../img/front3d.svg)
+
+It's often useful to cache elements even if they are not in the Pareto front. For instance, we might need a replacement for an element in the front that's not longer available, or few elements might make it to the more and we might need more options. In these cases, you can use [Pareto archives](archives.md) to keep track of the elements which are second-best, third-best, ....
+
+![2-dimensional front](../img/archive2d.svg)
 
 
 

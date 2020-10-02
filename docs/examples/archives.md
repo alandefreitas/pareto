@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Archives
-nav_order: 8
+nav_order: 9
 has_children: false
 parent: Examples
 has_toc: false

@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Indicators
-nav_order: 7
+nav_order: 8
 has_children: false
 parent: Examples
 has_toc: false

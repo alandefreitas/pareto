@@ -11,6 +11,7 @@ For complete examples, see the directory [examples](https://github.com/alandefre
 
 
 - [Constructing fronts](examples/constructing-fronts.md)
+- [Data Structures](examples/data-structures.md)
 - [Insertion](examples/insertion.md)
 - [Reference points](examples/reference-points.md)
 - [Iterators](examples/iterators.md)

@@ -9,7 +9,7 @@ has_toc: false
 
 > Efficient Pareto fronts and archives for Python and C++
 
-[![Two-dimensional front](img/front2d_b.svg)](https://alandefreitas.github.io/pareto-front/)
+[![Two-dimensional front](img/pareto_cover.svg)](https://alandefreitas.github.io/pareto-front/)
 
 <br/>
 
@@ -44,6 +44,7 @@ This library provides a STL-like container representing a data structure to cach
 - [Design goals](design-goals.md)
 - [Examples](examples.md)
   - [Constructing fronts](examples/constructing-fronts.md)
+  - [Data Structures](examples/data-structures.md)
   - [Insertion](examples/insertion.md)
   - [Reference points](examples/reference-points.md)
   - [Iterators](examples/iterators.md)
