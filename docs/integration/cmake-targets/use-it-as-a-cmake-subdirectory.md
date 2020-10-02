@@ -51,5 +51,4 @@ However, it's always recommended to look for ParetoFront with `find_package` bef
 
 
 
-
 <!-- Generated with mdsplit: https://github.com/alandefreitas/mdsplit -->

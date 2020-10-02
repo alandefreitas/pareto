@@ -80,5 +80,4 @@ cout << (pf.is_completely_dominated_by(pf2) ? "pf is completely dominated by pf2
 
 
 
-
 <!-- Generated with mdsplit: https://github.com/alandefreitas/mdsplit -->

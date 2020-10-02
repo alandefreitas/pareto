@@ -52,5 +52,4 @@ target_link_libraries(my_target PUBLIC pareto_front)
 
 
 
-
 <!-- Generated with mdsplit: https://github.com/alandefreitas/mdsplit -->

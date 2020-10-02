@@ -70,5 +70,4 @@ Assuming the well-known <img src="https://render.githubusercontent.com/render/ma
 
 
 
-
 <!-- Generated with mdsplit: https://github.com/alandefreitas/mdsplit -->

@@ -99,5 +99,4 @@ cout << "Normalized conflict: " << pf.normalized_conflict(0,1) << endl;
 
 
 
-
 <!-- Generated with mdsplit: https://github.com/alandefreitas/mdsplit -->

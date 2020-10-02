@@ -8,7 +8,6 @@ has_toc: false
 # Integration
 
 
-
 - [Packages](integration/packages.md)
 - [Build from source](integration/build-from-source.md)
   - [Dependencies](integration/build-from-source/dependencies.md)

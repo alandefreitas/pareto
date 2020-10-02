@@ -9,7 +9,6 @@ has_toc: false
 # Build from source
 
 
-
 - [Dependencies](build-from-source/dependencies.md)
 - [Build the Examples](build-from-source/build-the-examples.md)
 - [Installing pareto-front from Source](build-from-source/installing-pareto-front-from-source.md)

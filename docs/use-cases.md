@@ -22,5 +22,4 @@ Some use cases are to store objects with their best values according to the foll
 
 
 
-
 <!-- Generated with mdsplit: https://github.com/alandefreitas/mdsplit -->
