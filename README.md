@@ -26,6 +26,7 @@ This library provides a STL-like container representing a data structure to cach
 <details>
 <summary>Table of Contents</summary>
 
+- [Use cases](#use-cases)
 - [Design goals](#design-goals)
 - [Examples](#examples)
   - [Constructing fronts](#constructing-fronts)
