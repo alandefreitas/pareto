@@ -40,6 +40,7 @@ This library provides a STL-like container representing a data structure to cach
 - [Design goals](#design-goals)
 - [Examples](#examples)
   - [Constructing fronts](#constructing-fronts)
+  - [Data Structures](#data-structures)
   - [Insertion](#insertion)
   - [Reference points](#reference-points)
   - [Iterators](#iterators)
