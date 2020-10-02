@@ -84,6 +84,8 @@ int main() {
     matplot::hold(false);
 
     // Compare fronts and archives
+    auto f = matplot::gcf();
+    f->width(f->width() * 1.5);
     auto ax = matplot::subplot(2,2,0);
     ax->clear();
     matplot::gcf()->current_axes(ax);
