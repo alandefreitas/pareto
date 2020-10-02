@@ -18,7 +18,15 @@ ar = pyfront.archive(2, 100)
 archive<double, 2, unsigned> ar(100);
 ```
 
-The archive interface has the same functions as the front interface: insertion, removal, and searching operations identify the proper front for the elements; functions for indicators and dominance relationships use the first fronts as reference.
+![2-dimensional front](../img/archive2d.svg)
+
+The archives have the functions `begin()`/`end()` to iterate their elements, and `begin_front()`/`end_front()` to iterate their fronts.
+
+The container makes sure the archive never has more elements than allowed by the `max_size` parameter. If the capacity is about the exceed, the container will remove the element in the most crowded region of the worst front in the archive.
+
+If we insert a new element to the archive, and this element dominates other solutions in the archive, the container makes sure the dominated elements move to higher fronts efficiently.
+
+The archive interface has all functions a usual front has: insertion, removal, and querying. Searching operations identify the proper front for the elements. Functions for indicators and dominance relationships use the first fronts as reference.
 
 
 
