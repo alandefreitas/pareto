@@ -11,7 +11,7 @@ has_toc: false
 
 - [Dependencies](build-from-source/dependencies.md)
 - [Build the Examples](build-from-source/build-the-examples.md)
-- [Installing pareto-front from Source](build-from-source/installing-pareto-front-from-source.md)
+- [Installing pareto from Source](build-from-source/installing-pareto-from-source.md)
 - [Building the packages](build-from-source/building-the-packages.md)
 
 

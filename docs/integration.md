@@ -12,7 +12,7 @@ has_toc: false
 - [Build from source](integration/build-from-source.md)
   - [Dependencies](integration/build-from-source/dependencies.md)
   - [Build the Examples](integration/build-from-source/build-the-examples.md)
-  - [Installing pareto-front from Source](integration/build-from-source/installing-pareto-front-from-source.md)
+  - [Installing pareto from Source](integration/build-from-source/installing-pareto-from-source.md)
   - [Building the packages](integration/build-from-source/building-the-packages.md)
 - [CMake targets](integration/cmake-targets.md)
   - [Find it as a CMake Package](integration/cmake-targets/find-it-as-a-cmake-package.md)

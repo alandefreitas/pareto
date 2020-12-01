@@ -9,7 +9,7 @@ has_toc: false
 
 > Efficient Pareto fronts and archives for Python and C++
 
-[![Two-dimensional front](img/pareto_cover.svg)](https://alandefreitas.github.io/pareto-front/)
+[![Two-dimensional front](img/pareto_cover.svg)](https://alandefreitas.github.io/pareto/)
 
 <br/>
 
@@ -18,23 +18,23 @@ This library provides a STL-like container representing a data structure to cach
 
 <br/>
 
-[![Build Status](https://img.shields.io/github/workflow/status/alandefreitas/pareto-front/ParetoFront?event=push&label=Build&logo=Github-Actions)](https://github.com/alandefreitas/pareto-front/actions?query=workflow%3AParetoFront+event%3Apush)
-[![Latest Release](https://img.shields.io/github/release/alandefreitas/pareto-front.svg?label=Download)](https://GitHub.com/alandefreitas/pareto-front/releases/)
-[![Website lbesson.bitbucket.org](https://img.shields.io/website-up-down-green-red/http/alandefreitas.github.io/pareto-front.svg?label=Documentation)](https://alandefreitas.github.io/pareto-front/)
+[![Build Status](https://img.shields.io/github/workflow/status/alandefreitas/pareto/ParetoFront?event=push&label=Build&logo=Github-Actions)](https://github.com/alandefreitas/pareto/actions?query=workflow%3AParetoFront+event%3Apush)
+[![Latest Release](https://img.shields.io/github/release/alandefreitas/pareto.svg?label=Download)](https://GitHub.com/alandefreitas/pareto/releases/)
+[![Website lbesson.bitbucket.org](https://img.shields.io/website-up-down-green-red/http/alandefreitas.github.io/pareto.svg?label=Documentation)](https://alandefreitas.github.io/pareto/)
 
 <br/>
 
 <!-- https://github.com/bradvin/social-share-urls -->
-[![Facebook](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+Facebook&logo=facebook)](https://www.facebook.com/sharer/sharer.php?t=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python&u=https://github.com/alandefreitas/pareto-front/)
-[![QZone](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+QZone&logo=qzone)](http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=https://github.com/alandefreitas/pareto-front/&title=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python&summary=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
-[![Weibo](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+Weibo&logo=sina-weibo)](http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=https://github.com/alandefreitas/pareto-front/&title=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python&summary=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
-[![Reddit](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+Reddit&logo=reddit)](http://www.reddit.com/submit?url=https://github.com/alandefreitas/pareto-front/&title=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
-[![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?label=Share+on+Twitter&style=social)](https://twitter.com/intent/tweet?text=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python&url=https://github.com/alandefreitas/pareto-front/&hashtags=MOO,MultiObjectiveOptimization,Cpp,ScientificComputing,Optimization,Developers)
-[![LinkedIn](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+LinkedIn&logo=linkedin)](https://www.linkedin.com/shareArticle?mini=false&url=https://github.com/alandefreitas/pareto-front/&title=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
-[![WhatsApp](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+WhatsApp&logo=whatsapp)](https://api.whatsapp.com/send?text=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python:+https://github.com/alandefreitas/pareto-front/)
-[![Line.me](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+Line.me&logo=line)](https://lineit.line.me/share/ui?url=https://github.com/alandefreitas/pareto-front/&text=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
-[![Telegram.me](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+Telegram.me&logo=telegram)](https://telegram.me/share/url?url=https://github.com/alandefreitas/pareto-front/&text=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
-[![HackerNews](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+HackerNews&logo=y-combinator)](https://news.ycombinator.com/submitlink?u=https://github.com/alandefreitas/pareto-front/&t=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
+[![Facebook](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+Facebook&logo=facebook)](https://www.facebook.com/sharer/sharer.php?t=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python&u=https://github.com/alandefreitas/pareto/)
+[![QZone](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+QZone&logo=qzone)](http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=https://github.com/alandefreitas/pareto/&title=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python&summary=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
+[![Weibo](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+Weibo&logo=sina-weibo)](http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=https://github.com/alandefreitas/pareto/&title=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python&summary=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
+[![Reddit](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+Reddit&logo=reddit)](http://www.reddit.com/submit?url=https://github.com/alandefreitas/pareto/&title=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
+[![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?label=Share+on+Twitter&style=social)](https://twitter.com/intent/tweet?text=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python&url=https://github.com/alandefreitas/pareto/&hashtags=MOO,MultiObjectiveOptimization,Cpp,ScientificComputing,Optimization,Developers)
+[![LinkedIn](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+LinkedIn&logo=linkedin)](https://www.linkedin.com/shareArticle?mini=false&url=https://github.com/alandefreitas/pareto/&title=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
+[![WhatsApp](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+WhatsApp&logo=whatsapp)](https://api.whatsapp.com/send?text=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python:+https://github.com/alandefreitas/pareto/)
+[![Line.me](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+Line.me&logo=line)](https://lineit.line.me/share/ui?url=https://github.com/alandefreitas/pareto/&text=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
+[![Telegram.me](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+Telegram.me&logo=telegram)](https://telegram.me/share/url?url=https://github.com/alandefreitas/pareto/&text=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
+[![HackerNews](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+HackerNews&logo=y-combinator)](https://news.ycombinator.com/submitlink?u=https://github.com/alandefreitas/pareto/&t=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
 
 <br/>
 
@@ -59,7 +59,7 @@ This library provides a STL-like container representing a data structure to cach
   - [Build from source](integration/build-from-source.md)
     - [Dependencies](integration/build-from-source/dependencies.md)
     - [Build the Examples](integration/build-from-source/build-the-examples.md)
-    - [Installing pareto-front from Source](integration/build-from-source/installing-pareto-front-from-source.md)
+    - [Installing pareto from Source](integration/build-from-source/installing-pareto-from-source.md)
     - [Building the packages](integration/build-from-source/building-the-packages.md)
   - [CMake targets](integration/cmake-targets.md)
     - [Find it as a CMake Package](integration/cmake-targets/find-it-as-a-cmake-package.md)

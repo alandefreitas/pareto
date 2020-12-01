@@ -15,10 +15,10 @@ import pyfront
 pf = pyfront.front(2)
 ```
 
-C++, assuming we are in the `pareto` namespace:
+C++, assuming we are in the `pareto_front` namespace:
 
 ```cpp
-#include <pareto/front.h>
+#include <pareto_front/front.h>
 front<double, 2, unsigned> pf;
 ```
 

@@ -9,7 +9,7 @@ has_toc: false
 ---
 # Use it as a CMake subdirectory
 
-You can use pareto-front directly in CMake projects without installing it. Check if you have [Cmake](http://cmake.org) 3.14+ installed:
+You can use pareto directly in CMake projects without installing it. Check if you have [Cmake](http://cmake.org) 3.14+ installed:
 
 ```bash
 cmake -version
@@ -18,32 +18,32 @@ cmake -version
 Clone the whole project
  
 ```bash
-git clone https://github.com/alandefreitas/pareto-front/
+git clone https://github.com/alandefreitas/pareto/
 ```
 
 and add the subdirectory to your CMake project:
 
 ```cmake
-add_subdirectory(pareto-front)
+add_subdirectory(pareto)
 ```
 
 When creating your executable, link the library to the targets you want:
 
 ```
 add_executable(my_target main.cpp)
-target_link_libraries(my_target PUBLIC pareto-front)
+target_link_libraries(my_target PUBLIC pareto)
 ```
 
 Add this header to your source files:
 
 ```cpp
-#include <pareto/front.h>
+#include <pareto_front/front.h>
 ```
 
 Or to use Pareto archives:
 
 ```cpp
-#include <pareto/archives.h>
+#include <pareto_front/archives.h>
 ```
 
 However, it's always recommended to look for ParetoFront with `find_package` before including it as a subdirectory. Otherwise, we can get [ODR errors](https://en.wikipedia.org/wiki/One_Definition_Rule) in larger projects. 

@@ -9,7 +9,7 @@ has_toc: false
 ---
 # Building the packages
 
-This will create the binary packages you can use to install pareto-front on your system:
+This will create the binary packages you can use to install pareto on your system:
 
 ```bash
 mkdir build
