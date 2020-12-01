@@ -3,7 +3,7 @@
 //
 
 #include "test_instantiations.h"
-#include <pareto_front/tree/r_star_tree.h>
+#include <pareto/tree/r_star_tree.h>
 
 namespace pareto {
     template class r_star_tree<double, 0, unsigned>;

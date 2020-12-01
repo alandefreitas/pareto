@@ -17,10 +17,10 @@
 #include <forward_list>
 #include <sstream>
 
-#include <pareto_front/point.h>
-#include <pareto_front/query_box.h>
-#include <pareto_front/predicates.h>
-#include <pareto_front/memory_pool.h>
+#include <pareto/point.h>
+#include <pareto/query_box.h>
+#include <pareto/predicates.h>
+#include <pareto/memory_pool.h>
 
 namespace pareto {
     template<typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename TAG>

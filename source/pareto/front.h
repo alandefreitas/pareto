@@ -13,21 +13,21 @@
 #include <trase.hpp>
 #endif
 
-#include <pareto_front/hv-2.0rc2/hv.h>
+#include <pareto/hv-2.0rc2/hv.h>
 
-#include <pareto_front/common.h>
-#include <pareto_front/point.h>
-#include <pareto_front/query_box.h>
-#include <pareto_front/tree/vector_tree.h>
-#include <pareto_front/tree/quad_tree.h>
-#include <pareto_front/tree/kd_tree.h>
+#include <pareto/common.h>
+#include <pareto/point.h>
+#include <pareto/query_box.h>
+#include <pareto/tree/vector_tree.h>
+#include <pareto/tree/quad_tree.h>
+#include <pareto/tree/kd_tree.h>
 
 #ifdef BUILD_BOOST_TREE
-#include <pareto_front/tree/boost_tree.h>
+#include <pareto/tree/boost_tree.h>
 #endif
 
-#include <pareto_front/tree/r_tree.h>
-#include <pareto_front/tree/r_star_tree.h>
+#include <pareto/tree/r_tree.h>
+#include <pareto/tree/r_star_tree.h>
 
 namespace pareto {
     struct vector_tree_tag {};
@@ -1037,9 +1037,8 @@ namespace pareto {
         }
 
         /// \brief Check if this front weakly dominates a point
-        /// A front a weakly dominates a solution b if a has at least
-        /// one solution better than b in at least one objective and
-        /// is at least as good as b in all other objectives.
+        /// A front a weakly dominates a solution p if it has at least
+        /// one solution that dominates p
         /// \see http://www.cs.nott.ac.uk/~pszjds/research/files/dls_emo2009_1.pdf
         bool dominates(const point_type& p) const {
             const_iterator it = data_.begin_intersection(ideal(), p, [&p,this](const value_type& x) {
@@ -1062,12 +1061,9 @@ namespace pareto {
         /// all other objectives.
         /// \see http://www.cs.nott.ac.uk/~pszjds/research/files/dls_emo2009_1.pdf
         bool non_dominates(const point_type& p) const {
-            // ensure pareto does not dominate p
-            if (dominates(p)) {
-                return false;
-            }
-            // ensure p does not dominate anyone in the pareto
-            return !is_partially_dominated_by(p);
+            // Ensure pareto does not dominate p
+            // Ensure p does not dominate anyone in the pareto
+            return !dominates(p) && !is_partially_dominated_by(p);
         }
 
         bool is_partially_dominated_by(const point_type& p) const {
@@ -1093,22 +1089,31 @@ namespace pareto {
             // get points in the intersection between worst and p that p dominates
             it = data_.begin_intersection(worst(), p, [&p,this](const value_type& x) {
               return !p.dominates(x.first, is_minimization_);});
-            // if there's someone p dominates, then it's partially dominated by p
+            // if there's someone p dominates, then it's completely dominated by p
             return it == end();
         }
 
 
-        /// Check if this front dominates another front
-        bool dominates(const front & p) const {
+        /// \brief Check if this front dominates another front
+        /// P1 dominates P2 if all points in P1 dominate or at least
+        /// non-dominate P2
+        /// To avoid both operations, it's easy to check if P1
+        /// fails to dominate any point in P2
+        bool dominates(const front & P2) const {
             if (empty()) {
                 return false;
             }
-            for (auto& [k,v]: p) {
+            bool dominates_any = false;
+            for (auto& [k,v]: P2) {
                 if (!dominates(k)) {
-                    return false;
+                    if (find(k) != end()) {
+                        return false;
+                    }
+                } else {
+                    dominates_any = true;
                 }
             }
-            return true;
+            return dominates_any;
         }
 
         /// Check if this front strongly dominates another front

@@ -5,7 +5,7 @@
 #ifndef PARETO_FRONT_QUERY_BOX_H
 #define PARETO_FRONT_QUERY_BOX_H
 
-#include <pareto_front/point.h>
+#include <pareto/point.h>
 
 namespace pareto {
     template <typename NUMBER_T, std::size_t DimensionCount>

@@ -7,7 +7,7 @@
 
 #include <vector>
 
-#include <pareto_front/front.h>
+#include <pareto/front.h>
 
 namespace pareto {
 
@@ -917,7 +917,8 @@ namespace pareto {
             size_t c = 0;
             for (size_t i = lower_bound_it - data_.begin(); i < static_cast<size_t>(upper_bound_it - data_.begin()); ++i) {
                 c = data_[i].erase(point);
-                if (c != 0) { // if we could erase in this front
+                // if we could erase in this front
+                if (c != 0) {
                     // if front became empty
                     if (data_[i].empty()) {
                         // just erase the front and we're all set
@@ -932,7 +933,7 @@ namespace pareto {
                         // effect on the next fronts.
                         // Get points that might now not be dominated by the current front
                         auto it = data_[i + 1].find_intersection(point, data_[i + 1].worst());
-                        // Copy these points because erasing points invalidate iterators
+                        // Copy these points because erasing the points would invalidate iterators
                         std::vector<value_type> intersection;
                         auto it_end = data_[i + 1].end();
                         while (it != it_end) {

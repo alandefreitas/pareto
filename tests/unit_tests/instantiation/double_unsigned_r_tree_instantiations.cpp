@@ -3,7 +3,7 @@
 //
 
 #include "test_instantiations.h"
-#include <pareto_front/tree/quad_tree.h>
+#include <pareto/tree/quad_tree.h>
 
 namespace pareto {
     template class r_tree<double, 0, unsigned>;

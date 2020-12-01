@@ -17,7 +17,7 @@
 #include <boost/geometry/geometry.hpp>
 #endif
 
-#include <pareto_front/common.h>
+#include <pareto/common.h>
 
 namespace pareto {
 
@@ -147,10 +147,12 @@ using default_coordinate_system_for_points = void;
             return values_.size();
         }
 
-        /// This is often simply referred to as Pareto dominance.
+        /// \brief This is often simply referred to as Pareto dominance.
         /// A solution x weakly dominates a solution x∗ (x ≽ x∗)
         /// if x is better than x∗ in at least one objective and
         /// is as good as x∗ in all other objectives.
+        /// Some other works distinguish between weak dominance
+        /// and simple dominance, where weak dominance accepts ties
         template <class Rng>
         bool dominates(const point& p, const Rng& is_minimization) const {
             auto il = is_minimization.begin();
@@ -489,32 +491,32 @@ namespace boost {
     namespace geometry {
         namespace traits {
             template <typename CoordinateType, std::size_t DimensionCount, typename CoordinateSystem>
-            struct tag<pareto_front::point<CoordinateType, DimensionCount, CoordinateSystem> > {
+            struct tag<pareto::point<CoordinateType, DimensionCount, CoordinateSystem> > {
                 typedef point_tag type;
             };
 
             template < typename CoordinateType, std::size_t DimensionCount, typename CoordinateSystem >
-            struct coordinate_type<pareto_front::point<CoordinateType, DimensionCount, CoordinateSystem> > {
+            struct coordinate_type<pareto::point<CoordinateType, DimensionCount, CoordinateSystem> > {
                 typedef CoordinateType type;
             };
 
             template < typename CoordinateType, std::size_t DimensionCount, typename CoordinateSystem >
-            struct coordinate_system<pareto_front::point<CoordinateType, DimensionCount, CoordinateSystem> > {
+            struct coordinate_system<pareto::point<CoordinateType, DimensionCount, CoordinateSystem> > {
                 typedef CoordinateSystem type;
             };
 
             template < typename CoordinateType, std::size_t DimensionCount, typename CoordinateSystem >
-            struct dimension<pareto_front::point<CoordinateType, DimensionCount, CoordinateSystem> >
+            struct dimension<pareto::point<CoordinateType, DimensionCount, CoordinateSystem> >
                     : boost::mpl::int_<DimensionCount> {
             };
 
             template < typename CoordinateType, std::size_t DimensionCount, typename CoordinateSystem, std::size_t Dimension >
-            struct access<pareto_front::point<CoordinateType, DimensionCount, CoordinateSystem>, Dimension> {
-                static inline CoordinateType get( pareto_front::point<CoordinateType, DimensionCount, CoordinateSystem> const &p) {
+            struct access<pareto::point<CoordinateType, DimensionCount, CoordinateSystem>, Dimension> {
+                static inline CoordinateType get( pareto::point<CoordinateType, DimensionCount, CoordinateSystem> const &p) {
                     return p.template get<Dimension>();
                 }
 
-                static inline void set( pareto_front::point<CoordinateType, DimensionCount, CoordinateSystem> &p, CoordinateType const &value) {
+                static inline void set( pareto::point<CoordinateType, DimensionCount, CoordinateSystem> &p, CoordinateType const &value) {
                     p.template set<Dimension>(value);
                 }
             };

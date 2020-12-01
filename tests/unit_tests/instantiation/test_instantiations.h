@@ -5,8 +5,8 @@
 #ifndef PARETO_FRONT_PYTHON_INSTANTIATIONS_H
 #define PARETO_FRONT_PYTHON_INSTANTIATIONS_H
 
-#include <pareto_front/front.h>
-#include <pareto_front/archive.h>
+#include <pareto/front.h>
+#include <pareto/archive.h>
 
 namespace pareto {
     // That tells the test .cpp files not to implicitly instantiate these

@@ -4,9 +4,9 @@
 #include <vector>
 #include <functional>
 
-#include <pareto_front/point.h>
-#include <pareto_front/memory_pool.h>
-#include <pareto_front/query_box.h>
+#include <pareto/point.h>
+#include <pareto/memory_pool.h>
+#include <pareto/query_box.h>
 
 namespace pareto {
 

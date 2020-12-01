@@ -5,8 +5,8 @@
 
 #include "monotonic_resource.h"
 #include <benchmark/benchmark.h>
-#include <pareto_front/front.h>
-#include <pareto_front/memory_pool.h>
+#include <pareto/front.h>
+#include <pareto/memory_pool.h>
 
 // Rationale
 // The "unsynchronized_pool_resource" should give us performance

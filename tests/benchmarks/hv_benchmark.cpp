@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <benchmark/benchmark.h>
 #include <iostream>
-#include <pareto_front/front.h>
+#include <pareto/front.h>
 #include <random>
 #include <thread>
 #include <vector>

@@ -3,7 +3,7 @@
 //
 
 #include "test_instantiations.h"
-#include <pareto_front/point.h>
+#include <pareto/point.h>
 
 namespace pareto {
     template class point<double, 0>;

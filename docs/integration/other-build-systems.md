@@ -10,18 +10,18 @@ has_toc: false
 
 If you want to use it in another build system you can either install the library (Section [*Installing*](#installing)) or you have to somehow rewrite the build script.
 
-If you want to rewrite the build script, your project needs to 1) include the headers and compile all source files in the [`sources`](https://github.com/alandefreitas/pareto-front/blob/master/sources) directory, and 2) link the dependencies described in [`sources/CMakeLists.txt`](https://github.com/alandefreitas/pareto-front/blob/master/sources/CMakeLists.txt).
+If you want to rewrite the build script, your project needs to 1) include the headers and compile all source files in the [`source`](https://github.com/alandefreitas/pareto-front/blob/master/sources) directory, and 2) link the dependencies described in [`sources/CMakeLists.txt`](https://github.com/alandefreitas/pareto-front/blob/master/sources/CMakeLists.txt).
 
 Then add this header to your source files:
 
 ```cpp
-#include <pareto_front/front.h>
+#include <pareto/front.h>
 ```
 
 Or to use Pareto archives:
 
 ```cpp
-#include <pareto_front/archives.h>
+#include <pareto/archives.h>
 ```
 
 

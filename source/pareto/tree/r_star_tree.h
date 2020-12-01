@@ -1,5 +1,10 @@
-#ifndef PARETO_FRONT_R_TREE_H
-#define PARETO_FRONT_R_TREE_H
+//
+// Created by Alan Freitas on 2020-06-03.
+//
+
+#ifndef PARETO_FRONT_R_STAR_TREE_H
+#define PARETO_FRONT_R_STAR_TREE_H
+
 
 #include <cstdio>
 #include <cmath>
@@ -12,54 +17,35 @@
 #include <map>
 #include <forward_list>
 
-#include <pareto_front/point.h>
-#include <pareto_front/query_box.h>
-#include <pareto_front/predicates.h>
-#include <pareto_front/memory_pool.h>
+#include <pareto/point.h>
+#include <pareto/query_box.h>
+#include <pareto/predicates.h>
+#include <pareto/memory_pool.h>
 
 namespace pareto {
     template<typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename TAG>
     class front;
-    struct r_tree_tag;
+    struct r_star_tree_tag;
 
-    /// \class r_tree
-    /// Implementation of an R-Tree with an interface that matches the pareto front.
-    /// We could always use boost r-trees but:
-    /// - boost's r-tree doesn't work well with our allocator, which is an
-    ///   important part of our design.
-    /// - boost r-tree is also much more generic than we need because we only store
-    ///   points. In our experiments, our r-tree was up to 5 times faster that boost's
-    /// - At last, we need to be able to also define dimensions at runtime because of
-    ///   our python bindings. Boost's r-tree only allows us to define the dimension
-    ///   at compile time.
+    /// \class R*-Tree
+    /// Implementation of an R*-Tree with an interface that matches the pareto front.
+    /// Like the r_tree class, this class:
+    /// - Works with custom allocators
+    /// - Is designed for points only
+    /// - Allows us to define dimensions at runtime because of
+    /// Look at the r_tree class for more generic information.
     ///
-    /// On the other hand, defining the dimension at runtime is a VERY bad idea. These
-    /// trees seem to be up to 50 times slower, and there no much to do about it.
-    /// With runtime dimension, every new point involves an allocation, and we cannot
-    /// use our fast allocator because we don't know the dimension (our fast allocator
-    /// only works for structs of fixed size).
-    ///
-    /// We could come up with a new kind of allocator for this case, but this is a
-    /// completely new task in itself. The C++17 standard defines unsynchronized_pool_resource
-    /// which could be helpful, but it seems that most standard libraries simply don't
-    /// implement it. It seems like that's not really part of their plans, as
-    /// they have implemented much of C++20 already.
-    ///
-    /// Our current solution is to provide compile-time dimensions for low
-    /// dimensions in our python bindings and fall back to run-time dimensions for
-    /// high dimensions: 1) these applications are rare and 2) the application using
-    /// the tree might be expensive enough to amortize the cost of storing the tree.
-    /// 3) A third option is for python users to recompile the library with more
-    /// compile-time dimensions as they need for their tasks.
-    ///
-    /// This implementation used
-    /// https://github.com/nushoin/RTree/blob/master/RTree.h
-    /// as reference for correctness, but the design is completely different.
+    /// This implementation is used as reference for correctness:
+    /// https://github.com/virtuald/r-star-tree/blob/master/RStarTree.h
+    /// https://github.com/virtuald/r-star-tree/blob/master/RStarVisitor.h
+    /// https://github.com/virtuald/r-star-tree/blob/master/RStarBoundingBox.h
+    /// https://en.wikipedia.org/wiki/R*_tree
+    /// But our design is completely different.
     template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR = /* default_fast_memory_pool */ std::allocator>
-    class r_tree {
+    class r_star_tree {
     public:
-        friend front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, r_tree_tag>;
-        using self_type = r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>;
+        friend front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, r_star_tree_tag>;
+        using self_type = r_star_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>;
         using number_type = NUMBER_TYPE;
         static constexpr size_t number_of_compile_dimensions_ = NUMBER_OF_DIMENSIONS;
         using point_type = point<number_type, number_of_compile_dimensions_>;
@@ -78,6 +64,7 @@ namespace pareto {
         using pointer = value_type *;
         using const_pointer = value_type const *;
 
+
         // Better split classification, may be slower on some systems
         static constexpr bool rtree_use_spherical_volume_ = true;
 
@@ -89,9 +76,15 @@ namespace pareto {
         static_assert(maxnodes_ > minnodes_);
         static_assert(minnodes_ > 0);
 
+        static constexpr double RTREE_REINSERT_P = 0.30;
+        static constexpr size_t RTREE_CHOOSE_SUBTREE_P = 32;
+
+
     private /* internal node types */:
-        struct rtree_node;
-        using box_and_node = std::pair<box_type, rtree_node *>;
+        struct rstar_tree_node;
+
+        // bounded node
+        using box_and_node = std::pair<box_type, rstar_tree_node *>;
 
         /// This represents a box_and_node or a value_type
         /// The two kinds of data we might have on a node
@@ -107,11 +100,13 @@ namespace pareto {
 
             explicit branch_variant(const value_type &v) : data_(variant_type(v)) {}
 
-            bool is_branch() const {
+            virtual ~branch_variant() = default;
+
+            [[nodiscard]] bool is_branch() const {
                 return std::holds_alternative<box_and_node>(data_);
             }
 
-            bool is_value() const {
+            [[nodiscard]] bool is_value() const {
                 return std::holds_alternative<value_type>(data_);
             }
 
@@ -119,7 +114,7 @@ namespace pareto {
                 return std::get<box_and_node>(data_);
             }
 
-            const rtree_node *as_node() const {
+            const rstar_tree_node *as_node() const {
                 return std::get<box_and_node>(data_).second;
             }
 
@@ -131,7 +126,7 @@ namespace pareto {
                 return std::get<box_and_node>(data_);
             }
 
-            rtree_node *&as_node() {
+            rstar_tree_node *&as_node() {
                 return std::get<box_and_node>(data_).second;
             }
 
@@ -155,6 +150,22 @@ namespace pareto {
                 }
             }
 
+            distance_type distance_from_center(const point_type &p) const {
+                if (is_branch()) {
+                    return as_branch().first.distance_from_center(p);
+                } else {
+                    return as_value().first.distance(p);
+                }
+            }
+
+            point_type center() const {
+                if (is_branch()) {
+                    return as_branch().first.center();
+                } else {
+                    return as_value().first;
+                }
+            }
+
             distance_type distance(const box_type &b) const {
                 if (is_branch()) {
                     return as_branch().first.distance(b);
@@ -171,13 +182,13 @@ namespace pareto {
                 }
             }
 
-            void set_parent(rtree_node *parent) {
+            void set_parent(rstar_tree_node *parent) {
                 if (is_branch()) {
                     as_branch().second->parent_ = parent;
                 }
             }
 
-            rtree_node *node_pointer() {
+            rstar_tree_node *node_pointer() {
                 return as_branch().second;
             }
 
@@ -217,24 +228,26 @@ namespace pareto {
         };
 
         /// Node
-        /// Each branch might have a rtree_node for each branch level
+        /// Each branch might have a rstar_tree_node for each branch level
         /// The number of children is fixed because we need to make the
         /// size of a node constant. This makes it possible to use
         /// allocators efficiently.
-        struct rtree_node {
-            rtree_node() : rtree_node(0, 0) {}
+        struct rstar_tree_node {
+            rstar_tree_node() : rstar_tree_node(0, 0) {}
 
-            rtree_node(size_t count, size_t level)
+            rstar_tree_node(size_t count, size_t level)
                     : parent_(nullptr), count_(count), level_(level) {}
 
+            virtual ~rstar_tree_node() = default;
+
             /// An internal node, contains other nodes
-            bool is_internal_node() const {
+            [[nodiscard]] bool is_internal_node() const {
                 return (level_ > 0);
                 // or return std::holds_alternative<node_array>(data_)
             }
 
             /// A leaf, contains data
-            bool is_leaf_node() const {
+            [[nodiscard]] bool is_leaf_node() const {
                 return (level_ == 0);
                 // or return std::holds_alternative<value_array>(data_)
             }
@@ -243,7 +256,7 @@ namespace pareto {
                 return branches_[index];
             }
 
-            const box_type rectangle(size_t index) const {
+            box_type rectangle(size_t index) const {
                 return branches_[index].rectangle();
             }
 
@@ -253,7 +266,7 @@ namespace pareto {
             /// stacks and easily start the iterator from any node. This makes
             /// the use of iterators with predicates much easier because we just
             /// have to move forward until a predicate is valid.
-            rtree_node *parent_;
+            rstar_tree_node *parent_;
 
             /// Count / Number of elements in this node
             size_t count_ = 0;
@@ -272,17 +285,15 @@ namespace pareto {
         };
 
       public:
-        using node_allocator_type = allocator_type<rtree_node>;
-
-      private:
         /// Check if using the fast allocator
         constexpr static bool is_using_default_fast_allocator() {
-            return std::is_same_v<node_allocator_type, default_fast_memory_pool<rtree_node>>;
+            return std::is_same_v<node_allocator_type, default_fast_memory_pool<rstar_tree_node>>;
         }
 
+      private:
         /// A link list of nodes for reinsertion after a delete operation
-        using list_allocator_type = allocator_type<rtree_node *>;
-        using node_list = std::forward_list<rtree_node *, list_allocator_type>;
+        using list_allocator_type = allocator_type<rstar_tree_node *>;
+        using node_list = std::forward_list<rstar_tree_node *, list_allocator_type>;
 
         /// Variables for finding a split partition
         /// These are the variables the function to split nodes needs
@@ -291,13 +302,13 @@ namespace pareto {
 
             static constexpr int NOT_TAKEN = -1;
 
-            std::array<int, maxnodes_ + 1> partition_;
+            std::array<int, maxnodes_ + 1> partition_{};
 
             size_t total_{0};
 
             size_t min_fill_{0};
 
-            std::pair<int, int> count_;
+            std::pair<int, int> count_{0, 0};
 
             std::pair<box_type, box_type> cover_;
 
@@ -305,14 +316,15 @@ namespace pareto {
 
             std::array<branch_variant, maxnodes_ + 1> branch_buffer_{};
 
-            size_t branch_count_;
+            size_t branch_count_{0};
 
             box_type cover_split_;
 
-            number_type cover_split_area_;
+            number_type cover_split_area_{0};
         };
 
     public /* iterators */:
+        using node_allocator_type = allocator_type<rstar_tree_node>;
 
         /// Iterator is not erase safe. Erase elements will invalidate the iterators.
         /// Because iterator and const_iterator are almost the same,
@@ -322,14 +334,14 @@ namespace pareto {
         class iterator_impl {
         public:
             // friend const_iterator;
-            friend r_tree;
+            friend r_star_tree;
             using difference_type = typename self_type::difference_type;
             using value_type = std::conditional_t<is_const, const std::pair<key_type, mapped_type>, std::pair<const key_type, mapped_type>>;
             using reference = value_type &;
             using const_reference = value_type const &;
             using pointer = value_type *;
             using const_pointer = value_type const *;
-            using pointer_type = std::conditional_t<is_const, const rtree_node *, rtree_node *>;
+            using pointer_type = std::conditional_t<is_const, const rstar_tree_node *, rstar_tree_node *>;
             using iterator_category = std::forward_iterator_tag;
             using query_predicate_type = query_predicate<number_type, number_of_compile_dimensions_, mapped_type>;
             enum class iterator_tag {
@@ -992,7 +1004,7 @@ namespace pareto {
             std::vector<std::tuple<pointer_type, size_t, bool>> nearest_set_;
 
             // Allow hiding of non-public functions while allowing manipulation by logical owner
-            friend class r_tree;
+            friend class r_star_tree;
         };
 
         using iterator = iterator_impl<false>;
@@ -1000,19 +1012,16 @@ namespace pareto {
 
     public:
         /// Construct
-        r_tree() : size_(0),
-                   dimensions_(number_of_compile_dimensions_),
-                   alloc_(new node_allocator_type()),
-                   list_alloc_() {
+        r_star_tree() : size_(0), dimensions_(number_of_compile_dimensions_), alloc_(new node_allocator_type()), list_alloc_() {
             if constexpr (number_of_compile_dimensions_ != 0) {
                 initialize_unit_sphere_volume();
             }
-            root_ = allocate_rtree_node();
+            root_ = allocate_rstar_tree_node();
             root_->level_ = 0;
         }
 
         /// Constructor that shares an external allocator
-        r_tree(std::shared_ptr<node_allocator_type>& external_alloc) :
+        r_star_tree(std::shared_ptr<node_allocator_type>& external_alloc) :
                 size_(0),
                 dimensions_(number_of_compile_dimensions_),
                 alloc_(external_alloc),
@@ -1020,13 +1029,13 @@ namespace pareto {
             if constexpr (number_of_compile_dimensions_ != 0) {
                 initialize_unit_sphere_volume();
             }
-            root_ = allocate_rtree_node();
+            root_ = allocate_rstar_tree_node();
             root_->level_ = 0;
         }
 
         /// Construct from points
         template<class InputIterator>
-        r_tree(InputIterator first, InputIterator last) : r_tree() {
+        r_star_tree(InputIterator first, InputIterator last) : r_star_tree() {
             // sort points and bulk insert
             std::vector<value_type> v(first, last);
             std::sort(v.begin(), v.end());
@@ -1034,33 +1043,33 @@ namespace pareto {
         }
 
         /// Copy constructor
-        r_tree(const r_tree &other) :
+        r_star_tree(const r_star_tree &other) :
                 size_(other.size_),
                 dimensions_(other.dimensions_),
                 unit_sphere_volume_(other.unit_sphere_volume_),
                 alloc_(other.alloc_),
                 list_alloc_(other.list_alloc_) {
-            root_ = allocate_rtree_node();
-            rtree_node *root_parent = nullptr;
+            root_ = allocate_rstar_tree_node();
+            rstar_tree_node *root_parent = nullptr;
             copy_recursive(root_, root_parent, other.root_);
         }
 
         /// Copy constructor
-        r_tree &operator=(const r_tree &other) {
+        r_star_tree &operator=(const r_star_tree &other) {
             remove_all_records(root_);
             size_ = other.size_;
             dimensions_ = other.dimensions_;
             unit_sphere_volume_ = other.unit_sphere_volume_;
             alloc_ = other.alloc_;
             list_alloc_ = list_allocator_type();
-            root_ = allocate_rtree_node();
-            rtree_node *root_parent = nullptr;
+            root_ = allocate_rstar_tree_node();
+            rstar_tree_node *root_parent = nullptr;
             copy_recursive(root_, root_parent, other.root_);
             return *this;
         }
 
         /// Destructor
-        virtual ~r_tree() {
+        virtual ~r_star_tree() {
             remove_all_records(root_);
         }
 
@@ -1128,14 +1137,16 @@ namespace pareto {
 
         iterator find(const value_type &v) {
             iterator it = begin_intersection(v.first, v.first,
-                                             [&v](const value_type &x) { return mapped_type_custom_equality_operator(x.second,v.second);; });
+            [](const value_type&) {
+                return true;
+            });
             it.predicates_.clear();
             return it;
         }
 
         const_iterator find(const value_type &v) const {
             const_iterator it = begin_intersection(v.first, v.first,
-                                                   [&v](const value_type &x) { return mapped_type_custom_equality_operator(x.second,v.second);; });
+                                                   [](const value_type&) { return true; });
             it.predicates_.clear();
             return it;
         }
@@ -1268,7 +1279,6 @@ namespace pareto {
         }
 
 
-
         iterator max_element(size_t dimension) {
             auto[node, index] = recursive_max_element(root_, dimension);
             return iterator(node, index);
@@ -1319,7 +1329,7 @@ namespace pareto {
                     initialize_unit_sphere_volume();
                 }
             }
-            auto[node_split, destination_node, value_index] = insert_branch(branch_variant(v), root_, 0);
+            auto [node_split, destination_node, value_index, used_reinsert] = insert_branch(branch_variant(v), root_, 0, true);
             ++size_;
             return {iterator(destination_node, value_index), true};
         }
@@ -1367,7 +1377,7 @@ namespace pareto {
             // Delete all existing nodes
             remove_all_records(root_);
             list_alloc_ = list_allocator_type();
-            root_ = allocate_rtree_node();
+            root_ = allocate_rstar_tree_node();
             root_->level_ = 0;
             size_ = 0;
         }
@@ -1379,7 +1389,8 @@ namespace pareto {
             std::swap(unit_sphere_volume_, m.unit_sphere_volume_);
         }
 
-    private:
+    protected:
+
         /// \brief Insert a value into a tree node
         /// insert_branch provides for splitting the root;
         /// insert_branch_recursive does the recursion.
@@ -1389,21 +1400,22 @@ namespace pareto {
         /// \return return 1 if root was split, 0 if it was not.
         /// \return Pointer to the node containing the value we inserted
         /// \return Index of the element we inserted in the node that contains it
-        std::tuple<bool, rtree_node *, size_t>
-        insert_branch(const branch_variant &branch, rtree_node *&root_node, size_t a_level) {
+        std::tuple<bool, rstar_tree_node *, size_t, bool>
+        insert_branch(const branch_variant &branch, rstar_tree_node *&root_node, size_t a_level, bool first_insert) {
             assert(root_node);
             assert(a_level >= 0 && a_level <= root_node->level_);
 
             // Create new node pointer to put new node in case this node splits
-            rtree_node *new_rtree_node = nullptr;
+            rstar_tree_node *new_rstar_tree_node = nullptr;
 
+            // Insert the branch in the tree, this might split the root
+            auto result_tuple = insert_branch_recursive(branch, root_node, new_rstar_tree_node, static_cast<int>(a_level), first_insert);
             // If the root split
-            auto result_tuple = insert_branch_recursive(branch, root_node, new_rtree_node, static_cast<int>(a_level));
             bool root_was_split = std::get<0>(result_tuple);
             if (root_was_split) {
                 // Grow tree taller and new root
                 // Mark that it has a new level
-                rtree_node *new_root = allocate_rtree_node();
+                rstar_tree_node *new_root = allocate_rstar_tree_node();
                 new_root->level_ = root_node->level_ + 1;
 
                 // Create a new branch with the root node
@@ -1415,8 +1427,8 @@ namespace pareto {
 
                 // Add the split node as a child of the new root
                 box_and_node branch_with_new_node;
-                branch_with_new_node.first = minimum_bounding_rectangle(new_rtree_node);
-                branch_with_new_node.second = new_rtree_node;
+                branch_with_new_node.first = minimum_bounding_rectangle(new_rstar_tree_node);
+                branch_with_new_node.second = new_rstar_tree_node;
                 add_rtree_branch(branch_variant(branch_with_new_node), new_root);
 
                 // Set the new root as the root node
@@ -1425,6 +1437,7 @@ namespace pareto {
 
             return result_tuple;
         }
+
 
         /// \brief Inserts a new data rectangle into the index structure.
         /// Recursively descends tree, propagates splits back up.
@@ -1435,14 +1448,15 @@ namespace pareto {
         /// level to insert; e.g. a data rectangle goes in at level = 0.
         /// \param value value to be inserted
         /// \param a_node Node where we are inserting the element
-        /// \param a_new_rtree_node Pointer where we store the new node in case the node splits
+        /// \param a_new_rstar_tree_node Pointer where we store the new node in case the node splits
         /// \param a_level Level at which we are inserting the new (0 represent the leaf node)
         /// \return True if node was split
         /// \return Pointer to the node containing the value we inserted
         /// \return Index of the element we inserted in the node that contains it
-        std::tuple<bool, rtree_node *, size_t>
-        insert_branch_recursive(const branch_variant &branch, rtree_node *&parent_node,
-                                rtree_node *&maybe_new_tree_node, int target_level) {
+        /// \return True if the insertion used reinsertion
+        std::tuple<bool, rstar_tree_node *, size_t, bool>
+        insert_branch_recursive(const branch_variant &branch, rstar_tree_node *&parent_node,
+                                rstar_tree_node *&maybe_new_tree_node, int target_level, bool first_insert) {
             assert(parent_node);
             assert(target_level >= 0 && target_level <= static_cast<int>(parent_node->level_));
 
@@ -1451,14 +1465,22 @@ namespace pareto {
             if (static_cast<int>(parent_node->level_) > target_level) {
                 // Still above level for insertion, go down tree recursively
                 // Find the optimal branch for this record
+                // I1: Invoke ChooseSubtree. with the level as a parameter,
+                // to find an appropriate node N, m which to place the
+                // new leaf E
                 size_t index = pick_rtree_branch(branch.rectangle(), parent_node);
 
                 // Recursively insert this record into the picked branch
-                rtree_node *other_rtree_node = nullptr;
-                auto[child_was_split, insertion_branch, insertion_index] = insert_branch_recursive(branch,
-                                                                                                   parent_node->branches_[index].as_branch().second,
-                                                                                                   other_rtree_node,
-                                                                                                   target_level);
+                rstar_tree_node *other_rstar_tree_node = nullptr;
+                auto [child_was_split, insertion_branch, insertion_index, used_reinsertion] =
+                        insert_branch_recursive(branch, parent_node->branches_[index].as_branch().second,
+                                other_rstar_tree_node, target_level, first_insert);
+
+                // if we used reinsertion, the parent_node is invalidated
+                if (used_reinsertion) {
+                    // just return pointer to internal object we inserted
+                    return std::make_tuple(child_was_split, insertion_branch, insertion_index, used_reinsertion);
+                }
 
                 if (!child_was_split) {
                     // Child was not split.
@@ -1466,45 +1488,45 @@ namespace pareto {
                     parent_node->branches_[index].as_branch().first = branch.rectangle().combine(
                             parent_node->branches_[index].as_branch().first);
                     parent_node->branches_[index].set_parent(parent_node);
-                    return std::make_tuple(child_was_split, insertion_branch, insertion_index);
+                    return std::make_tuple(child_was_split, insertion_branch, insertion_index, used_reinsertion);
                 } else {
                     // Child was split. The old branches are now re-partitioned to two nodes
                     // so we have to re-calculate the bounding boxes of each node
                     parent_node->branches_[index].as_branch().first = minimum_bounding_rectangle(
                             parent_node->branches_[index].as_branch().second);
                     box_and_node branch_with_new_tree;
-                    branch_with_new_tree.first = minimum_bounding_rectangle(other_rtree_node);
-                    branch_with_new_tree.second = other_rtree_node;
+                    branch_with_new_tree.first = minimum_bounding_rectangle(other_rstar_tree_node);
+                    branch_with_new_tree.second = other_rstar_tree_node;
                     branch_with_new_tree.second->parent_ = parent_node;
 
                     // The old node is already a child of parent_node. Now add the newly-created
                     // node to parent_node as well. parent_node might be split because of that.
-                    auto[branch_was_split, branch_node, branch_index] = add_rtree_branch(
-                            branch_variant(branch_with_new_tree), parent_node, maybe_new_tree_node);
+                    auto [branch_was_split, branch_node, branch_index, branch_used_reinsertion] = add_rtree_branch(
+                            branch_variant(branch_with_new_tree), parent_node, maybe_new_tree_node, first_insert);
                     // we return if the immediate branch split, but propagate up the directions to the new value
-                    return std::make_tuple(branch_was_split, insertion_branch, insertion_index);
+                    return std::make_tuple(branch_was_split, insertion_branch, insertion_index, branch_used_reinsertion);
                 }
             } else if (static_cast<int>(parent_node->level_) == target_level) {
                 // We have reached level for insertion. Add branch, split if necessary
-                return add_rtree_branch(branch, parent_node, maybe_new_tree_node);
+                return add_rtree_branch(branch, parent_node, maybe_new_tree_node, first_insert);
             } else {
                 throw std::logic_error("Should never occur. Target level cannot be less than the node level.");
             }
         }
 
-        rtree_node *allocate_rtree_node() {
+        rstar_tree_node *allocate_rstar_tree_node() {
             auto p = alloc_->allocate(1);
-            new(p) rtree_node(0, 0);
+            new(p) rstar_tree_node(0, 0);
             return p;
         }
 
-        void deallocate_rtree_node(rtree_node *p) {
-            p->~rtree_node();
+        void deallocate_rstar_tree_node(rstar_tree_node *p) {
+            p->~rstar_tree_node();
             alloc_->deallocate(p, 1);
         }
 
         /// Find the smallest rectangle that includes all rectangles in branches of a node.
-        box_type minimum_bounding_rectangle(rtree_node *a_node) {
+        box_type minimum_bounding_rectangle(rstar_tree_node *a_node) {
             assert(a_node);
             box_type rect = a_node->rectangle(0);
             for (size_t index = 1; index < a_node->count_; ++index) {
@@ -1515,73 +1537,101 @@ namespace pareto {
 
         /// \brief Add a branch to a node. Split the node if necessary.
         /// Returns 0 if node not split. Old node updated.
-        /// Returns 1 if node split, sets a_new_rtree_node to address of new node.
+        /// Returns 1 if node split, sets a_new_rstar_tree_node to address of new node.
         /// Old node updated, becomes one of two.
         /// \param a_branch Branch
         /// \param a_node Node where we should put the branch
-        /// \param a_new_rtree_node New node, if the node was split
+        /// \param a_new_rstar_tree_node New node, if the node was split
         /// \return True if node was split
         /// \return Pointer to the node containing the value we inserted
         /// \return Index of the element we inserted in the node that contains it
-        std::tuple<bool, rtree_node *, size_t>
-        add_rtree_branch(const branch_variant &branch_to_insert, rtree_node *&parent_node,
-                         rtree_node *&maybe_new_tree) {
+        /// \return True if we used reinsertion
+        std::tuple<bool, rstar_tree_node *, size_t, bool>
+        add_rtree_branch(const branch_variant &branch_to_insert, rstar_tree_node *&parent_node,
+                         rstar_tree_node *&maybe_new_tree, bool first_insert) {
             assert(parent_node);
             // Split won't be necessary
             if (parent_node->count_ < maxnodes_) {
                 parent_node->branches_[parent_node->count_] = branch_to_insert;
                 parent_node->branches_[parent_node->count_].set_parent(parent_node);
                 ++parent_node->count_;
-                return std::make_tuple(false, parent_node, parent_node->count_ - 1);
+                return std::make_tuple(false, parent_node, parent_node->count_ - 1, false);
             } else {
-                // If we need to split the node
-                auto[node_with_value, value_index] = split_rtree_node(parent_node, branch_to_insert, maybe_new_tree);
-                return std::make_tuple(true, node_with_value, value_index);
+                // The R*-tree tries to avoid splits by reinserting objects and subtrees
+                // into the tree, inspired by the concept of balancing a B-tree.
+                // OT1: If 1) the level is not the root level AND 2) this is the first
+                // call to split_rstar_tree_node in the given level during the insertion of
+                // one data rectangle, then invoke reinsert node branches
+                if (first_insert && parent_node != root_) {
+                    // reinsert branches from old node with the new branch from scratch
+                    auto [node_with_value, value_index] = reinsert(parent_node, branch_to_insert);
+                    return std::make_tuple(false, node_with_value, value_index, true);
+                } else {
+                    // If we need to split the node
+                    auto [node_with_value, value_index] = split_rstar_tree_node(parent_node, branch_to_insert, maybe_new_tree, first_insert);
+                    return std::make_tuple(true, node_with_value, value_index, false);
+                }
             }
         }
 
         /// \return True if node was split
         /// \return Pointer to the node containing the value we inserted
         /// \return Index of the element we inserted in the node that contains it
-        std::tuple<bool, rtree_node *, size_t>
-        add_rtree_branch(const branch_variant &branch_to_insert, rtree_node *parent_node) {
+        std::tuple<bool, rstar_tree_node *, size_t, bool>
+        add_rtree_branch(const branch_variant &branch_to_insert, rstar_tree_node *parent_node) {
             assert(parent_node);
             // Split won't be necessary
             if (parent_node->count_ < maxnodes_) {
                 parent_node->branches_[parent_node->count_] = branch_to_insert;
                 parent_node->branches_[parent_node->count_].set_parent(parent_node);
                 ++parent_node->count_;
-                return std::make_tuple(false, parent_node, parent_node->count_ - 1);
+                return std::make_tuple(false, parent_node, parent_node->count_ - 1, false);
             } else {
                 throw std::logic_error(
                         "You should use the other add_rtree_branch function is a split might be necessary");
             }
         }
 
-        /// Pick a branch.  Pick the one that will need the smallest increase
-        /// in area to accomodate the new rectangle.  This will result in the
+        /// Pick a branch for a new item.
+        /// Only pass this nodes that do not have leaves.
+        /// Pick the one that will need the smallest increase
+        /// in area to accommodate the new rectangle.  This will result in the
         /// least total area for the covering rectangles in the current node.
         /// In case of a tie, pick the one which was smaller before, to get
         /// the best resolution when searching.
         /// \param new_rectangle Rectangle of the new element we are putting in the node
         /// \param parent_node Node where we will put an element with the new rectangle
         /// \return Index of the child most appropriate to put the element
-        size_t pick_rtree_branch(const box_type &new_rectangle, rtree_node *parent_node) {
+        size_t pick_rtree_branch(const box_type &new_rectangle, rstar_tree_node *parent_node) {
             assert(parent_node);
 
-            // true if it's the first time we are going to find a better increase size
+            // If the child pointers in N point to leaves
+            // We use the usual R-Tree strategy
+            if (parent_node->is_leaf_node()) {
+                // Get minimum overlap
+                auto min_it = std::min_element(parent_node->branches_.begin(), parent_node->branches_.begin() + parent_node->count_,
+                                                             [&new_rectangle](const branch_variant& a, const branch_variant& b) {
+                    return a.as_branch().first.overlap_area(new_rectangle) < b.as_branch().first.overlap_area(new_rectangle);
+                });
+                return min_it - parent_node->branches_.begin();
+            }
+
+            // if the child pointers in N do not point to leaves
+            // choose the leaf in N whose rectangle needs least
+            // area enlargement to include the new data
+            // True if it's the first time we are going to find a better increase size
             bool first_time = true;
-            // by how much the box would increase the minimum bounding rectangle
+            // By how much the box would increase the minimum bounding rectangle
             number_type increase;
-            // the best/minimal increase we found
+            // The best/minimal increase we found
             auto best_increase = static_cast<number_type>(-1);
-            // variable to keep the volume we calculate for the query box
+            // Variable to keep the volume we calculate for the query box
             number_type volume;
-            // best volume of the new box
+            // Best volume of the new box
             number_type best_volume = 0;
-            // index of the branch most appropriate for the new element
+            // Index of the branch most appropriate for the new element
             size_t best = 0;
-            // variable to keep the combination of both query boxes
+            // Variable to keep the combination of both query boxes
             box_type combined_query_box;
 
             // for each branch in this parent node
@@ -1606,7 +1656,7 @@ namespace pareto {
             return best;
         }
 
-        size_t pick_rtree_branch(const point_type &p, rtree_node *a_node) {
+        size_t pick_rtree_branch(const point_type &p, rstar_tree_node *a_node) {
             box_type b(p);
             return pick_rtree_branch(b, a_node);
         }
@@ -1617,32 +1667,137 @@ namespace pareto {
         /// Tries more than one method for choosing a partition, uses best result.
         /// \param a_node Node to be split (will become one of the two new nodes)
         /// \param a_branch Branch we are inserting in a_node that would make it exceed its capacity
-        /// \param a_new_rtree_node Pointer where we will store the new node
+        /// \param a_new_rstar_tree_node Pointer where we will store the new node
         /// \return Pointer to the node containing the value we inserted
         /// \return Index of the element we inserted in the node that contains it
-        std::tuple<rtree_node *, size_t>
-        split_rtree_node(rtree_node *&old_node, const branch_variant &branch_to_insert, rtree_node *&new_tree_node) {
+        std::tuple<rstar_tree_node *, size_t>
+        split_rstar_tree_node(rstar_tree_node *&old_node, const branch_variant &branch_to_insert, rstar_tree_node *&new_tree_node, bool first_insert [[maybe_unused]] /* to make it compatible with r_star */) {
             assert(old_node);
+            // If this is root level OR this is not the first time we try insertion at this level
+            // When splitting, the R*-tree uses a topological split that chooses a split
+            // axis based on perimeter, then minimizes overlap.
 
             // Could just use local here, but member or external is faster since it is reused
             partition_vars par_vars;
 
             // Load all the branches into a buffer, initialize old node
             // New branch goes to last position of par_vars.branch_buffer_
+            // This sets par_vars.branch_buffer_, par_vars.branch_count_,
+            //           par_vars.cover_split_, par_vars.cover_split_area_
             get_rtree_branches(old_node, branch_to_insert, par_vars);
 
             // Calculate an appropriate partition for the nodes
+            // Unlike the original algorithm for r*-trees, we define
+            // the partition first and copy the items later
             choose_partition(par_vars, minnodes_);
 
-            // Create a new node to hold (about) half of the branches
-            new_tree_node = allocate_rtree_node();
+            // Create a new node to hold (about) half the branches
+            new_tree_node = allocate_rstar_tree_node();
             new_tree_node->level_ = old_node->level_;
             new_tree_node->parent_ = old_node->parent_;
             // Put branches from buffer into 2 nodes according to the chosen partition
             old_node->count_ = 0;
-            auto result_tuple = load_rtree_nodes(old_node, new_tree_node, par_vars);
+            auto result_tuple = load_rstar_tree_nodes(old_node, new_tree_node, par_vars, branch_to_insert);
             assert((old_node->count_ + new_tree_node->count_) == par_vars.total_);
             return result_tuple;
+        }
+
+        std::tuple<rstar_tree_node *, size_t>
+        reinsert(rstar_tree_node *&parent_node, const branch_variant &branch_to_insert) {
+            // number of items in the node + branch to insert
+            const std::size_t n_items = parent_node->count_ + 1;
+            // number of items to be reinserted
+            // we create space in the node by reinserting the most distant items
+            const std::size_t p = (std::size_t)((double) n_items * RTREE_REINSERT_P) > 0 ? (std::size_t)((double) n_items * RTREE_REINSERT_P) : 1;
+
+            // RI1 For all M+l items of a node N, compute the distance
+            // between the centers of their rectangles and the center
+            // of the bounding rectangle of N
+            assert(n_items == maxnodes_ + 1);
+
+            // Get branches to reinsert
+            std::array<branch_variant, maxnodes_ + 1> buffer;
+            std::copy(parent_node->branches_.begin(), parent_node->branches_.end(), buffer.begin());
+            buffer.back() = branch_to_insert;
+            assert(buffer.back() == branch_to_insert);
+
+            // RI2: Sort the items in increasing order of their distances
+            // computed in RI1
+            point_type node_center = minimum_bounding_rectangle(parent_node).combine(branch_to_insert.rectangle()).center();
+            std::partial_sort(buffer.begin(),
+                              buffer.begin() + n_items - p,
+                              buffer.begin() + n_items,
+                              [&node_center](const branch_variant& a, const branch_variant& b) {
+                return a.distance_from_center(node_center) < b.distance_from_center(node_center);
+            });
+            assert(std::any_of(buffer.begin(), buffer.end(), [&branch_to_insert](const auto& b) {return b == branch_to_insert; }));
+
+            // RI3.A: Remove the last p items from N (the largest distances from the center)
+            std::vector<branch_variant> removed_items(buffer.begin() + n_items - p, buffer.end());
+            std::copy(buffer.begin(), buffer.begin() + n_items - p, parent_node->branches_.begin());
+            parent_node->count_ = parent_node->count_ - p + 1;
+            assert(std::any_of(removed_items.begin(), removed_items.end(), [&branch_to_insert](const auto& b) {return b == branch_to_insert; })
+                || std::any_of(parent_node->branches_.begin(), parent_node->branches_.end(), [&branch_to_insert](const auto& b) {return b == branch_to_insert; }));
+
+            // RI3.B: adjust the bounding rectangle of N and all its parents
+            // The bounding rectangle of N is kept in the parent though
+            auto current_node = parent_node;
+            while (current_node->parent_ != nullptr) {
+                // Get index of this node in its parent
+                auto node_in_its_parent = std::find_if(current_node->parent_->branches_.begin(),
+                        current_node->parent_->branches_.begin() + current_node->parent_->count_,
+                        [&current_node](const branch_variant& x) {
+                    return x.is_branch() ? x.as_node() == current_node : false;
+                });
+                // if index is valid
+                if (node_in_its_parent != current_node->parent_->branches_.begin() + current_node->parent_->count_) {
+                    node_in_its_parent->as_branch().first = minimum_bounding_rectangle(current_node);
+                } else {
+                    throw std::logic_error("Cannot find node branch in the parent node");
+                }
+                // go up to the root
+                current_node = current_node->parent_;
+            }
+
+            // RI4: In the sort, defined in RI2, starting with the
+            // minimum distance (= close reinsert), invoke inser_branch
+            // to reinsert the items
+            // Variables to return a pointer to the new branch
+            rstar_tree_node * result_node = nullptr;
+            size_t result_index = 0;
+
+            // Try to find the result node in the parent node
+            // Look for the branch_to_insert in the items that were left in the parent_node
+            for (size_t index = 0; index < parent_node->count_; ++index) {
+                if (parent_node->branches_[index] == branch_to_insert) {
+                    result_node = parent_node;
+                    result_index = index;
+                    break;
+                }
+            }
+
+            for (auto it = removed_items.begin(); it != removed_items.end(); it++) {
+                assert(it->is_value());
+                if (*it == branch_to_insert) {
+                    assert(result_node == nullptr);
+                    std::tie(std::ignore, result_node, result_index, std::ignore) = insert_branch(*it, root_, 0, false);
+                } else {
+                    insert_branch(*it, root_, 0, false);
+                }
+            }
+
+            // We HAVE to have found the branch in either the reinserted items
+            // or in the items that were left in the node
+            assert(result_node != nullptr);
+
+            // check if reinserting other nodes didn't invalidate the pointer
+            if (result_index < result_node->count_ && result_node->branches_[result_index] == branch_to_insert) {
+                return std::make_tuple(result_node, result_index);
+            } else {
+                // we might need to look for the node again
+                auto it = find(branch_to_insert.as_value());
+                return std::make_tuple(it.current_node_, it.current_branch_);
+            }
         }
 
         /// The exact volume of the bounding sphere for the given box_type
@@ -1682,17 +1837,19 @@ namespace pareto {
             return volume;
         }
 
-        /// Use one of the methods to calculate retangle volume
+        /// Use one of the methods to calculate rectangle volume
         number_type calculate_query_box_volume(const box_type &region_to_erase) {
             if constexpr (rtree_use_spherical_volume_) {
-                return query_box_spherical_volume(region_to_erase); // Slower but helps certain merge cases
+                // Slower but helps certain merge cases
+                return query_box_spherical_volume(region_to_erase);
             } else {
-                return query_box_volume(region_to_erase); // Faster but can cause poor merges
+                // Faster but can cause poor merges
+                return query_box_volume(region_to_erase);
             }
         }
 
         /// Load branch buffer with branches from full node plus the extra branch.
-        void get_rtree_branches(rtree_node *parent_node, const branch_variant &branch_to_insert,
+        void get_rtree_branches(rstar_tree_node *parent_node, const branch_variant &branch_to_insert,
                                 partition_vars &partition_vars) {
             assert(parent_node);
             assert(parent_node->count_ == maxnodes_);
@@ -1708,7 +1865,6 @@ namespace pareto {
 
             // Calculate rect containing all in the set
             partition_vars.cover_split_ = partition_vars.branch_buffer_[0].rectangle();
-
             for (size_t index = 1; index < maxnodes_ + 1; ++index) {
                 partition_vars.cover_split_ = partition_vars.cover_split_.combine(
                         partition_vars.branch_buffer_[index].rectangle());
@@ -1728,64 +1884,151 @@ namespace pareto {
         /// fill requirement) then other group gets the rest.
         /// These last are the ones that can go in either group most easily.
         void choose_partition(partition_vars &a_par_vars, size_t a_min_fill) {
-            number_type biggest_diff;
-            int group, chosen = 0, better_group = 0;
-
+            // Initialize
+            // a_par_vars.count_.first (number in group 1)
+            // a_par_vars.count_.second (number in group 2)
+            // a_par_vars.area_.first (area in group 1)
+            // a_par_vars.area_.second (area in group 2)
+            // a_par_vars.total_ (number of branches)
+            // a_par_vars.min_fill_ = a_min_fill = minnodes_
+            // a_par_vars.partition_ = NOT_TAKEN on all positions
             init_partition_variables(a_par_vars, a_par_vars.branch_count_, a_min_fill);
-            pick_seeds(a_par_vars);
-            // while (not all nodes have groups && groups have less than minimum number of branches (4))
-            while (((a_par_vars.count_.first + a_par_vars.count_.second) < static_cast<int>(a_par_vars.total_))
-                   && (a_par_vars.count_.first < static_cast<int>(a_par_vars.total_ - a_par_vars.min_fill_))
-                   && (a_par_vars.count_.second < static_cast<int>(a_par_vars.total_ - a_par_vars.min_fill_))) {
-                biggest_diff = static_cast<number_type>(-1);
-                // for each branch
-                for (size_t index = 0; index < a_par_vars.total_; ++index) {
-                    // if branch is not in a group yet
-                    if (partition_vars::NOT_TAKEN == a_par_vars.partition_[index]) {
-                        box_type current_query_box = a_par_vars.branch_buffer_[index].rectangle();
-                        box_type rect_0 = current_query_box.combine(a_par_vars.cover_.first);
-                        box_type rect_1 = current_query_box.combine(a_par_vars.cover_.second);
-                        number_type growth_0 = calculate_query_box_volume(rect_0) - a_par_vars.area_.first;
-                        number_type growth_1 = calculate_query_box_volume(rect_1) - a_par_vars.area_.second;
-                        number_type diff = growth_1 - growth_0;
-                        // assign branch to group that causes smallest growth
-                        if (diff >= 0) {
-                            group = 0;
-                        } else {
-                            group = 1;
-                            diff = -diff;
+
+            // Items to distribute
+            const std::size_t n_items = a_par_vars.total_;
+            // Number of items beyond the minimum: 9 - 2 * 4 + 1 = 2
+            const std::size_t distribution_count = n_items - 2 * minnodes_ + 1;
+
+            // Invariants
+            assert(n_items == maxnodes_ + 1);
+            assert(distribution_count > 0);
+            assert(minnodes_ + distribution_count-1 <= n_items);
+
+            // S1: Invoke ChooseSplitAxis to determine the axis,
+            // perpendicular to which the split 1s performed
+
+            // S2: Invoke ChooseSplitIndex to determine the best
+            // distribution into two groups along that axis
+
+            // Axis we will use to split the node
+            std::size_t split_axis = dimensions() + 1;
+            // Split edge (lower (0) or upper (1) box value)
+            size_t split_edge = 0;
+            // Split index (dimensions used for the split)
+            size_t split_index = 0;
+            // margin (sum of edge deltas) of the split axis
+            number_type split_margin = 0;
+
+            // Rectangles for both groups
+            box_type R1;
+            box_type R2;
+
+            // ChooseSplitAxis1 (CSA1): For each axis
+            for (std::size_t axis = 0; axis < dimensions(); axis++) {
+                // edge deltas of R1 and R2
+                number_type margin = 0;
+                // overlap of R1 and R2
+                number_type overlap = 0;
+                // area of the best split
+                double dist_area = std::numeric_limits<double>::max();
+                // overlap of the best split
+                double dist_overlap = std::numeric_limits<double>::max();
+                // edge (lower or upper) of the best split
+                std::size_t dist_edge = 0;
+                // distribution of the last split (there are distribution_count_ distributions)
+                size_t dist_index = 0;
+
+                // Sort the items by the lower then by the upper
+                // edge of their bounding box on this particular axis and
+                // determine all distributions as described.
+                // Compute S. the sum of all margin-values of the different
+                // distributions
+
+                constexpr size_t lower_edge = 0;
+                // constexpr size_t upper_edge = 1;
+                for (std::size_t edge = 0; edge < 2; edge++) {
+                    // sort the items by the correct key (lower edge or upper edge)
+                    if (edge == lower_edge) {
+                        std::sort(a_par_vars.branch_buffer_.begin(),
+                                  a_par_vars.branch_buffer_.begin() + a_par_vars.total_,
+                                  [axis](const branch_variant &a, const branch_variant &b) {
+                                      return a.rectangle().first()[axis] < b.rectangle().first()[axis];
+                                  });
+                    } else {
+                        std::sort(a_par_vars.branch_buffer_.begin(),
+                                  a_par_vars.branch_buffer_.begin() + a_par_vars.total_,
+                                  [axis](const branch_variant &a, const branch_variant &b) {
+                                      return a.rectangle().second()[axis] < b.rectangle().second()[axis];
+                                  });
+                    }
+
+                    // Distributions: pick a point m in the middle of the thing, call the left
+                    // R1 and the right R2. Calculate the bounding box of R1 and R2, then
+                    // calculate the margins. Then do it again for some more points
+                    for (std::size_t k = 0; k < distribution_count; k++) {
+                        number_type area = 0;
+                        // calculate bounding box of R1 (assuming R1 has branches 0, 1, 2, ..., minnodes + k - 1)
+                        R1 = a_par_vars.branch_buffer_[0].rectangle();
+                        for (size_t index = 1; index < minnodes_ + k; ++index) {
+                            R1.stretch(a_par_vars.branch_buffer_[index].rectangle());
                         }
-                        // save the group that included the element with the biggest difference
-                        if (diff > biggest_diff) {
-                            biggest_diff = diff;
-                            chosen = static_cast<int>(index);
-                            better_group = group;
-                        } else if ((diff == biggest_diff) &&
-                                   (((group == 0) ? a_par_vars.count_.first : a_par_vars.count_.second) <
-                                    (better_group == 0 ? a_par_vars.count_.first : a_par_vars.count_.second))) {
-                            chosen = static_cast<int>(index);
-                            better_group = group;
+                        // calculate bounding box of R2 (assuming R2 has branches minnodes + k, minnodes + k + 1, ..., total)
+                        R2 = a_par_vars.branch_buffer_[minnodes_ + k].rectangle();
+                        for (size_t index = minnodes_ + k + 1; index < a_par_vars.total_; ++index) {
+                            R2.stretch(a_par_vars.branch_buffer_[index].rectangle());
+                        }
+
+                        // calculate the three values
+                        margin 	+= R1.edge_deltas() + R2.edge_deltas();
+                        area 	+= R1.area() + R2.area();
+                        overlap =  R1.overlap_area(R2);
+
+                        // CSI1: Along the split axis, choose the distribution with the
+                        // minimum overlap-value. Resolve ties by choosing the distribution
+                        // with minimum area-value.
+                        if (overlap < dist_overlap || (overlap == dist_overlap && area < dist_area)) {
+                            // if so, store the parameters that allow us to recreate it at the end
+                            dist_edge = 	edge;
+                            dist_index = 	minnodes_+k;
+                            dist_overlap = 	overlap;
+                            dist_area = 	area;
                         }
                     }
                 }
-                classify(chosen, better_group, a_par_vars);
+
+                // CSA2: Choose the axis with the minimum S as split axis
+                if (split_axis == dimensions() + 1 || split_margin > margin ) {
+                    split_axis 		= axis;
+                    split_margin 	= margin;
+                    split_edge 		= dist_edge;
+                    split_index 	= dist_index;
+                }
             }
 
-            // If one group too full, put remaining rects in the other
-            if ((a_par_vars.count_.first + a_par_vars.count_.second) < static_cast<int>(a_par_vars.total_)) {
-                // first group is full
-                if (a_par_vars.count_.first >= static_cast<int>(a_par_vars.total_ - a_par_vars.min_fill_)) {
-                    group = 1;
-                } else {
-                    group = 0;
-                }
-                // classify nodes not taken
-                for (int index = 0; index < static_cast<int>(a_par_vars.total_); ++index) {
-                    if (partition_vars::NOT_TAKEN == a_par_vars.partition_[index]) {
-                        classify(index, group, a_par_vars);
-                    }
-                }
+            // S3: Distribute the items into two groups
+            // Ok, we're done, and the best distribution on the selected split
+            // axis has been recorded, so we just have to recreate it and
+            // return the correct index
+            if (split_edge == 0) {
+                std::sort(a_par_vars.branch_buffer_.begin(), a_par_vars.branch_buffer_.begin() + a_par_vars.total_,
+                          [split_axis](const branch_variant &a, const branch_variant &b) {
+                              return a.rectangle().first()[split_axis] < b.rectangle().first()[split_axis];
+                          });
+            } else if (split_axis != dimensions() - 1) {
+                // only reinsert the sort key if we have to
+                // the last iteration of the loop has left us with the items
+                // sorted for split_edge 0 and split_axis dimensions()-1
+                std::sort(a_par_vars.branch_buffer_.begin(), a_par_vars.branch_buffer_.begin() + a_par_vars.total_,
+                          [split_axis](const branch_variant &a, const branch_variant &b) {
+                              return a.rectangle().second()[split_axis] < b.rectangle().second()[split_axis];
+                          });
             }
+
+            // distribute the end of the array to the new node, then erase them from the original node
+            std::fill(a_par_vars.partition_.begin(), a_par_vars.partition_.begin() + split_index, 0);
+            a_par_vars.count_.first = static_cast<int>(split_index);
+            std::fill(a_par_vars.partition_.begin() + split_index, a_par_vars.partition_.end(), 1);
+            a_par_vars.count_.second = static_cast<int>(a_par_vars.total_ - split_index);
 
             assert((a_par_vars.count_.first + a_par_vars.count_.second) == static_cast<int>(a_par_vars.total_));
             assert((a_par_vars.count_.first >= static_cast<int>(a_par_vars.min_fill_)) &&
@@ -1795,27 +2038,27 @@ namespace pareto {
         // Copy branches from the buffer into two nodes according to the partition.
         /// \return Pointer to the node containing the branch
         /// \return Index of the last branch in the node that now contains it
-        std::tuple<rtree_node *, size_t>
-        load_rtree_nodes(rtree_node *a_nodeA, rtree_node *a_nodeB, partition_vars &a_par_vars) {
+        std::tuple<rstar_tree_node *, size_t>
+        load_rstar_tree_nodes(rstar_tree_node *a_nodeA, rstar_tree_node *a_nodeB, partition_vars &a_par_vars, const branch_variant &branch_to_insert) {
             assert(a_nodeA);
             assert(a_nodeB);
 
-            rtree_node *node_with_last_branch;
+            rstar_tree_node *node_with_last_branch;
             size_t last_branch_index;
 
             // for each branch to include in the nodes
             for (size_t index = 0; index < a_par_vars.total_; ++index) {
                 assert(a_par_vars.partition_[index] == 0 || a_par_vars.partition_[index] == 1);
                 // node where we should put the branch (0 or 1)
-                int target_rtree_node_index = a_par_vars.partition_[index];
+                int target_rstar_tree_node_index = a_par_vars.partition_[index];
                 // It is assured that add_rtree_branch here will not cause a node split.
                 bool node_was_split;
-                if (index != a_par_vars.total_ - 1) {
-                    std::tie(node_was_split, std::ignore, std::ignore) = add_rtree_branch(
-                            a_par_vars.branch_buffer_[index], (target_rtree_node_index == 0 ? a_nodeA : a_nodeB));
+                if (a_par_vars.branch_buffer_[index] != branch_to_insert) {
+                    std::tie(node_was_split, std::ignore, std::ignore, std::ignore) = add_rtree_branch(
+                            a_par_vars.branch_buffer_[index], (target_rstar_tree_node_index == 0 ? a_nodeA : a_nodeB));
                 } else {
-                    std::tie(node_was_split, node_with_last_branch, last_branch_index) = add_rtree_branch(
-                            a_par_vars.branch_buffer_[index], (target_rtree_node_index == 0 ? a_nodeA : a_nodeB));
+                    std::tie(node_was_split, node_with_last_branch, last_branch_index, std::ignore) = add_rtree_branch(
+                            a_par_vars.branch_buffer_[index], (target_rstar_tree_node_index == 0 ? a_nodeA : a_nodeB));
                 }
                 assert(!node_was_split);
             }
@@ -1895,7 +2138,7 @@ namespace pareto {
         /// \param a_root
         /// \return Number of elements erased
         size_t erase_query_box(const box_type &region_to_erase, const mapped_type &mapped_type_to_erase,
-                               rtree_node *&root_node) {
+                               rstar_tree_node *&root_node) {
             assert(root_node);
 
             // List of elements we need to reinsert in the tree after removing some branches
@@ -1911,22 +2154,22 @@ namespace pareto {
             }
         }
 
-        void apply_reinsert_list(rtree_node *&root_node, node_list &reinsert_list) {
+        void apply_reinsert_list(rstar_tree_node *&root_node, node_list &reinsert_list) {
             // Found and deleted a data item
             // Reinsert any branches from eliminated nodes
             // While there are items to reinsert
             while (!reinsert_list.empty()) {
                 // Get item from the list
-                rtree_node *temp_rtree_node = reinsert_list.front();
+                rstar_tree_node *temp_rstar_tree_node = reinsert_list.front();
 
                 // This list node has less than minnodes_, so
                 // For each branch of this node, put it in the root
-                for (size_t index = 0; index < temp_rtree_node->count_; ++index) {
-                    insert_branch(temp_rtree_node->branches_[index], root_node, temp_rtree_node->level_);
+                for (size_t index = 0; index < temp_rstar_tree_node->count_; ++index) {
+                    insert_branch(temp_rstar_tree_node->branches_[index], root_node, temp_rstar_tree_node->level_, false);
                 }
 
                 // Deallocate the original
-                deallocate_rtree_node(temp_rtree_node);
+                deallocate_rstar_tree_node(temp_rstar_tree_node);
 
                 // Next branch
                 reinsert_list.pop_front();
@@ -1936,7 +2179,7 @@ namespace pareto {
             while (root_node->count_ == 1 && root_node->is_internal_node()) {
                 auto root_parent = root_node->parent_;
                 auto root_child = root_node->branches_[0].as_node();
-                deallocate_rtree_node(root_node);
+                deallocate_rstar_tree_node(root_node);
                 root_node = root_child;
                 root_node->parent_ = root_parent;
             }
@@ -1947,7 +2190,7 @@ namespace pareto {
             node_list reinsert_list(list_alloc_);
 
             // parent node so we have a reference after (maybe) removing the branch
-            rtree_node *parent_node = node_to_erase.current_node_;
+            rstar_tree_node *parent_node = node_to_erase.current_node_;
             size_t branch_index = node_to_erase.current_branch_;
 
             // Remove leaf branch
@@ -1955,7 +2198,7 @@ namespace pareto {
             --parent_node->count_;
 
             // Go up the tree adjusting the rectangles or eliminating branches
-            rtree_node *child_node = parent_node;
+            rstar_tree_node *child_node = parent_node;
             parent_node = parent_node->parent_;
             while (parent_node != nullptr) {
                 // Look for branch position of child node in the parent
@@ -1987,7 +2230,7 @@ namespace pareto {
         /// \param parent_node Node from where we might update or remove the branch
         /// \param index Branch index in the node
         /// \param reinsert_list List with elements to reinsert / removed branches
-        void adjust_rectangle_or_eliminate_branch(rtree_node *&parent_node, size_t index, node_list &reinsert_list) {
+        void adjust_rectangle_or_eliminate_branch(rstar_tree_node *&parent_node, size_t index, node_list &reinsert_list) {
             // If it erased any points from the branch,
             // If branch still has the minimum number of elements
             if (parent_node->branches_[index].as_node()->count_ >= minnodes_) {
@@ -2016,7 +2259,7 @@ namespace pareto {
         /// \param reinsert_list
         /// \return Number of elements we have erased
         size_t erase_query_box_recursive(const box_type &region_to_erase, const mapped_type &mapped_type_to_erase,
-                                         rtree_node *&parent_node, node_list &reinsert_list) {
+                                         rstar_tree_node *&parent_node, node_list &reinsert_list) {
             assert(parent_node);
             assert(parent_node->level_ >= 0);
 
@@ -2058,7 +2301,7 @@ namespace pareto {
         }
 
         /// Count number of elements
-        void count_recursive(const rtree_node *parent_node, size_t &counter) const {
+        void count_recursive(const rstar_tree_node *parent_node, size_t &counter) const {
             // not a leaf node
             if (parent_node->is_internal_node()) {
                 // call the function recursively for all branches
@@ -2071,7 +2314,7 @@ namespace pareto {
             }
         }
 
-        void copy_recursive(rtree_node *current, rtree_node *current_parent, const rtree_node *other) {
+        void copy_recursive(rstar_tree_node *current, rstar_tree_node *current_parent, const rstar_tree_node *other) {
             current->level_ = other->level_;
             current->count_ = other->count_;
             current->parent_ = current_parent;
@@ -2080,10 +2323,10 @@ namespace pareto {
             if (current->is_internal_node()) {
                 // for each branch
                 for (size_t index = 0; index < current->count_; ++index) {
-                    std::pair<box_type, rtree_node *> &current_rtree_branch = current->branches_[index].as_branch();
-                    const std::pair<box_type, rtree_node *> &other_rtree_branch = other->branches_[index].as_branch();
+                    std::pair<box_type, rstar_tree_node *> &current_rtree_branch = current->branches_[index].as_branch();
+                    const std::pair<box_type, rstar_tree_node *> &other_rtree_branch = other->branches_[index].as_branch();
                     current_rtree_branch.first = other_rtree_branch.first;
-                    current_rtree_branch.second = allocate_rtree_node();
+                    current_rtree_branch.second = allocate_rstar_tree_node();
                     copy_recursive(current_rtree_branch.second, current, other_rtree_branch.second);
                 }
             } else {
@@ -2173,7 +2416,7 @@ namespace pareto {
             }
         }
 
-        std::pair<rtree_node *, size_t> recursive_max_element(rtree_node *parent_node, size_t dimension) const {
+        std::pair<rstar_tree_node *, size_t> recursive_max_element(rstar_tree_node *parent_node, size_t dimension) const {
             auto max_it = std::max_element(parent_node->branches_.begin(),
                                            parent_node->branches_.begin() + parent_node->count_,
                                            [&dimension](const branch_variant &a, const branch_variant &b) {
@@ -2188,7 +2431,7 @@ namespace pareto {
             return recursive_max_element(max_it->as_node(), dimension);
         }
 
-        std::pair<rtree_node *, size_t> recursive_min_element(rtree_node *parent_node, size_t dimension) const {
+        std::pair<rstar_tree_node *, size_t> recursive_min_element(rstar_tree_node *parent_node, size_t dimension) const {
             auto min_it = std::min_element(parent_node->branches_.begin(),
                                            parent_node->branches_.begin() + parent_node->count_,
                                            [&dimension](const branch_variant &a, const branch_variant &b) {
@@ -2203,7 +2446,7 @@ namespace pareto {
             return recursive_min_element(min_it->as_node(), dimension);
         }
 
-        void remove_all_records(rtree_node *node) {
+        void remove_all_records(rstar_tree_node *node) {
             assert(node);
             assert(node->level_ >= 0);
             if (node->is_internal_node()) {
@@ -2212,7 +2455,7 @@ namespace pareto {
                     remove_all_records(node->branches_[index].as_node());
                 }
             }
-            deallocate_rtree_node(node);
+            deallocate_rstar_tree_node(node);
         }
 
         /// Bulk insertion inserts the median before other elements
@@ -2221,11 +2464,11 @@ namespace pareto {
             bulk_insert(l_begin, l_end, v, r_begin, r_end, root_);
         }
 
-        void bulk_insert(const std::vector<value_type> &v, rtree_node*& node) {
+        void bulk_insert(const std::vector<value_type> &v, rstar_tree_node*& node) {
             // bulk insert ranges {1, median - 1}, median, { median + 1, end()}
             if (!v.empty()) {
                 if (v.size() == 1) {
-                    insert_branch(branch_variant(v[0]), node, 0);
+                    insert_branch(branch_variant(v[0]), node, 0, true);
                 } else {
                     size_t median_pos = v.size() / 2;
                     bulk_insert(v.begin(), v.begin() + median_pos, v[median_pos], v.begin() + median_pos + 1, v.end(), node);
@@ -2234,12 +2477,12 @@ namespace pareto {
         }
 
         template<class InputIterator>
-        void bulk_insert(InputIterator l_begin, InputIterator l_end, const value_type& v, InputIterator r_begin, InputIterator r_end, rtree_node*& node) {
-            insert_branch(branch_variant(v), node, 0);
+        void bulk_insert(InputIterator l_begin, InputIterator l_end, const value_type& v, InputIterator r_begin, InputIterator r_end, rstar_tree_node*& node) {
+            insert_branch(branch_variant(v), node, 0, true);
             size_t l_size = std::distance(l_begin, l_end);
             if (l_size != 0) {
                 if (l_size == 1) {
-                    insert_branch(branch_variant(*l_begin), node, 0);
+                    insert_branch(branch_variant(*l_begin), node, 0, true);
                 } else {
                     size_t l_median_pos = l_size / 2;
                     bulk_insert(l_begin, l_begin + l_median_pos, *(l_begin + l_median_pos), l_begin + l_median_pos + 1, l_end, node);
@@ -2248,7 +2491,7 @@ namespace pareto {
             size_t r_size = std::distance(r_begin, r_end);
             if (r_size != 0) {
                 if (r_size == 1) {
-                    insert_branch(branch_variant(*r_begin), node, 0);
+                    insert_branch(branch_variant(*r_begin), node, 0, true);
                 } else {
                     size_t r_median_pos = r_size / 2;
                     bulk_insert(r_begin, r_begin + r_median_pos, *(r_begin + r_median_pos), r_begin + r_median_pos + 1, r_end, node);
@@ -2256,8 +2499,9 @@ namespace pareto {
             }
         }
 
+
         /// Root of tree
-        rtree_node *root_;
+        rstar_tree_node *root_;
 
         /// Number of elements in the tree
         /// We cache the size at each insertion/removal.
@@ -2282,19 +2526,18 @@ namespace pareto {
 
         /// Allocator for lists
         list_allocator_type list_alloc_;
-
     };
 
     // MSVC hack
     template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR>
     template <bool constness>
-    const std::function<bool(const typename r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element&,
-                             const typename r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element&)> r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::iterator_impl<constness>::queue_comp = [](
-            const typename r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element& a,
-            const typename r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element& b) -> bool {
+    const std::function<bool(const typename r_star_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element&,
+                             const typename r_star_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element&)> r_star_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::iterator_impl<constness>::queue_comp = [](
+            const typename r_star_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element& a,
+            const typename r_star_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element& b) -> bool {
         return std::get<2>(a) > std::get<2>(b);
     };
 }
 
 
-#endif //PARETO_FRONT_R_TREE_H
+#endif //PARETO_FRONT_R_STAR_TREE_H

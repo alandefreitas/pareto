@@ -2,7 +2,7 @@
 #include <random>
 #include <chrono>
 #include <map>
-#include <pareto_front/archive.h>
+#include <pareto/archive.h>
 
 int main() {
     using std::cout;

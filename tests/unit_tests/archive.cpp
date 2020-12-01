@@ -1,7 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
-#include <pareto_front/archive.h>
-#include <pareto_front/front.h>
+#include <pareto/archive.h>
+#include <pareto/front.h>
 
 unsigned randi();
 //bool rand_flip();

@@ -37,7 +37,7 @@ If you are using CMake, you can then find pareto-front with the usual `find_pack
 ```cmake
 find_package(ParetoFront REQUIRED)
 # ...
-target_link_libraries(my_target PUBLIC pareto_front)
+target_link_libraries(my_target PUBLIC pareto)
 ```
 
 CMake should be able to locate the `ParetoFrontConfig.cmake` script automatically if you installed the library under `/usr/local/` (Linux / Mac OS) or `C:/Program Files/` (Windows). Otherwise, you need to include your installation directory in `CMAKE_MODULE_PATH` first: 
@@ -46,7 +46,7 @@ CMake should be able to locate the `ParetoFrontConfig.cmake` script automaticall
 list(APPEND CMAKE_MODULE_PATH put/your/installation/directory/here)
 find_package(ParetoFront REQUIRED)
 # ...
-target_link_libraries(my_target PUBLIC pareto_front)
+target_link_libraries(my_target PUBLIC pareto)
 ```
 
 

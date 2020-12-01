@@ -20,7 +20,7 @@ endif()
 # http://lopez-ibanez.eu/hypervolume
 # This is bundled because it's not on a git repository.
 # It could go offline at anytime.
-add_library(hv pareto_front/hv-2.0rc2/hv.h pareto_front/hv-2.0rc2/hv.c)
+add_library(hv pareto/hv-2.0rc2/hv.h pareto/hv-2.0rc2/hv.c)
 target_compile_definitions(hv PRIVATE VARIANT=4)
 set_target_properties(hv PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
@@ -35,33 +35,33 @@ find_package(Threads)
 #######################################################
 ### Library                                         ###
 #######################################################
-add_library(pareto_front INTERFACE)
+add_library(pareto INTERFACE)
 
-target_include_directories(pareto_front
-        INTERFACE $<BUILD_INTERFACE:${PARETOFRONTS_ROOT_DIR}/sources>
+target_include_directories(pareto
+        INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-target_link_libraries(pareto_front INTERFACE hv Threads::Threads)
+target_link_libraries(pareto INTERFACE hv Threads::Threads)
 if (BUILD_FRONTS_WITH_TRASE)
-    target_link_libraries(pareto_front INTERFACE trase)
+    target_link_libraries(pareto INTERFACE trase)
     # Retroactively make trase -fPIC
     set_target_properties(trase PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
-    target_compile_definitions(pareto_front INTERFACE BUILD_FRONTS_WITH_TRASE)
+    target_compile_definitions(pareto INTERFACE BUILD_FRONTS_WITH_TRASE)
 endif()
 
 if (BUILD_BOOST_TREE)
-    target_include_directories(pareto_front INTERFACE ${Boost_INCLUDE_DIR})
-    target_compile_definitions(pareto_front INTERFACE BUILD_BOOST_TREE)
+    target_include_directories(pareto INTERFACE ${Boost_INCLUDE_DIR})
+    target_compile_definitions(pareto INTERFACE BUILD_BOOST_TREE)
 endif()
 
 # Set warning levels to about the same level for MSVC, GCC, and Clang
 if (BUILD_WITH_PEDANTIC_WARNINGS)
     if (MSVC)
-        target_compile_options(pareto_front INTERFACE /W4 /WX)
+        target_compile_options(pareto INTERFACE /W4 /WX)
     else()
         # -Wno-self-assign-overloaded has a false positive that prevents pybind11
         # from working
-        target_compile_options(pareto_front INTERFACE -Wall -Wextra -pedantic -Werror -Wno-self-assign-overloaded)
+        target_compile_options(pareto INTERFACE -Wall -Wextra -pedantic -Werror -Wno-self-assign-overloaded)
     endif()
 endif()
 
@@ -70,10 +70,10 @@ endif()
 ### Installer                                       ###
 #######################################################
 if(BUILD_INSTALLER)
-    # Install hv and pareto_front targets
-    # Because pareto_front is INTERFACE, this installs no artifacts
-    # but includes pareto_front in the EXPORT
-    install(TARGETS hv pareto_front
+    # Install hv and pareto targets
+    # Because pareto is INTERFACE, this installs no artifacts
+    # but includes pareto in the EXPORT
+    install(TARGETS hv pareto
             EXPORT ParetoFrontTargets
             COMPONENT "CPP_Library"
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -81,7 +81,7 @@ if(BUILD_INSTALLER)
             )
 
     # Install headers
-    install(DIRECTORY ${PARETOFRONTS_ROOT_DIR}/sources/
+    install(DIRECTORY ${PARETO_ROOT_DIR}/source/
             COMPONENT "CPP_Library"
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
             FILES_MATCHING PATTERN "*.h"

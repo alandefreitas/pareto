@@ -36,29 +36,17 @@ add_library(tests_point_and_query_box_instantiation
         instantiation/double_point_instantiations.cpp
         instantiation/double_query_box_instantiations.cpp
 )
-target_link_libraries(tests_point_and_query_box_instantiation PUBLIC pareto_front)
-if (MSVC)
-    # MSVC requires this flag if the code uses C++ exception handling
-    target_compile_options(tests_point_and_query_box_instantiation PRIVATE /EHsc)
-    target_compile_options(tests_point_and_query_box_instantiation PRIVATE /bigobj)
-endif()
+target_link_libraries(tests_point_and_query_box_instantiation PUBLIC pareto)
+target_exception_options(tests_point_and_query_box_instantiation)
+target_bigobj_options(tests_point_and_query_box_instantiation)
 
 # Create test with the tests_point_and_query_box_instantiation
 add_executable(unit_test_point point.cpp)
 target_link_libraries(unit_test_point PUBLIC tests_point_and_query_box_instantiation Catch2)
-if (BUILD_LONG_TESTS)
-    target_compile_definitions(unit_test_point PUBLIC BUILD_LONG_TESTS)
-endif()
-
-if (MSVC)
-    # Allow MSVC to compile such a large code
-    target_compile_options(unit_test_point PRIVATE /bigobj)
-    # MSVC requires this flag if the code uses C++ exception handling
-    target_compile_options(unit_test_point PRIVATE /EHsc)
-endif()
-
+target_longtests_definitions(unit_test_point)
+target_exception_options(unit_test_point)
+target_bigobj_options(unit_test_point)
 catch_discover_tests(unit_test_point)
-
 
 #######################################################
 ### Test tree data structures                       ###
@@ -73,28 +61,17 @@ add_library(tests_tree_instantiation
         instantiation/double_unsigned_vector_tree_instantiations.cpp
     )
 target_link_libraries(tests_tree_instantiation PUBLIC tests_point_and_query_box_instantiation)
-if (MSVC)
-    # MSVC requires this flag if the code uses C++ exception handling
-    target_compile_options(tests_tree_instantiation PRIVATE /EHsc)
-    target_compile_options(tests_tree_instantiation PRIVATE /bigobj)
-endif()
+target_exception_options(tests_tree_instantiation)
+target_bigobj_options(tests_tree_instantiation)
 
 # Create test with the tests_tree_instantiation
 add_executable(unit_test_trees trees.cpp)
 target_link_libraries(unit_test_trees PUBLIC tests_tree_instantiation Catch2)
-if (BUILD_LONG_TESTS)
-    target_compile_definitions(unit_test_trees PUBLIC BUILD_LONG_TESTS)
-endif()
-if(MSVC)
-    # Because there is so much in the file
-    target_compile_options(unit_test_trees PRIVATE /bigobj)
-    target_compile_options(unit_test_trees PUBLIC /wd4305)
-    # MSVC requires this flag if the code uses C++ exception handling
-    target_compile_options(unit_test_trees PRIVATE /EHsc)
-endif()
-
+target_exception_options(unit_test_trees)
+target_bigobj_options(unit_test_trees)
+target_longtests_definitions(unit_test_trees)
+target_msvc_compile_options(unit_test_trees /wd4305)
 catch_discover_tests(unit_test_trees)
-
 
 #######################################################
 ### Test Pareto fronts                              ###
@@ -110,42 +87,16 @@ add_library(tests_front_instantiation
         instantiation/double_unsigned_front_vector_instantiations.cpp
     )
 target_link_libraries(tests_front_instantiation PUBLIC tests_tree_instantiation)
-if (MSVC)
-    # MSVC requires this flag if the code uses C++ exception handling
-    target_compile_options(tests_front_instantiation PRIVATE /EHsc)
-    target_compile_options(tests_front_instantiation PRIVATE /bigobj)
-endif()
+target_exception_options(tests_front_instantiation)
+target_bigobj_options(tests_front_instantiation)
 
 # Create test with the tests_front_instantiation
 add_executable(unit_test_pareto_front fronts.cpp)
 target_link_libraries(unit_test_pareto_front PUBLIC tests_front_instantiation Catch2)
-if (BUILD_LONG_TESTS)
-    target_compile_definitions(unit_test_pareto_front PUBLIC BUILD_LONG_TESTS)
-endif()
-
-if(MSVC)
-    # Because there is so much in the file
-    target_compile_options(unit_test_pareto_front PRIVATE /bigobj)
-    target_compile_options(unit_test_pareto_front PUBLIC /wd4305)
-endif()
-
-# Set warning levels to about the same level for MSVC, GCC, and Clang
-if (BUILD_WITH_PEDANTIC_WARNINGS)
-    if (MSVC)
-        target_compile_options(unit_test_pareto_front PRIVATE /W4 /WX)
-    else()
-        target_compile_options(unit_test_pareto_front PRIVATE -Wall -Wextra -pedantic -Werror)
-    endif()
-endif()
-
-if (MSVC)
-    # Allow MSVC to compile such a large code
-    target_compile_options(unit_test_pareto_front PRIVATE /bigobj)
-    # MSVC requires this flag if the code uses C++ exception handling
-    target_compile_options(unit_test_pareto_front PRIVATE /EHsc)
-endif()
-
-
+target_longtests_definitions(unit_test_pareto_front)
+target_exception_options(unit_test_pareto_front)
+target_bigobj_options(unit_test_pareto_front)
+target_pedantic_options(unit_test_pareto_front)
 catch_discover_tests(unit_test_pareto_front)
 
 #######################################################
@@ -162,29 +113,13 @@ add_library(tests_archive_instantiation
         instantiation/double_unsigned_archive_vector_instantiations.cpp
     )
 target_link_libraries(tests_archive_instantiation PUBLIC tests_front_instantiation)
-if (MSVC)
-    # MSVC requires this flag if the code uses C++ exception handling
-    target_compile_options(tests_archive_instantiation PRIVATE /EHsc)
-    target_compile_options(tests_archive_instantiation PRIVATE /bigobj)
-endif()
+target_exception_options(tests_archive_instantiation)
+target_bigobj_options(tests_archive_instantiation)
 
 # Create test with the tests_archive_instantiation
 add_executable(unit_test_pareto_archive archive.cpp)
 target_link_libraries(unit_test_pareto_archive PUBLIC tests_archive_instantiation Catch2)
-if (BUILD_LONG_TESTS)
-    target_compile_definitions(unit_test_pareto_archive PUBLIC BUILD_LONG_TESTS)
-endif()
-if(MSVC)
-    # Because there is so much in the file
-    target_compile_options(unit_test_pareto_archive PRIVATE /bigobj)
-    target_compile_options(unit_test_pareto_archive PUBLIC /wd4305)
-endif()
-
-if (MSVC)
-    # Allow MSVC to compile such a large code
-    target_compile_options(unit_test_pareto_archive PRIVATE /bigobj)
-    # MSVC requires this flag if the code uses C++ exception handling
-    target_compile_options(unit_test_pareto_archive PRIVATE /EHsc)
-endif()
-
+target_longtests_definitions(unit_test_pareto_archive)
+target_exception_options(unit_test_pareto_archive)
+target_bigobj_options(unit_test_pareto_archive)
 catch_discover_tests(unit_test_pareto_archive)

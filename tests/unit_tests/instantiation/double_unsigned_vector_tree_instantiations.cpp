@@ -3,7 +3,7 @@
 //
 
 #include "test_instantiations.h"
-#include <pareto_front/tree/vector_tree.h>
+#include <pareto/tree/vector_tree.h>
 
 namespace pareto {
     template class vector_tree<double, 0, unsigned>;

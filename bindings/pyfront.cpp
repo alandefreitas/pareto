@@ -6,7 +6,7 @@ constexpr size_t max_num_dimensions = MAX_NUM_DIMENSIONS_PYTHON;
 constexpr bool boost_rtree_is_deprecated = true;
 
 /// Create bindings for front with n = 1 dimensions
-/// i.e., create bindings for pareto_front<double, n, object>
+/// i.e., create bindings for pareto<double, n, object>
 ///       create bindings for archive<double, n, object>
 template<size_t n = max_num_dimensions, class module_t>
 std::enable_if_t<0 == n, void>
@@ -37,11 +37,11 @@ binding_for_all_dimensions(module_t &m) {
 }
 
 /// Create bindings for front with n > 1 dimensions
-/// Create bindings for pareto_front<double, n, py_object>,
-/// pareto_front<double, n-1, py_object>,
-/// pareto_front<double, n-2, py_object>,
+/// Create bindings for pareto<double, n, py_object>,
+/// pareto<double, n-1, py_object>,
+/// pareto<double, n-2, py_object>,
 /// ...
-/// pareto_front<double, 0, py_object>
+/// pareto<double, 0, py_object>
 template<size_t n = max_num_dimensions, class module_t>
 std::enable_if_t<0 < n, void>
 binding_for_all_dimensions(module_t &m) {
@@ -76,7 +76,7 @@ binding_for_all_dimensions(module_t &m) {
 }
 
 /// Return a py object with a front with n = 0 dimensions
-/// py::object with pareto_front<double, 0, py_object>
+/// py::object with pareto<double, 0, py_object>
 template<size_t n = max_num_dimensions,
          template<typename, size_t, typename, typename> class FRONT_OR_ARCHIVE,
          class... Args>
@@ -134,7 +134,7 @@ cast_for_dimension(std::string tag, size_t d, Args &&... args) {
 }
 
 /// Create a py object with a front with n > 0 dimensions
-/// py::object with pareto_front<double, n, py_object>
+/// py::object with pareto<double, n, py_object>
 template<size_t n = max_num_dimensions,
          template<typename, size_t, typename, typename> class FRONT_OR_ARCHIVE,
          class... Args>

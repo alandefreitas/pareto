@@ -42,7 +42,7 @@ set(EXPLICIT_TRANSLATION_UNITS)
 # header with extern templates for all data structures
 # for fronts and archives
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/python_instantiations.h
-        "#ifndef PARETO_FRONT_PYTHON_INSTANTIATIONS_H\n#define PARETO_FRONT_PYTHON_INSTANTIATIONS_H\n\n#include <pareto_front/front.h>\n#include <pareto_front/archive.h>\n#include <pybind11/pybind11.h>\n#include \"custom_equality.h\"\n\nnamespace pareto {\n"
+        "#ifndef PARETO_FRONT_PYTHON_INSTANTIATIONS_H\n#define PARETO_FRONT_PYTHON_INSTANTIATIONS_H\n\n#include <pareto/front.h>\n#include <pareto/archive.h>\n#include <pybind11/pybind11.h>\n#include \"custom_equality.h\"\n\nnamespace pareto {\n"
         )
 
 # binding_n_dimensional_extern_templates.h is a automatically generated
@@ -65,13 +65,13 @@ foreach (TREE_TYPE vector quad kd r r_star)
 
             # instantiation for point
             file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/point_instantiation/double_point_${DIMENSION}_instantiation.cpp
-                    "#include <pareto_front/point.h>\n\nnamespace pareto {\n    template class point<double, ${DIMENSION}>;\n}\n"
+                    "#include <pareto/point.h>\n\nnamespace pareto {\n    template class point<double, ${DIMENSION}>;\n}\n"
                     )
             list(APPEND EXPLICIT_TRANSLATION_UNITS ${CMAKE_CURRENT_BINARY_DIR}/point_instantiation/double_point_${DIMENSION}_instantiation.cpp)
 
             # instantiation for query box
             file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/query_box_instantiation/double_query_box_${DIMENSION}_instantiation.cpp
-                    "#include <pareto_front/query_box.h>\n\nnamespace pareto {\n    template class query_box<double, ${DIMENSION}>;\n}\n"
+                    "#include <pareto/query_box.h>\n\nnamespace pareto {\n    template class query_box<double, ${DIMENSION}>;\n}\n"
                     )
             list(APPEND EXPLICIT_TRANSLATION_UNITS ${CMAKE_CURRENT_BINARY_DIR}/query_box_instantiation/double_query_box_${DIMENSION}_instantiation.cpp)
 
@@ -97,19 +97,19 @@ foreach (TREE_TYPE vector quad kd r r_star)
 
             # Generate a translation unit that instantiates the tree object
             file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${TREE_TYPE}_instantiation/double_object_${TREE_TYPE}_tree_${DIMENSION}_instantiation.cpp
-                    "#include <pybind11/pybind11.h>\n#include \"custom_equality.h\"\n#include <pareto_front/tree/${TREE_TYPE}_tree.h>\n\nnamespace pareto {\n    template class ${TREE_TYPE}_tree<double, ${DIMENSION}, pybind11::object>;\n}\n"
+                    "#include <pybind11/pybind11.h>\n#include \"custom_equality.h\"\n#include <pareto/tree/${TREE_TYPE}_tree.h>\n\nnamespace pareto {\n    template class ${TREE_TYPE}_tree<double, ${DIMENSION}, pybind11::object>;\n}\n"
                     )
             list(APPEND EXPLICIT_TRANSLATION_UNITS ${CMAKE_CURRENT_BINARY_DIR}/${TREE_TYPE}_instantiation/double_object_${TREE_TYPE}_tree_${DIMENSION}_instantiation.cpp)
 
             # Generate a translation unit that instantiates the front object
             file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/front_instantiation/double_object_front_${TREE_TYPE}_tree_${DIMENSION}_instantiation.cpp
-                    "#include <pybind11/pybind11.h>\n#include \"custom_equality.h\"\n#include <pareto_front/front.h>\n\nnamespace pareto {\n    template class front<double, ${DIMENSION}, pybind11::object, ${TREE_TYPE}_tree_tag>;\n}\n"
+                    "#include <pybind11/pybind11.h>\n#include \"custom_equality.h\"\n#include <pareto/front.h>\n\nnamespace pareto {\n    template class front<double, ${DIMENSION}, pybind11::object, ${TREE_TYPE}_tree_tag>;\n}\n"
                     )
             list(APPEND EXPLICIT_TRANSLATION_UNITS ${CMAKE_CURRENT_BINARY_DIR}/front_instantiation/double_object_front_${TREE_TYPE}_tree_${DIMENSION}_instantiation.cpp)
 
             # Generate a translation unit that instantiates the front object
             file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/archive_instantitation/double_object_archive_${TREE_TYPE}_tree_${DIMENSION}_instantiation.cpp
-                    "#include <pybind11/pybind11.h>\n#include \"custom_equality.h\"\n#include <pareto_front/archive.h>\n\nnamespace pareto {\n    template class archive<double, ${DIMENSION}, pybind11::object, ${TREE_TYPE}_tree_tag>;\n}\n"
+                    "#include <pybind11/pybind11.h>\n#include \"custom_equality.h\"\n#include <pareto/archive.h>\n\nnamespace pareto {\n    template class archive<double, ${DIMENSION}, pybind11::object, ${TREE_TYPE}_tree_tag>;\n}\n"
                     )
             list(APPEND EXPLICIT_TRANSLATION_UNITS ${CMAKE_CURRENT_BINARY_DIR}/archive_instantitation/double_object_archive_${TREE_TYPE}_tree_${DIMENSION}_instantiation.cpp)
         endif()
@@ -149,7 +149,7 @@ pybind11_add_module(pyfront
         # library that calls binding_n_dimensional
         pyfront.cpp
         )
-target_link_libraries(pyfront PUBLIC pareto_front pybind11)
+target_link_libraries(pyfront PRIVATE pareto pybind11)
 
 # Change visibility
 # https://www.rapidtables.com/code/linux/gcc/gcc-o.html

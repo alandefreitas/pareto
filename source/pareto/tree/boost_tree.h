@@ -2,8 +2,8 @@
 #define PARETO_FRONTS_PREDICATE_TREE_H
 
 #include <boost/geometry/geometry.hpp>
-#include <pareto_front/point.h>
-#include <pareto_front/query_box.h>
+#include <pareto/point.h>
+#include <pareto/query_box.h>
 
 namespace pareto {
     template <typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename TAG>

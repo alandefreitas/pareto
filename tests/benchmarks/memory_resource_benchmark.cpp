@@ -4,12 +4,12 @@
 #include <random>
 
 #include <benchmark/benchmark.h>
-#include <pareto_front/front.h>
-#include <pareto_front/memory_pool.h>
-#include <pareto_front/point.h>
-#include <pareto_front/tree/r_tree.h>
+#include <pareto/front.h>
+#include <pareto/memory_pool.h>
+#include <pareto/point.h>
+#include <pareto/tree/r_tree.h>
 #ifdef BUILD_BOOST_TREE
-#include <pareto_front/tree/boost_tree.h>
+#include <pareto/tree/boost_tree.h>
 #endif
 #include "monotonic_resource.h"
 

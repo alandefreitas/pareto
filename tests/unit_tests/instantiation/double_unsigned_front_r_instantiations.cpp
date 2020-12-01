@@ -3,7 +3,7 @@
 //
 
 #include "test_instantiations.h"
-#include <pareto_front/front.h>
+#include <pareto/front.h>
 
 namespace pareto {
     template class front<double, 0, unsigned, r_tree_tag>;

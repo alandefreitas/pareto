@@ -27,13 +27,13 @@ target_link_libraries(my_target PUBLIC pareto_front)
 Add this header to your source files:
 
 ```cpp
-#include <pareto_front/front.h>
+#include <pareto/front.h>
 ```
 
 Or to use Pareto archives:
 
 ```cpp
-#include <pareto_front/archives.h>
+#include <pareto/archives.h>
 ```
 
 

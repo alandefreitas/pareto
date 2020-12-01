@@ -3,7 +3,7 @@
 //
 
 #include "test_instantiations.h"
-#include <pareto_front/tree/kd_tree.h>
+#include <pareto/tree/kd_tree.h>
 
 namespace pareto {
     template class kd_tree<double, 0, unsigned>;

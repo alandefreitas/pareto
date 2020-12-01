@@ -1,7 +1,7 @@
 #include <chrono>
 #include <iostream>
 #include <map>
-#include <pareto_front/front.h>
+#include <pareto/front.h>
 #include <random>
 
 int main() {

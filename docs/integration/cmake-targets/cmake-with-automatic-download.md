@@ -30,13 +30,13 @@ target_link_libraries(my_target PUBLIC pareto-front)
 Then add this header to your source files:
 
 ```cpp
-#include <pareto_front/front.h>
+#include <pareto/front.h>
 ```
 
 Or to use Pareto archives:
 
 ```cpp
-#include <pareto_front/archives.h>
+#include <pareto/archives.h>
 ```
 
 However, it's always recommended to look for ParetoFront with `find_package` before including it as a subdirectory. You can use:
