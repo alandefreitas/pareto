@@ -18,9 +18,9 @@
 #include <forward_list>
 
 #include <pareto/point.h>
-#include <pareto/query_box.h>
-#include <pareto/predicates.h>
-#include <pareto/memory_pool.h>
+#include <pareto/query/query_box.h>
+#include <pareto/query/predicates.h>
+#include <pareto/memory/memory_pool.h>
 
 namespace pareto {
     template<typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename TAG>
@@ -41,7 +41,7 @@ namespace pareto {
     /// https://github.com/virtuald/r-star-tree/blob/master/RStarBoundingBox.h
     /// https://en.wikipedia.org/wiki/R*_tree
     /// But our design is completely different.
-    template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR = /* default_fast_memory_pool */ std::allocator>
+    template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR = fast_memory_pool>
     class r_star_tree {
     public:
         friend front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, r_star_tree_tag>;
@@ -287,7 +287,7 @@ namespace pareto {
       public:
         /// Check if using the fast allocator
         constexpr static bool is_using_default_fast_allocator() {
-            return std::is_same_v<node_allocator_type, default_fast_memory_pool<rstar_tree_node>>;
+            return std::is_same_v<node_allocator_type, fast_memory_pool<rstar_tree_node>>;
         }
 
       private:
@@ -343,7 +343,7 @@ namespace pareto {
             using const_pointer = value_type const *;
             using pointer_type = std::conditional_t<is_const, const rstar_tree_node *, rstar_tree_node *>;
             using iterator_category = std::forward_iterator_tag;
-            using query_predicate_type = query_predicate<number_type, number_of_compile_dimensions_, mapped_type>;
+            using predicate_variant_type = predicate_variant<number_type, number_of_compile_dimensions_, mapped_type>;
             enum class iterator_tag {
                 begin,
                 end
@@ -368,11 +368,11 @@ namespace pareto {
             }
 
             /// This is the begin iterator
-            iterator_impl(pointer_type root_, std::initializer_list<query_predicate_type> predicate_list)
+            iterator_impl(pointer_type root_, std::initializer_list<predicate_variant_type> predicate_list)
                     : iterator_impl(root_, predicate_list.begin(), predicate_list.end()) {}
 
             /// This is the begin iterator
-            iterator_impl(pointer_type root_, const std::vector<query_predicate_type> &predicate_list)
+            iterator_impl(pointer_type root_, const std::vector<predicate_variant_type> &predicate_list)
                     : iterator_impl(root_, predicate_list.begin(), predicate_list.end()) {}
 
             /// This is the begin iterator
@@ -980,7 +980,7 @@ namespace pareto {
             size_t current_branch_;
 
             /// Predicate constraining the search area
-            std::vector<query_predicate<number_type, number_of_compile_dimensions_, mapped_type>> predicates_;
+            std::vector<predicate_variant<number_type, number_of_compile_dimensions_, mapped_type>> predicates_;
 
             /// Pointer to a nearest predicate
             nearest<number_type, number_of_compile_dimensions_> *nearest_predicate_ = nullptr;
@@ -2286,7 +2286,7 @@ namespace pareto {
                 for (size_t index = 0; index < parent_node->count_; ++index) {
                     // If the value key is in the region to erase
                     // If the value mapped type has the mapped type we want to erase
-                    if (region_to_erase.intersects(parent_node->branches_[index].as_value().first)) {
+                    if (region_to_erase.contains(parent_node->branches_[index].as_value().first)) {
                         // Remove leaf branch
                         parent_node->branches_[index] = parent_node->branches_[parent_node->count_ - 1];
                         --parent_node->count_;

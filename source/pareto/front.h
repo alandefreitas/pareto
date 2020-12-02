@@ -15,9 +15,9 @@
 
 #include <pareto/hv-2.0rc2/hv.h>
 
-#include <pareto/common.h>
+#include <pareto/common/common.h>
 #include <pareto/point.h>
-#include <pareto/query_box.h>
+#include <pareto/query/query_box.h>
 #include <pareto/tree/vector_tree.h>
 #include <pareto/tree/quad_tree.h>
 #include <pareto/tree/kd_tree.h>

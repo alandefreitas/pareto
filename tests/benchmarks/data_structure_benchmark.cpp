@@ -1,69 +1,6 @@
-#include <algorithm>
 #include <benchmark/benchmark.h>
-//#include <iostream>
 #include <pareto/front.h>
-#include <random>
-#include <thread>
-#include <vector>
-
-std::mt19937 &generator() {
-    static std::mt19937 g(static_cast<unsigned int>(std::random_device()()) | static_cast<unsigned int>(std::chrono::high_resolution_clock::now().time_since_epoch().count()));
-    return g;
-}
-
-//bool rand_flip() {
-//    static std::uniform_int_distribution<unsigned> ud(0, 1);
-//    return ud(generator());
-//}
-
-unsigned randi(size_t low = 0, size_t high = 40) {
-    static std::uniform_int_distribution<unsigned>ud(static_cast<unsigned>(low), static_cast<unsigned>(high));
-    return ud(generator());
-}
-
-double randu() {
-    static std::uniform_real_distribution<double> ud(0., 1.);
-    return ud(generator());
-}
-
-double randn() {
-    static std::normal_distribution nd;
-    return nd(generator());
-}
-
-template <size_t dimensions, typename TAG>
-typename pareto::front<double, dimensions, unsigned, TAG>::point_type random_point() {
-    typename pareto::front<double, dimensions, unsigned, TAG>::point_type p(dimensions);
-    std::generate(p.begin(), p.end(), randn);
-    return p;
-}
-
-template <size_t dimensions, typename TAG>
-typename pareto::front<double, dimensions, unsigned, TAG>::value_type random_value() {
-    auto v = std::make_pair<typename pareto::front<double, dimensions, unsigned, TAG>::point_type, unsigned>(random_point<dimensions, TAG>(), randi());
-    return v;
-}
-
-template <size_t dimensions, typename TAG>
-pareto::front<double, dimensions, unsigned, TAG>
-create_test_pareto(size_t target_size) {
-    pareto::front<double, dimensions, unsigned, TAG> pf;
-    for (size_t i = 0; i < std::max(static_cast<size_t>(100000), target_size*100) && pf.size() < target_size; ++i) {
-        pf.insert(random_value<dimensions, TAG>());
-    }
-    return pf;
-}
-
-template <size_t dimensions, typename TAG>
-std::vector<typename pareto::front<double, dimensions, unsigned, TAG>::value_type>
-create_vector_with_values(size_t n) {
-    std::vector<typename pareto::front<double, dimensions, unsigned, TAG>::value_type> v;
-    v.reserve(n);
-    for (size_t i = 0; i < n; ++i) {
-        v.emplace_back(random_value<dimensions, TAG>());
-    }
-    return v;
-}
+#include "benchmark_helpers.h"
 
 template <size_t dimensions, typename TAG>
 void create_front_from_vector(benchmark::State &state) {
@@ -71,7 +8,6 @@ void create_front_from_vector(benchmark::State &state) {
     for (auto _ : state) {
         state.PauseTiming();
         auto v = create_vector_with_values<dimensions, TAG>(n);
-
         state.ResumeTiming();
         benchmark::DoNotOptimize(pareto::front<double, dimensions, unsigned, TAG>(v.begin(), v.end()));
     }
@@ -103,6 +39,9 @@ void erase_from_front(benchmark::State &state) {
     for (auto _ : state) {
         state.PauseTiming();
         auto pf = create_test_pareto<dimensions, TAG>(n);
+
+        // create vector with all the elements in the front to erase in
+        // random order
         std::vector<typename pareto::front<double, dimensions, unsigned, TAG>::value_type> to_erase;
         to_erase.reserve(n);
         for (const auto& v: pf) {

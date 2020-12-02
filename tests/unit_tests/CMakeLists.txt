@@ -49,6 +49,16 @@ target_bigobj_options(unit_test_point)
 catch_discover_tests(unit_test_point)
 
 #######################################################
+### Test memory allocators                          ###
+#######################################################
+add_executable(unit_test_memory memory.cpp)
+target_link_libraries(unit_test_memory PUBLIC pareto Catch2)
+target_longtests_definitions(unit_test_memory)
+target_exception_options(unit_test_memory)
+target_bigobj_options(unit_test_memory)
+catch_discover_tests(unit_test_memory)
+
+#######################################################
 ### Test tree data structures                       ###
 #######################################################
 # Create explicit template instantiations for trees

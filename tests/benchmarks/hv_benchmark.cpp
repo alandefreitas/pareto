@@ -1,51 +1,22 @@
-#include <algorithm>
 #include <benchmark/benchmark.h>
-#include <iostream>
 #include <pareto/front.h>
-#include <random>
-#include <thread>
-#include <vector>
+#include "benchmark_helpers.h"
 
-std::mt19937 &generator() {
-    static std::mt19937 g(
-        static_cast<unsigned int>(std::random_device()()) | static_cast<unsigned int>(std::chrono::high_resolution_clock::now().time_since_epoch().count()));
-    return g;
-}
-
-bool rand_flip() {
-    static std::uniform_int_distribution<unsigned> ud(0, 1);
-    return ud(generator());
-}
-
-unsigned randi() {
-    static std::uniform_int_distribution<unsigned> ud(0, 40);
-    return ud(generator());
-}
-
-double randu() {
-    static std::uniform_real_distribution<double> ud(0., 1.);
-    return ud(generator());
-}
-
-double randn() {
-    static std::normal_distribution nd;
-    return nd(generator());
-}
-
-template <size_t dimensions, size_t runtime_dimensions>
+template<size_t dimensions, size_t runtime_dimensions>
 typename pareto::front<double, dimensions, unsigned>::point_type random_point() {
     typename pareto::front<double, dimensions, unsigned>::point_type p(runtime_dimensions);
     std::generate(p.begin(), p.end(), randn);
     return p;
-};
+}
 
-template <size_t dimensions, size_t runtime_dimensions>
+template<size_t dimensions, size_t runtime_dimensions>
 typename pareto::front<double, dimensions, unsigned>::value_type random_value() {
-    auto v = std::make_pair<typename pareto::front<double, dimensions, unsigned>::point_type, unsigned>(random_point<dimensions, runtime_dimensions>(), randi());
+    auto v = std::make_pair<typename pareto::front<double, dimensions, unsigned>::point_type, unsigned>(
+            random_point<dimensions, runtime_dimensions>(), randi());
     return v;
-};
+}
 
-template <typename FRONT_T, size_t dimensions, size_t runtime_dimensions>
+template<typename FRONT_T, size_t dimensions, size_t runtime_dimensions>
 FRONT_T generate_reference_set() {
     if constexpr (dimensions == 0) {
         return FRONT_T(runtime_dimensions);
@@ -54,17 +25,17 @@ FRONT_T generate_reference_set() {
     }
 }
 
-template <size_t dimensions, size_t runtime_dimensions>
+template<size_t dimensions, size_t runtime_dimensions>
 pareto::front<double, dimensions, unsigned>
 create_test_pareto(size_t target_size) {
-    static std::map<size_t,pareto::front<double, dimensions, unsigned>> cache;
+    static std::map<size_t, pareto::front<double, dimensions, unsigned>> cache;
     auto it = cache.find(target_size);
     if (it != cache.end()) {
         return it->second;
     }
-    auto pf = generate_reference_set<pareto::front<double, dimensions, unsigned>,dimensions,runtime_dimensions>();
-    for (size_t i = 0; i < std::max(static_cast<size_t>(1000000), target_size*100) && pf.size() < target_size; ++i) {
-        pf.insert(random_value<dimensions,runtime_dimensions>());
+    auto pf = generate_reference_set<pareto::front<double, dimensions, unsigned>, dimensions, runtime_dimensions>();
+    for (size_t i = 0; i < std::max(static_cast<size_t>(1000000), target_size * 100) && pf.size() < target_size; ++i) {
+        pf.insert(random_value<dimensions, runtime_dimensions>());
     }
     cache[target_size] = pf;
     return pf;
@@ -75,7 +46,7 @@ void calculate_hypervolume(benchmark::State &state) {
     // using pareto_front_t = pareto::front<double, dimensions, unsigned>;
     // using point_t = typename pareto_front_t::point_type;
     double hv = 0.0;
-    static std::map<size_t,double> known_hv;
+    static std::map<size_t, double> known_hv;
     if constexpr (dimensions == 0) {
         if (known_hv.find(size_t(state.range(0))) != known_hv.end()) {
             hv = known_hv[state.range(0)];
@@ -110,27 +81,27 @@ void calculate_hypervolume(benchmark::State &state) {
 constexpr size_t max_pareto_size = 5000;
 constexpr size_t max_number_of_samples = 10000;
 
-void pareto_sizes_and_samples(benchmark::internal::Benchmark* b) {
+void pareto_sizes_and_samples(benchmark::internal::Benchmark *b) {
     for (long long i = 50; i <= static_cast<long long>(max_pareto_size); i *= 10) {
-        b->Args({i,0});
+        b->Args({i, 0});
         for (long long j = 100; j <= static_cast<long long>(max_number_of_samples); j *= 10) {
-            b->Args({i,j});
+            b->Args({i, j});
         }
     }
 }
 
-void pareto_sizes_and_samples2(benchmark::internal::Benchmark* b) {
+void pareto_sizes_and_samples2(benchmark::internal::Benchmark *b) {
     for (long long i = 50; i <= 200; i *= 2) {
-        b->Args({i,0});
+        b->Args({i, 0});
         for (long long j = 100; j <= static_cast<long long>(max_number_of_samples); j *= 10) {
-            b->Args({i,j});
+            b->Args({i, j});
         }
     }
     // if we calculate with n=200, we might as well try to calculate with n=500
     // but that's not usually feasiable though
-    b->Args({500,0});
+    b->Args({500, 0});
     for (long long j = 100; j <= static_cast<long long>(max_number_of_samples); j *= 10) {
-        b->Args({500,j});
+        b->Args({500, j});
     }
 }
 

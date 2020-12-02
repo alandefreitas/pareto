@@ -18,9 +18,9 @@
 #include <sstream>
 
 #include <pareto/point.h>
-#include <pareto/query_box.h>
-#include <pareto/predicates.h>
-#include <pareto/memory_pool.h>
+#include <pareto/query/query_box.h>
+#include <pareto/query/predicates.h>
+#include <pareto/memory/memory_pool.h>
 
 namespace pareto {
     template<typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename TAG>
@@ -44,7 +44,7 @@ namespace pareto {
     /// https://github.com/danshapero/quadtree
     /// as reference for correctness, but the design is completely different.
     /// \see https://en.wikipedia.org/wiki/Quadtree#Point_quadtree
-    template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR = /* default_fast_memory_pool */ std::allocator>
+    template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR = fast_memory_pool>
     class quad_tree {
     public:
         friend front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, quad_tree_tag>;
@@ -139,7 +139,7 @@ namespace pareto {
 
         /// Check if using the fast allocator
         constexpr static bool is_using_default_fast_allocator() {
-            return std::is_same_v<node_allocator_type, default_fast_memory_pool<quadtree_node>>;
+            return std::is_same_v<node_allocator_type, fast_memory_pool<quadtree_node>>;
         }
 
     public /* iterators */:
@@ -162,7 +162,7 @@ namespace pareto {
             using node_pointer_type = std::conditional_t<is_const, const quadtree_node *, quadtree_node *>;
             using context_pointer_type = std::conditional_t<is_const, const quad_tree *, quad_tree *>;
             using iterator_category = std::forward_iterator_tag;
-            using query_predicate_type = query_predicate<number_type, number_of_compile_dimensions_, mapped_type>;
+            using predicate_variant_type = predicate_variant<number_type, number_of_compile_dimensions_, mapped_type>;
             enum class iterator_tag {
                 begin,
                 end
@@ -189,11 +189,11 @@ namespace pareto {
             }
 
             /// Iterator with predicate initializer list
-            iterator_impl(context_pointer_type context, node_pointer_type root_, std::initializer_list<query_predicate_type> predicate_list)
+            iterator_impl(context_pointer_type context, node_pointer_type root_, std::initializer_list<predicate_variant_type> predicate_list)
                     : iterator_impl(context, root_, predicate_list.begin(), predicate_list.end()) {}
 
             /// Iterator with predicate vector
-            iterator_impl(context_pointer_type context, node_pointer_type root_, const std::vector<query_predicate_type> &predicate_list)
+            iterator_impl(context_pointer_type context, node_pointer_type root_, const std::vector<predicate_variant_type> &predicate_list)
                     : iterator_impl(context, root_, predicate_list.begin(), predicate_list.end()) {}
 
             /// Iterator with iterators to predicates
@@ -782,7 +782,7 @@ namespace pareto {
             node_pointer_type current_node_;
 
             /// Predicate constraining the search area
-            std::vector<query_predicate<number_type, number_of_compile_dimensions_, mapped_type>> predicates_;
+            std::vector<predicate_variant<number_type, number_of_compile_dimensions_, mapped_type>> predicates_;
 
             /// Pointer to a nearest predicate
             nearest<number_type, number_of_compile_dimensions_> *nearest_predicate_ = nullptr;
@@ -1388,7 +1388,6 @@ namespace pareto {
             deallocate_quadtree_node(node);
         }
 
-
         std::string to_string() const {
             std::string str;
             // auto current = root_;
@@ -1401,7 +1400,7 @@ namespace pareto {
             std::stringstream ss;
             ss << current->value_.first;
             // ss << current->value_.first << ": " << current->value_.second;
-            assert(current->bounds_.intersects(current->value_.first));
+            assert(current->bounds_.contains(current->value_.first));
             str += ss.str() + "\n";
             for (const auto& child: current->children_) {
                 str += to_string(child.second, level + 1);

@@ -71,7 +71,7 @@ foreach (TREE_TYPE vector quad kd r r_star)
 
             # instantiation for query box
             file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/query_box_instantiation/double_query_box_${DIMENSION}_instantiation.cpp
-                    "#include <pareto/query_box.h>\n\nnamespace pareto {\n    template class query_box<double, ${DIMENSION}>;\n}\n"
+                    "#include <pareto/query/query_box.h>\n\nnamespace pareto {\n    template class query_box<double, ${DIMENSION}>;\n}\n"
                     )
             list(APPEND EXPLICIT_TRANSLATION_UNITS ${CMAKE_CURRENT_BINARY_DIR}/query_box_instantiation/double_query_box_${DIMENSION}_instantiation.cpp)
 

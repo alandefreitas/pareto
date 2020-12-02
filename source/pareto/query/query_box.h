@@ -8,45 +8,82 @@
 #include <pareto/point.h>
 
 namespace pareto {
-    template <typename NUMBER_T, std::size_t DimensionCount>
+
+    /// \brief Normalize query box corners so that lower_bound < upper_bound always
+    template<typename NUMBER_T, std::size_t DimensionCount, typename CoordinateSystem>
+    void normalize_corners(point <NUMBER_T, DimensionCount, CoordinateSystem> &min_corner,
+                           point <NUMBER_T, DimensionCount, CoordinateSystem> &max_corner) {
+        for (size_t i = 0; i < min_corner.dimensions(); ++i) {
+            if (min_corner[i] > max_corner[i]) {
+                std::swap(min_corner[i], max_corner[i]);
+            }
+        }
+    }
+
+    /// \class Query box
+    /// A query box is a hyperbox used for queries
+    /// Almost all query predicates need a hyperbox to limit the query
+    /// Hyperboxes allow the queries to go faster because they only inspect
+    /// the nodes that might have children inside a give hyperbox
+    template<typename NUMBER_T, std::size_t DimensionCount>
     class query_box {
+        /// Number of dimensions (zero for runtime dimension)
         static constexpr size_t number_of_compile_dimensions_ = DimensionCount;
+
+        /// Vertices type
         using point_type = point<NUMBER_T, number_of_compile_dimensions_>;
+
+        /// Number type of the vertices
         using number_type = typename point_type::number_type;
+
+        /// \brief Distance between two vertices
+        /// If the number type is integer, this might need to be promoted
         using distance_type = typename point_type::distance_type;
-        point_type first_;
-        point_type second_;
+
         using box_type = query_box<NUMBER_T, number_of_compile_dimensions_>;
 
-    public /* constructors */:
+    public /* Constructors */:
+        /// \brief Construct box from two points
+        /// This is the constructor you are most likely to use
+        query_box(const point_type &first, const point_type &second)
+                : first_(first), second_(second) {}
+
+        /// \brief Construct hyperbox
+        /// Use this version only if dimension is set at compile-time
         query_box() {
             reset();
         };
 
-        /// Construct with n dimensions (only if dimensions are not set at compile time)
+        /// \brief Construct with n dimensions
+        /// Only if dimensions are not set at compile time)
         explicit query_box(size_t n)
-            : first_(n), second_(n) {
+                : first_(n), second_(n) {
             reset();
         }
 
-        explicit query_box(const point_type& single_point_box) : query_box(single_point_box, single_point_box) {}
+        /// \brief Construct box for a single point
+        explicit query_box(const point_type &single_point_box) : query_box(single_point_box, single_point_box) {
+            normalize_corners(first_,second_);
+        }
 
-        query_box(const point_type& center, number_type half_width)
-            : first_(center - half_width), second_(center + half_width) {}
+        /// \brief Construct box from a center and a half width
+        query_box(const point_type &center, number_type half_width)
+                : first_(center - half_width), second_(center + half_width) {
+            normalize_corners(first_,second_);
+        }
 
-        query_box(const point_type& center, number_type* half_widths)
-            : first_(center), second_(center) {
+        /// \brief Construct box from a center and a list of half widths for dimension
+        query_box(const point_type &center, number_type *half_widths)
+                : first_(center), second_(center) {
             for (size_t i = 0; i < dimensions(); ++i) {
                 first_[i] -= half_widths[i];
                 second_[i] += half_widths[i];
             }
+            normalize_corners(first_,second_);
         }
 
-        query_box(const point_type& first, const point_type& second)
-            : first_(first), second_(second){}
-
-    public /* static functions */:
-        /// Returns a new bounding box that has the maximum boundaries
+    public /* static constructor-like functions */:
+        /// \brief Returns a new bounding box that has the maximum boundaries
         static query_box maximum_bound_box(size_t n) {
             query_box bound(n);
             bound.reset();
@@ -55,52 +92,64 @@ namespace pareto {
 
     public /* non-modifying functions */:
 
-        point_type& first() {
+        /// \brief Return the first (min) point
+        point_type &first() {
             return first_;
         }
 
-        point_type& second() {
-            return second_;
-        }
-
-        point_type& min() {
+        /// \brief Return the min (first) point
+        point_type &min() {
             return first_;
         }
 
-        point_type& max() {
+        /// \brief Return the second (max) point
+        point_type &second() {
             return second_;
         }
 
-        const point_type& first() const {
+        /// \brief Return the max (max) point
+        point_type &max() {
+            return second_;
+        }
+
+        /// \brief Return the first (min) point
+        const point_type &first() const {
             return first_;
         }
 
-        const point_type& second() const {
-            return second_;
-        }
-
-        const point_type& min() const {
+        /// \brief Return the min (first) point
+        const point_type &min() const {
             return first_;
         }
 
-        const point_type& max() const {
+        /// \brief Return the second (max) point
+        const point_type &second() const {
             return second_;
         }
 
+        /// \brief Return the max (max) point
+        const point_type &max() const {
+            return second_;
+        }
+
+        /// \brief Return center of the hyperbox
         point_type center() const {
-            return (first_ + second_)/2.0;
+            return (first_ + second_) / 2.0;
         }
 
-        size_t dimensions() const {
+        /// \brief Get number of dimensions of a hyperbox
+        [[nodiscard]] size_t dimensions() const {
             return first_.dimensions();
         }
 
+        /// \brief Return the half width of a hyperbox in a given dimension
         point_type half_width(size_t index) const {
-            return (second_[index] - first_[index])/2.0;
+            return (second_[index] - first_[index]) / 2.0;
         }
 
-        bool empty() const {
-            for (size_t index=0; index < dimensions(); ++index) {
+        /// \brief Return true is a hyperbox has hypervolume zero
+        [[nodiscard]] bool empty() const {
+            for (size_t index = 0; index < dimensions(); ++index) {
                 if (second_[index] - first_[index] == 0) {
                     return true;
                 }
@@ -108,6 +157,7 @@ namespace pareto {
             return false;
         }
 
+        /// \brief Return hypervolume of a hyperbox
         number_type volume() const {
             number_type v = 1.;
             for (size_t i = 0; i < dimensions(); ++i) {
@@ -116,12 +166,16 @@ namespace pareto {
             return v;
         }
 
-        number_type area() const {
+        /// \brief Return hypervolume of a hyperbox
+        /// Just is just a convenience function as some
+        /// boxes are 2d and "volume" would be hard to guess
+        /// For this reason, we inline calls to this function
+        inline number_type area() const {
             return volume();
         }
 
-        /// Combine two rectangles into larger one containing both
-        query_box combine(const query_box& other) const {
+        /// \brief Combine two hyperboxes into larger one containing both
+        query_box combine(const query_box &other) const {
             box_type new_query_box(dimensions());
             for (size_t index = 0; index < dimensions(); ++index) {
                 new_query_box.min()[index] = std::min(min()[index], other.min()[index]);
@@ -130,26 +184,13 @@ namespace pareto {
             return new_query_box;
         }
 
-        query_box operator|(const query_box& other) const {
+        /// \brief Combine two hyperboxes into larger one containing both
+        query_box operator|(const query_box &other) const {
             return combine(other);
         }
 
-        /// Return the intersection of two rectangles into a smaller rectangle
-        query_box intersection(const query_box& other) const {
-            box_type new_query_box(dimensions());
-            for (size_t index = 0; index < dimensions(); ++index) {
-                new_query_box.min()[index] = std::max(min()[index], other.min()[index]);
-                new_query_box.max()[index] = std::min(max()[index], other.max()[index]);
-            }
-            return new_query_box;
-        }
-
-        query_box operator&(const query_box& other) const {
-            return intersection(other);
-        }
-
-        /// Combine the rectangle into larger one containing the point
-        query_box combine(const point_type& p) const {
+        /// \brief Combine the rectangle into larger one containing the point
+        query_box combine(const point_type &p) const {
             box_type new_query_box;
             for (size_t index = 0; index < dimensions(); ++index) {
                 new_query_box.min()[index] = std::min(min()[index], p[index]);
@@ -158,10 +199,30 @@ namespace pareto {
             return new_query_box;
         }
 
-        /// Check if they have some area in common (ar any point)
-        bool overlap(const point_type& p) const {
+        /// \brief Combine two hyperboxes into larger one containing the point p
+        query_box operator|(const point_type &p) const {
+            return combine(p);
+        }
+
+        /// \brief Return the intersection of two rectangles into a smaller rectangle
+        query_box intersection(const query_box &other) const {
+            box_type new_query_box(dimensions());
+            for (size_t index = 0; index < dimensions(); ++index) {
+                new_query_box.min()[index] = std::max(min()[index], other.min()[index]);
+                new_query_box.max()[index] = std::min(max()[index], other.max()[index]);
+            }
+            return new_query_box;
+        }
+
+        /// \brief Return the intersection of two rectangles into a smaller rectangle
+        query_box operator&(const query_box &other) const {
+            return intersection(other);
+        }
+
+        /// \brief Check if the hyperbox and the point have some area in common (or any point)
+        bool overlap(const point_type &p) const {
             // for each dimension
-            for (size_t index=0; index < first_.dimensions(); ++index) {
+            for (size_t index = 0; index < first_.dimensions(); ++index) {
                 // check min and max intersection
                 if (first_[index] > p[index] || p[index] > second_[index]) {
                     return false;
@@ -170,10 +231,10 @@ namespace pareto {
             return true;
         }
 
-        /// Check if they have some area in common (on any point including borders)
-        bool overlap(const query_box& rhs) const {
+        /// \brief Check if two hyperboxes have some area in common (or any point)
+        bool overlap(const query_box &rhs) const {
             // for each dimension
-            for (size_t index=0; index < first_.dimensions(); ++index) {
+            for (size_t index = 0; index < first_.dimensions(); ++index) {
                 // check min and max intersection
                 if (first_[index] > rhs.second_[index] ||
                     rhs.first_[index] > second_[index]) {
@@ -183,13 +244,13 @@ namespace pareto {
             return true;
         }
 
-        /// Calculate how much area they have in common
+        /// \brief Calculate how much area two query boxes have in common
         /// If they have only borders in common, this will return zero
-        /// while overlap will return true.
-        number_type overlap_area(const query_box& rhs) const {
+        /// while overlap will still return true.
+        number_type overlap_area(const query_box &rhs) const {
             number_type area = 1.;
             // for each dimension
-            for (size_t index=0; area && index < first_.dimensions(); ++index) {
+            for (size_t index = 0; area && index < first_.dimensions(); ++index) {
                 // left edge outside left edge
                 if (first_[index] < rhs.first_[index]) {
                     // and right edge inside left edge
@@ -220,10 +281,10 @@ namespace pareto {
             return true;
         }
 
-        /// Check if point is inside the box (including border)
-        bool intersects(const point_type& p) const {
+        /// \brief Check if a point is inside the box (including borders)
+        bool contains(const point_type &p) const {
             // for each dimension
-            for (size_t index=0; index < p.dimensions(); ++index) {
+            for (size_t index = 0; index < p.dimensions(); ++index) {
                 // check min and max intersection
                 if (p[index] < first_[index]) {
                     return false;
@@ -235,10 +296,10 @@ namespace pareto {
             return true;
         }
 
-        /// Check if box is inside the box (including border)
-        bool intersects(const box_type& b) const {
+        /// \brief Check if hyperbox b is inside this hyperbox (including border)
+        bool contains(const box_type &b) const {
             // for each dimension
-            for (size_t index=0; index < b.dimensions(); ++index) {
+            for (size_t index = 0; index < b.dimensions(); ++index) {
                 // check min and max intersection
                 if (b.min()[index] < first_[index]) {
                     return false;
@@ -251,18 +312,20 @@ namespace pareto {
         }
 
         /// This determines if a bounding box is fully contained within this bounding box
-        bool encloses(const box_type& b) const {
-            return intersects(b);
+        bool encloses(const box_type &b) const {
+            return contains(b);
         }
 
         /// \\brief Returns true if a point is inside the half-closed rectangle
+        /// This seems like a weird operation but it's useful to make sure
+        /// trees can have a order relationship between points and boxes.
         /// For our purposes, we're considering half-closed rectangles.
         /// If a point is on the boundary of a rectangle, then it is considered
         /// to be inside the rectangle if it's on the upper boundary but not
         /// inside the rectangle if it's on the lower boundary. This is to avoid
         /// annoying edge cases because computational geometry is hard. */
-        inline bool in_half_closed_rectangle( point_type& p ) {
-            for (size_t i=0; i < dimensions(); i++) {
+        inline bool in_half_closed_rectangle(point_type &p) {
+            for (size_t i = 0; i < dimensions(); i++) {
                 if (p[i] > second_[i]) {
                     return false;
                 }
@@ -273,10 +336,10 @@ namespace pareto {
             return true;
         }
 
-        /// Check if point is inside the box (excluding border)
-        bool within(const point_type& p) const {
+        /// \brief Check if point is inside the box (excluding border)
+        bool within(const point_type &p) const {
             // for each dimension
-            for (size_t index=0; index < p.dimensions(); ++index) {
+            for (size_t index = 0; index < p.dimensions(); ++index) {
                 // check min and max intersection
                 if (p[index] <= first_[index]) {
                     return false;
@@ -288,10 +351,10 @@ namespace pareto {
             return true;
         }
 
-        /// Check if box is inside the box (excluding border)
-        bool within(const box_type& b) const {
+        /// Check if another hyperbox is inside this hyperbox (excluding border)
+        bool within(const box_type &b) const {
             // for each dimension
-            for (size_t index=0; index < b.dimensions(); ++index) {
+            for (size_t index = 0; index < b.dimensions(); ++index) {
                 // check min and max intersection
                 if (b.min()[index] <= first_[index]) {
                     return false;
@@ -303,8 +366,9 @@ namespace pareto {
             return true;
         }
 
-        template <std::size_t DimensionCount2, typename CoordinateSystem>
-        distance_type distance(const point<NUMBER_T, DimensionCount2, CoordinateSystem>& p) const {
+        /// \brief Calculates the distance between this hyperbox and a point
+        template<std::size_t DimensionCount2, typename CoordinateSystem>
+        distance_type distance(const point <NUMBER_T, DimensionCount2, CoordinateSystem> &p) const {
             distance_type dist = 0.0;
             for (size_t i = 0; i < dimensions(); ++i) {
                 distance_type di = std::max(std::max(first()[i] - p[i], p[i] - second()[i]), 0.0);
@@ -313,7 +377,8 @@ namespace pareto {
             return sqrt(dist);
         }
 
-        distance_type distance(const point_type& p) const {
+        /// \brief Calculates the distance between this hyperbox and a point
+        distance_type distance(const point_type &p) const {
             distance_type dist = 0.0;
             for (size_t i = 0; i < dimensions(); ++i) {
                 distance_type di = std::max(std::max(first()[i] - p[i], p[i] - second()[i]), 0.0);
@@ -322,7 +387,8 @@ namespace pareto {
             return sqrt(dist);
         }
 
-        distance_type distance(const query_box& b) const {
+        /// \brief Calculates the distance between this hyperbox and another hyperbox
+        distance_type distance(const query_box &b) const {
             point_type closest_point(dimensions());
             for (size_t i = 0; i < b.dimensions(); ++i) {
                 closest_point[i] = b.min()[i] > min()[i] ? max()[i] : min()[i];
@@ -330,27 +396,28 @@ namespace pareto {
             return distance(closest_point);
         }
 
-        /// Distance from center point to the center of another bounding box
-        distance_type distance_from_center(const query_box& b) const {
+        /// \brief Distance from center point to the center of another bounding box
+        distance_type distance_from_center(const query_box &b) const {
             return center().distance(b.center());
         }
 
-        /// Distance from center point to another point
-        distance_type distance_from_center(const point_type& p) const {
+        /// \brief Distance from center point of this hyperbox to another point
+        distance_type distance_from_center(const point_type &p) const {
             return p.distance(center());
         }
 
-        /// Check if point is outside the box
-        bool disjoint(const point_type& p) const {
-            return !intersects(p);
+        /// \brief Check if point is outside the box
+        bool disjoint(const point_type &p) const {
+            return !contains(p);
         }
 
-        /// Check if box is outside the query box
-        bool disjoint(const box_type& b) const {
+        /// \brief Check if box is outside the query box
+        bool disjoint(const box_type &b) const {
             return !overlap(b);
         }
 
-        /// The sum of all deltas between edges
+        /// \brief The sum of all deltas between edges
+        /// This is equivalent to the perimeter for a normalized hyperbox
         inline number_type edge_deltas() const {
             number_type distance = 0;
             for (std::size_t axis = 0; axis < dimensions(); axis++) {
@@ -359,16 +426,21 @@ namespace pareto {
             return distance;
         }
 
+        /// \brief Compare hyperboxes
         bool operator==(const query_box &rhs) const {
             return first_ == rhs.first_ && second_ == rhs.second_;
         }
 
+        /// \brief Compare hyperboxes
         bool operator!=(const query_box &rhs) const {
-            return !(rhs == *this);
+            return first_ != rhs.first_ || second_ != rhs.second_;
         }
 
     public /* modifying functions */:
-        /// Forces all edges to their extremes so we can stretch() it
+        /// \brief Forces all edges to their extremes in +infinity/-infinity so we can stretch() it later
+        /// New hyperboxes start with invalid values larger and smaller than any other values
+        /// This makes it possible to stretch the hyperbox later because the new value will always
+        /// be smaller than min and larger than max
         void reset() {
             for (std::size_t axis = 0; axis < dimensions(); axis++) {
                 first_[axis] = std::numeric_limits<number_type>::max();
@@ -376,7 +448,7 @@ namespace pareto {
             }
         }
 
-        /// Fits another box inside of this box
+        /// \brief Fit another hyperbox inside of this box
         /// \param bb Another query box
         /// \return true if a stretch occurred
         bool stretch(const query_box &bb) {
@@ -394,7 +466,7 @@ namespace pareto {
             return ret;
         }
 
-        /// Fits another point inside of this box
+        /// \brief Fits another point inside this box
         /// \param bb Another query box
         /// \return true if a stretch occurred
         bool stretch(const point_type &p) {
@@ -411,6 +483,13 @@ namespace pareto {
             }
             return ret;
         }
+
+    private /* members */:
+        /// First query vertex (min point)
+        point_type first_;
+
+        /// First query vertex (max point)
+        point_type second_;
     };
 }
 

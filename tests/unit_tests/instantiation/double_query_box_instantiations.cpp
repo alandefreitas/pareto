@@ -3,7 +3,7 @@
 //
 
 #include "test_instantiations.h"
-#include <pareto/query_box.h>
+#include <pareto/query/query_box.h>
 
 namespace pareto {
     template class query_box<double, 0>;

@@ -5,8 +5,8 @@
 #include <functional>
 
 #include <pareto/point.h>
-#include <pareto/memory_pool.h>
-#include <pareto/query_box.h>
+#include <pareto/memory/memory_pool.h>
+#include <pareto/query/query_box.h>
 
 namespace pareto {
 

@@ -20,9 +20,9 @@
 #include <tuple>
 
 #include <pareto/point.h>
-#include <pareto/query_box.h>
-#include <pareto/predicates.h>
-#include <pareto/memory_pool.h>
+#include <pareto/query/query_box.h>
+#include <pareto/query/predicates.h>
+#include <pareto/memory/memory_pool.h>
 
 namespace pareto {
     template <typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename TAG>
@@ -41,7 +41,7 @@ namespace pareto {
     /// queries more efficient.
     /// \see https://www.cs.cmu.edu/~ckingsf/bioinfo-lectures/kdtrees.pdf
     /// \see LOTS of kd-trees on github: https://github.com/search?l=C%2B%2B&q=kd-tree&type=Repositories
-    template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR = /* default_fast_memory_pool */ std::allocator>
+    template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR = fast_memory_pool>
     class kd_tree {
     public:
         friend front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, kd_tree_tag>;
@@ -143,7 +143,7 @@ namespace pareto {
       public:
         /// Check if using the fast allocator
         constexpr static bool is_using_default_fast_allocator() {
-            return std::is_same_v<node_allocator_type, default_fast_memory_pool<kdtree_node>>;
+            return std::is_same_v<node_allocator_type, fast_memory_pool<kdtree_node>>;
         }
 
     public /* iterators */:
@@ -167,7 +167,7 @@ namespace pareto {
             using node_pointer_type = std::conditional_t<is_const, const kdtree_node *, kdtree_node *>;
             using context_pointer_type = std::conditional_t<is_const, const kd_tree *, kd_tree *>;
             using iterator_category = std::forward_iterator_tag;
-            using query_predicate_type = query_predicate<number_type, number_of_compile_dimensions_, mapped_type>;
+            using predicate_variant_type = predicate_variant<number_type, number_of_compile_dimensions_, mapped_type>;
             enum class iterator_tag {
                 begin,
                 end
@@ -195,11 +195,11 @@ namespace pareto {
             }
 
             /// Iterator with predicate initializer list
-            iterator_impl(context_pointer_type context, node_pointer_type root_, std::initializer_list<query_predicate_type> predicate_list)
+            iterator_impl(context_pointer_type context, node_pointer_type root_, std::initializer_list<predicate_variant_type> predicate_list)
                     : iterator_impl(context, root_, predicate_list.begin(), predicate_list.end()) {}
 
             /// Iterator with predicate vector
-            iterator_impl(context_pointer_type context, node_pointer_type root_, const std::vector<query_predicate_type> &predicate_list)
+            iterator_impl(context_pointer_type context, node_pointer_type root_, const std::vector<predicate_variant_type> &predicate_list)
                     : iterator_impl(context, root_, predicate_list.begin(), predicate_list.end()) {}
 
             /// Iterator with iterators to predicates
@@ -808,7 +808,7 @@ namespace pareto {
             node_pointer_type current_node_;
 
             /// Predicate constraining the search area
-            std::vector<query_predicate<number_type, number_of_compile_dimensions_, mapped_type>> predicates_;
+            std::vector<predicate_variant<number_type, number_of_compile_dimensions_, mapped_type>> predicates_;
 
             /// Pointer to a nearest predicate
             nearest<number_type, number_of_compile_dimensions_> *nearest_predicate_ = nullptr;
@@ -860,7 +860,6 @@ namespace pareto {
             std::vector<value_type> v(first, last);
             std::sort(v.begin(), v.end());
             bulk_insert(v, root_);
-
         }
 
         /// Copy constructor
@@ -1467,7 +1466,7 @@ namespace pareto {
             std::stringstream ss;
             ss << current->value_.first;
             // ss << current->value_.first << ": " << current->value_.second;
-            assert(current->bounds_.intersects(current->value_.first));
+            assert(current->bounds_.contains(current->value_.first));
             str += ss.str() + "\n";
             if (current->l_child != nullptr) {
                 str += to_string(current->l_child, level + 1);

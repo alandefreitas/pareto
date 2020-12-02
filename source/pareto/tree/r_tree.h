@@ -13,13 +13,14 @@
 #include <forward_list>
 
 #include <pareto/point.h>
-#include <pareto/query_box.h>
-#include <pareto/predicates.h>
-#include <pareto/memory_pool.h>
+#include <pareto/query/query_box.h>
+#include <pareto/query/predicates.h>
+#include <pareto/memory/memory_pool.h>
 
 namespace pareto {
     template<typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename TAG>
     class front;
+
     struct r_tree_tag;
 
     /// \class r_tree
@@ -55,7 +56,7 @@ namespace pareto {
     /// This implementation used
     /// https://github.com/nushoin/RTree/blob/master/RTree.h
     /// as reference for correctness, but the design is completely different.
-    template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR = /* default_fast_memory_pool */ std::allocator>
+    template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR = fast_memory_pool>
     class r_tree {
     public:
         friend front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, r_tree_tag>;
@@ -93,7 +94,7 @@ namespace pareto {
         struct rtree_node;
         using box_and_node = std::pair<box_type, rtree_node *>;
 
-        /// This represents a box_and_node or a value_type
+        /// \brief This represents a box_and_node or a value_type
         /// The two kinds of data we might have on a node
         class branch_variant {
         public:
@@ -163,7 +164,7 @@ namespace pareto {
                 }
             }
 
-            distance_type distance(const nearest<number_type, number_of_compile_dimensions_> &b) const {
+            distance_type distance(const nearest <number_type, number_of_compile_dimensions_> &b) const {
                 if (b.has_reference_box()) {
                     return distance(b.reference_box());
                 } else {
@@ -204,7 +205,8 @@ namespace pareto {
                 if (is_branch()) {
                     return as_branch() == rhs.as_branch();
                 } else {
-                    return point_value() == rhs.point_value() && mapped_type_custom_equality_operator(mapped_value(), rhs.mapped_value());
+                    return point_value() == rhs.point_value() &&
+                           mapped_type_custom_equality_operator(mapped_value(), rhs.mapped_value());
                 }
             }
 
@@ -216,7 +218,7 @@ namespace pareto {
             variant_type data_;
         };
 
-        /// Node
+        /// \brief Node
         /// Each branch might have a rtree_node for each branch level
         /// The number of children is fixed because we need to make the
         /// size of a node constant. This makes it possible to use
@@ -271,20 +273,20 @@ namespace pareto {
             branches_array branches_;
         };
 
-      public:
+    public:
         using node_allocator_type = allocator_type<rtree_node>;
 
-      private:
+    private:
         /// Check if using the fast allocator
         constexpr static bool is_using_default_fast_allocator() {
-            return std::is_same_v<node_allocator_type, default_fast_memory_pool<rtree_node>>;
+            return std::is_same_v<node_allocator_type, fast_memory_pool < rtree_node>>;
         }
 
-        /// A link list of nodes for reinsertion after a delete operation
+        /// \brief A link list of nodes for reinsertion after a delete operation
         using list_allocator_type = allocator_type<rtree_node *>;
         using node_list = std::forward_list<rtree_node *, list_allocator_type>;
 
-        /// Variables for finding a split partition
+        /// \brief Variables for finding a split partition
         /// These are the variables the function to split nodes needs
         struct partition_vars {
             constexpr partition_vars() = default;
@@ -314,7 +316,7 @@ namespace pareto {
 
     public /* iterators */:
 
-        /// Iterator is not erase safe. Erase elements will invalidate the iterators.
+        /// \brief Iterator is not erase safe. Erase elements will invalidate the iterators.
         /// Because iterator and const_iterator are almost the same,
         /// we define iterator as iterator<false> and const_iterator as iterator<true>
         /// \see https://stackoverflow.com/questions/2150192/how-to-avoid-code-duplication-implementing-const-and-non-const-iterators
@@ -331,11 +333,12 @@ namespace pareto {
             using const_pointer = value_type const *;
             using pointer_type = std::conditional_t<is_const, const rtree_node *, rtree_node *>;
             using iterator_category = std::forward_iterator_tag;
-            using query_predicate_type = query_predicate<number_type, number_of_compile_dimensions_, mapped_type>;
+            using predicate_variant_type = predicate_variant<number_type, number_of_compile_dimensions_, mapped_type>;
             enum class iterator_tag {
                 begin,
                 end
             };
+            using predicate_list_type = predicate_list <number_type, number_of_compile_dimensions_, mapped_type>;
 
             /// Default
             explicit iterator_impl() : iterator_impl(nullptr, 0) {}
@@ -349,18 +352,20 @@ namespace pareto {
                     : iterator_impl(root_, 0) {}
 
             /// This is the begin iterator
-            iterator_impl(pointer_type root_, size_t index) : current_node_(root_), current_branch_(index),
-                                                              nearest_predicate_(nullptr), nearest_queue_{},
+            iterator_impl(pointer_type root_, size_t index) : current_node_(root_),
+                                                              current_branch_(index),
+                                                              nearest_predicate_(nullptr),
+                                                              nearest_queue_{},
                                                               nearest_points_iterated_(0) {
                 advance_if_invalid();
             }
 
             /// This is the begin iterator
-            iterator_impl(pointer_type root_, std::initializer_list<query_predicate_type> predicate_list)
+            iterator_impl(pointer_type root_, std::initializer_list<predicate_variant_type> predicate_list)
                     : iterator_impl(root_, predicate_list.begin(), predicate_list.end()) {}
 
             /// This is the begin iterator
-            iterator_impl(pointer_type root_, const std::vector<query_predicate_type> &predicate_list)
+            iterator_impl(pointer_type root_, const predicate_list_type &predicate_list)
                     : iterator_impl(root_, predicate_list.begin(), predicate_list.end()) {}
 
             /// This is the begin iterator
@@ -381,12 +386,7 @@ namespace pareto {
                       predicates_(rhs.predicates_), nearest_predicate_(rhs.nearest_predicate_),
                       nearest_points_iterated_(rhs.nearest_points_iterated_) {
                 if (rhs.nearest_predicate_ != nullptr) {
-                    for (auto &p: predicates_) {
-                        if (p.is_nearest()) {
-                            nearest_predicate_ = &p.as_nearest();
-                            break;
-                        }
-                    }
+                    nearest_predicate_ = predicates_.get_nearest();
                 }
                 nearest_queue_.reserve(rhs.nearest_queue_.size());
                 for (const auto&[a, b, c]: rhs.nearest_queue_) {
@@ -400,12 +400,7 @@ namespace pareto {
                       predicates_(rhs.predicates_), nearest_predicate_(rhs.nearest_predicate_),
                       nearest_points_iterated_(rhs.nearest_points_iterated_) {
                 if (rhs.nearest_predicate_ != nullptr) {
-                    for (auto &p: predicates_) {
-                        if (p.is_nearest()) {
-                            nearest_predicate_ = &p.as_nearest();
-                            break;
-                        }
-                    }
+                    nearest_predicate_ = predicates_.get_nearest();
                 }
                 nearest_queue_.reserve(rhs.nearest_queue_.size());
                 for (const auto&[a, b, c]: rhs.nearest_queue_) {
@@ -422,12 +417,7 @@ namespace pareto {
                 current_branch_ = rhs.current_branch_;
                 predicates_ = rhs.predicates_;
                 if (rhs.nearest_predicate_ != nullptr) {
-                    for (auto &p: predicates_) {
-                        if (p.is_nearest()) {
-                            nearest_predicate_ = &p.as_nearest();
-                            break;
-                        }
-                    }
+                    nearest_predicate_ = predicates_.get_nearest();
                 }
                 nearest_points_iterated_ = rhs.nearest_points_iterated_;
                 nearest_queue_ = rhs.nearest_queue_;
@@ -515,7 +505,8 @@ namespace pareto {
                         }
                     } else {
                         // if there is a nearest predicate
-                        if (nearest_points_iterated_ == 0 || !passes_predicates(current_node_->branches_[current_branch_].as_value())) {
+                        if (nearest_points_iterated_ == 0 ||
+                            !passes_predicates(current_node_->branches_[current_branch_].as_value())) {
                             // if we haven't iterated nearest points, we advance even
                             // if it might pass the predicate by coincidence
                             advance_to_next_valid(false);
@@ -559,30 +550,15 @@ namespace pareto {
             }
 
             bool passes_predicates(const box_type &b) const {
-                for (const auto &p: predicates_) {
-                    if (!p.pass_predicate(b)) {
-                        return false;
-                    }
-                }
-                return true;
+                return predicates_.pass_predicate(b);
             }
 
             bool passes_predicates(const value_type &pnt) const {
-                for (const auto &p: predicates_) {
-                    if (!p.pass_predicate(pnt)) {
-                        return false;
-                    }
-                }
-                return true;
+                return predicates_.pass_predicate(pnt);
             }
 
             bool might_pass_predicates(const box_type &b) const {
-                for (const auto &p: predicates_) {
-                    if (!p.might_pass_predicate(b)) {
-                        return false;
-                    }
-                }
-                return true;
+                return predicates_.might_pass_predicate(b);
             }
 
             void normalize_nearest_queries() {
@@ -917,31 +893,9 @@ namespace pareto {
             }
 
             void sort_predicates() {
-                // handle the most trivial cases
-                // there is nothing to sort if there are less than 2 elements
-                if (predicates_.size() < 2) {
-                    return;
-                }
-                // if it's a query box and a predicate, just swap or not
-                if (predicates_.size() == 2) {
-                    if (predicates_[0].is_intersects() || predicates_[0].is_within() || predicates_[0].is_disjoint()) {
-                        if (predicates_[1].is_satisfies() || predicates_[1].is_nearest()) {
-                            return;
-                        }
-                    }
-                    if (predicates_[0].is_satisfies() || predicates_[0].is_nearest()) {
-                        if (predicates_[1].is_intersects() || predicates_[1].is_within() ||
-                            predicates_[1].is_disjoint()) {
-                            std::swap(predicates_[0], predicates_[1]);
-                            return;
-                        }
-                    }
-                }
-                // for the more general case
+                // If there is any disjoint predicate
                 number_type volume_root = 0.;
-                // if there is any disjoint predicate
-                if (std::find_if(predicates_.begin(), predicates_.end(),
-                                 [](const auto &x) { return x.is_disjoint(); }) != predicates_.end()) {
+                if (predicates_.contains_disjoint()) {
                     // find root node
                     auto root = current_node_;
                     while (root->parent_ != nullptr) {
@@ -955,10 +909,7 @@ namespace pareto {
                     // calculate volume of root minimum bounding rectangle
                     volume_root = rect.volume();
                 }
-                // sort predicates by how restrictive they are
-                std::sort(predicates_.begin(), predicates_.end(), [&volume_root](const auto &a, const auto &b) {
-                    return a.is_more_restrictive(b, volume_root);
-                });
+                predicates_.sort(volume_root);
             }
 
             /// Stack as we are doing iteration instead of recursion
@@ -968,10 +919,10 @@ namespace pareto {
             size_t current_branch_;
 
             /// Predicate constraining the search area
-            std::vector<query_predicate<number_type, number_of_compile_dimensions_, mapped_type>> predicates_;
+            predicate_list_type predicates_;
 
             /// Pointer to a nearest predicate
-            nearest<number_type, number_of_compile_dimensions_> *nearest_predicate_ = nullptr;
+            nearest <number_type, number_of_compile_dimensions_> *nearest_predicate_ = nullptr;
 
             // Pair with branch (node or object) and distance to the reference point
             // The branch is represented by the node and its position in the node
@@ -979,7 +930,7 @@ namespace pareto {
             using queue_element = std::tuple<pointer_type, size_t, distance_type>;
 
             // Function to compare queue_elements by their distance to the reference point
-            static const std::function<bool(const queue_element&, const queue_element&)> queue_comp;
+            static const std::function<bool(const queue_element &, const queue_element &)> queue_comp;
 
             // Queue <- NewPriorityQueue()
             std::vector<queue_element> nearest_queue_;
@@ -1011,8 +962,8 @@ namespace pareto {
             root_->level_ = 0;
         }
 
-        /// Constructor that shares an external allocator
-        r_tree(std::shared_ptr<node_allocator_type>& external_alloc) :
+        /// \brief Constructor that shares an external allocator
+        r_tree(std::shared_ptr<node_allocator_type> &external_alloc) :
                 size_(0),
                 dimensions_(number_of_compile_dimensions_),
                 alloc_(external_alloc),
@@ -1024,7 +975,7 @@ namespace pareto {
             root_->level_ = 0;
         }
 
-        /// Construct from points
+        /// \brief Construct from points
         template<class InputIterator>
         r_tree(InputIterator first, InputIterator last) : r_tree() {
             // sort points and bulk insert
@@ -1033,7 +984,7 @@ namespace pareto {
             bulk_insert(v, root_);
         }
 
-        /// Copy constructor
+        /// \brief Copy constructor
         r_tree(const r_tree &other) :
                 size_(other.size_),
                 dimensions_(other.dimensions_),
@@ -1045,7 +996,7 @@ namespace pareto {
             copy_recursive(root_, root_parent, other.root_);
         }
 
-        /// Copy constructor
+        /// \brief Copy constructor
         r_tree &operator=(const r_tree &other) {
             remove_all_records(root_);
             size_ = other.size_;
@@ -1059,7 +1010,7 @@ namespace pareto {
             return *this;
         }
 
-        /// Destructor
+        /// \brief Destructor
         virtual ~r_tree() {
             remove_all_records(root_);
         }
@@ -1128,14 +1079,18 @@ namespace pareto {
 
         iterator find(const value_type &v) {
             iterator it = begin_intersection(v.first, v.first,
-                                             [&v](const value_type &x) { return mapped_type_custom_equality_operator(x.second,v.second);; });
+                                             [&v](const value_type &x) {
+                                                 return mapped_type_custom_equality_operator(x.second, v.second);;
+                                             });
             it.predicates_.clear();
             return it;
         }
 
         const_iterator find(const value_type &v) const {
             const_iterator it = begin_intersection(v.first, v.first,
-                                                   [&v](const value_type &x) { return mapped_type_custom_equality_operator(x.second,v.second);; });
+                                                   [&v](const value_type &x) {
+                                                       return mapped_type_custom_equality_operator(x.second, v.second);;
+                                                   });
             it.predicates_.clear();
             return it;
         }
@@ -1198,7 +1153,7 @@ namespace pareto {
             return const_iterator(root_, {disjoint(min_corner_, max_corner_)});
         }
 
-        ///  Find the point closest to this point
+        /// \brief  Find the point closest to this point
         /// \see Hjaltason, Gísli R., and Hanan Samet. "Distance browsing in spatial databases." ACM Transactions on Database Systems (TODS) 24.2 (1999): 265-318.
         /// \see https://dl.acm.org/doi/pdf/10.1145/320248.320255
         /// \see https://stackoverflow.com/questions/45816632/nearest-neighbor-algorithm-in-r-tree
@@ -1268,7 +1223,6 @@ namespace pareto {
         }
 
 
-
         iterator max_element(size_t dimension) {
             auto[node, index] = recursive_max_element(root_, dimension);
             return iterator(node, index);
@@ -1333,7 +1287,7 @@ namespace pareto {
             }
         }
 
-        /// Erase element
+        /// \brief Erase element
         size_t erase(iterator position) {
             // erase_query_box will erase only one element
             // the first element in the box that has position->second
@@ -1350,7 +1304,7 @@ namespace pareto {
             return s;
         }
 
-        /// Remove range of iterators from the front
+        /// \brief Remove range of iterators from the front
         size_t erase(const_iterator first, const_iterator last) {
             // get copy of all elements in the query
             std::vector<value_type> v(first, last);
@@ -1362,7 +1316,7 @@ namespace pareto {
             return s;
         }
 
-        /// erase all entries from tree
+        /// \brief erase all entries from tree
         void clear() {
             // Delete all existing nodes
             remove_all_records(root_);
@@ -1372,7 +1326,7 @@ namespace pareto {
             size_ = 0;
         }
 
-        /// Swap the content of two fronts
+        /// \brief Swap the content of two fronts
         void swap(self_type &m) {
             std::swap(root_, m.root_);
             std::swap(size_, m.size_);
@@ -1503,7 +1457,7 @@ namespace pareto {
             alloc_->deallocate(p, 1);
         }
 
-        /// Find the smallest rectangle that includes all rectangles in branches of a node.
+        /// \brief Find the smallest rectangle that includes all rectangles in branches of a node.
         box_type minimum_bounding_rectangle(rtree_node *a_node) {
             assert(a_node);
             box_type rect = a_node->rectangle(0);
@@ -1540,7 +1494,7 @@ namespace pareto {
             }
         }
 
-        /// \return True if node was split
+        /// \brief \return True if node was split
         /// \return Pointer to the node containing the value we inserted
         /// \return Index of the element we inserted in the node that contains it
         std::tuple<bool, rtree_node *, size_t>
@@ -1558,7 +1512,7 @@ namespace pareto {
             }
         }
 
-        /// Pick a branch.  Pick the one that will need the smallest increase
+        /// \brief Pick a branch.  Pick the one that will need the smallest increase
         /// in area to accomodate the new rectangle.  This will result in the
         /// least total area for the covering rectangles in the current node.
         /// In case of a tie, pick the one which was smaller before, to get
@@ -1645,7 +1599,7 @@ namespace pareto {
             return result_tuple;
         }
 
-        /// The exact volume of the bounding sphere for the given box_type
+        /// \brief The exact volume of the bounding sphere for the given box_type
         number_type query_box_spherical_volume(const box_type &region_to_erase) {
             auto sum_of_squares = static_cast<number_type>(0.);
             number_type radius;
@@ -1669,7 +1623,7 @@ namespace pareto {
             }
         }
 
-        /// Calculate the n-dimensional volume of a rectangle
+        /// \brief Calculate the n-dimensional volume of a rectangle
         number_type query_box_volume(const box_type &region_to_erase) {
             auto volume = static_cast<number_type>(1.0);
 
@@ -1682,7 +1636,7 @@ namespace pareto {
             return volume;
         }
 
-        /// Use one of the methods to calculate retangle volume
+        /// \brief Use one of the methods to calculate retangle volume
         number_type calculate_query_box_volume(const box_type &region_to_erase) {
             if constexpr (rtree_use_spherical_volume_) {
                 return query_box_spherical_volume(region_to_erase); // Slower but helps certain merge cases
@@ -1691,7 +1645,7 @@ namespace pareto {
             }
         }
 
-        /// Load branch buffer with branches from full node plus the extra branch.
+        /// \brief Load branch buffer with branches from full node plus the extra branch.
         void get_rtree_branches(rtree_node *parent_node, const branch_variant &branch_to_insert,
                                 partition_vars &partition_vars) {
             assert(parent_node);
@@ -1716,7 +1670,7 @@ namespace pareto {
             partition_vars.cover_split_area_ = calculate_query_box_volume(partition_vars.cover_split_);
         }
 
-        /// Method #0 for choosing a partition:
+        /// \brief Method #0 for choosing a partition:
         /// As the seeds for the two groups, pick the two rects that would waste the
         /// most area if covered by a single rectangle, i.e. evidently the worst pair
         /// to have in the same group.
@@ -1863,7 +1817,7 @@ namespace pareto {
             classify(static_cast<int>(seed1), 1, a_par_vars);
         }
 
-        /// Put a branch in one of the groups.
+        /// \brief Put a branch in one of the groups.
         void classify(int a_index, int a_group, partition_vars &a_par_vars) {
             assert(partition_vars::NOT_TAKEN == a_par_vars.partition_[a_index]);
 
@@ -1982,7 +1936,7 @@ namespace pareto {
             return 1;
         }
 
-        /// If branch has minimum number of elements, we update its minimum bounding rectangle
+        /// \brief If branch has minimum number of elements, we update its minimum bounding rectangle
         /// If branch does not have minimum number of elements, put its branches on reinsertion list
         /// \param parent_node Node from where we might update or remove the branch
         /// \param index Branch index in the node
@@ -2006,7 +1960,7 @@ namespace pareto {
             }
         }
 
-        /// Delete a rectangle from non-root part of an index structure.
+        /// \brief Delete a rectangle from non-root part of an index structure.
         /// Called by erase_query_box.  Descends tree recursively,
         /// merges branches on the way back up.
         /// Returns 1 if record not found, 0 if success.
@@ -2043,7 +1997,7 @@ namespace pareto {
                 for (size_t index = 0; index < parent_node->count_; ++index) {
                     // If the value key is in the region to erase
                     // If the value mapped type has the mapped type we want to erase
-                    if (region_to_erase.intersects(parent_node->branches_[index].as_value().first)) {
+                    if (region_to_erase.contains(parent_node->branches_[index].as_value().first)) {
                         // Remove leaf branch
                         parent_node->branches_[index] = parent_node->branches_[parent_node->count_ - 1];
                         --parent_node->count_;
@@ -2057,7 +2011,7 @@ namespace pareto {
             }
         }
 
-        /// Count number of elements
+        /// \brief Count number of elements
         void count_recursive(const rtree_node *parent_node, size_t &counter) const {
             // not a leaf node
             if (parent_node->is_internal_node()) {
@@ -2162,12 +2116,16 @@ namespace pareto {
                 size_t i = 2;
                 number_type vi_minus_2 = static_cast<number_type>(1.);
                 number_type vi_minus_1 = static_cast<number_type>(2.);
-                number_type vi = static_cast<number_type>((static_cast<number_type>(2.) * static_cast<number_type>(pi)) / static_cast<number_type>(i) * vi_minus_2);
+                number_type vi = static_cast<number_type>(
+                        (static_cast<number_type>(2.) * static_cast<number_type>(pi)) / static_cast<number_type>(i) *
+                        vi_minus_2);
                 while (i < number_of_compile_dimensions_) {
                     ++i;
                     vi_minus_2 = vi_minus_1;
                     vi_minus_1 = vi;
-                    vi = static_cast<number_type>((static_cast<number_type>(2.) * static_cast<number_type>(3.14159265359)) / static_cast<number_type>(i) * vi_minus_2);
+                    vi = static_cast<number_type>(
+                            (static_cast<number_type>(2.) * static_cast<number_type>(3.14159265359)) /
+                            static_cast<number_type>(i) * vi_minus_2);
                 }
                 unit_sphere_volume_ = vi;
             }
@@ -2215,26 +2173,29 @@ namespace pareto {
             deallocate_rtree_node(node);
         }
 
-        /// Bulk insertion inserts the median before other elements
+        /// \brief Bulk insertion inserts the median before other elements
         template<class InputIterator>
-        void bulk_insert(InputIterator l_begin, InputIterator l_end, const value_type& v, InputIterator r_begin, InputIterator r_end) {
+        void bulk_insert(InputIterator l_begin, InputIterator l_end, const value_type &v, InputIterator r_begin,
+                         InputIterator r_end) {
             bulk_insert(l_begin, l_end, v, r_begin, r_end, root_);
         }
 
-        void bulk_insert(const std::vector<value_type> &v, rtree_node*& node) {
+        void bulk_insert(const std::vector<value_type> &v, rtree_node *&node) {
             // bulk insert ranges {1, median - 1}, median, { median + 1, end()}
             if (!v.empty()) {
                 if (v.size() == 1) {
                     insert_branch(branch_variant(v[0]), node, 0);
                 } else {
                     size_t median_pos = v.size() / 2;
-                    bulk_insert(v.begin(), v.begin() + median_pos, v[median_pos], v.begin() + median_pos + 1, v.end(), node);
+                    bulk_insert(v.begin(), v.begin() + median_pos, v[median_pos], v.begin() + median_pos + 1, v.end(),
+                                node);
                 }
             }
         }
 
         template<class InputIterator>
-        void bulk_insert(InputIterator l_begin, InputIterator l_end, const value_type& v, InputIterator r_begin, InputIterator r_end, rtree_node*& node) {
+        void bulk_insert(InputIterator l_begin, InputIterator l_end, const value_type &v, InputIterator r_begin,
+                         InputIterator r_end, rtree_node *&node) {
             insert_branch(branch_variant(v), node, 0);
             size_t l_size = std::distance(l_begin, l_end);
             if (l_size != 0) {
@@ -2242,7 +2203,8 @@ namespace pareto {
                     insert_branch(branch_variant(*l_begin), node, 0);
                 } else {
                     size_t l_median_pos = l_size / 2;
-                    bulk_insert(l_begin, l_begin + l_median_pos, *(l_begin + l_median_pos), l_begin + l_median_pos + 1, l_end, node);
+                    bulk_insert(l_begin, l_begin + l_median_pos, *(l_begin + l_median_pos), l_begin + l_median_pos + 1,
+                                l_end, node);
                 }
             }
             size_t r_size = std::distance(r_begin, r_end);
@@ -2251,27 +2213,28 @@ namespace pareto {
                     insert_branch(branch_variant(*r_begin), node, 0);
                 } else {
                     size_t r_median_pos = r_size / 2;
-                    bulk_insert(r_begin, r_begin + r_median_pos, *(r_begin + r_median_pos), r_begin + r_median_pos + 1, r_end, node);
+                    bulk_insert(r_begin, r_begin + r_median_pos, *(r_begin + r_median_pos), r_begin + r_median_pos + 1,
+                                r_end, node);
                 }
             }
         }
 
-        /// Root of tree
+        /// \brief Root of tree
         rtree_node *root_;
 
-        /// Number of elements in the tree
+        /// \brief Number of elements in the tree
         /// We cache the size at each insertion/removal.
         /// Otherwise it would cost us O(n log(n)) to find out the size
         size_t size_{0};
 
-        /// Number of dimensions of this rtree
+        /// \brief Number of dimensions of this rtree
         /// This is only needed when the dimension will be defined at runtime
         size_t dimensions_{0};
 
-        /// Unit sphere constant for required number of dimensions
+        /// \brief Unit sphere constant for required number of dimensions
         number_type unit_sphere_volume_;
 
-        /// Node allocator
+        /// \brief Node allocator
         /// It's fundamental to allocate our nodes with an efficient allocator
         /// to have a tree that can compete with vectors
         /// This is a shared ptr because trees can also share the same
@@ -2280,18 +2243,19 @@ namespace pareto {
         /// unreasonable to create an allocator for every new front.
         std::shared_ptr<node_allocator_type> alloc_;
 
-        /// Allocator for lists
+        /// \brief Allocator for lists
         list_allocator_type list_alloc_;
 
     };
 
     // MSVC hack
     template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR>
-    template <bool constness>
-    const std::function<bool(const typename r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element&,
-                             const typename r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element&)> r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::iterator_impl<constness>::queue_comp = [](
-            const typename r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element& a,
-            const typename r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element& b) -> bool {
+    template<bool constness>
+    const std::function<bool(
+            const typename r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element &,
+            const typename r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element &)> r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::iterator_impl<constness>::queue_comp = [](
+            const typename r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element &a,
+            const typename r_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element &b) -> bool {
         return std::get<2>(a) > std::get<2>(b);
     };
 }

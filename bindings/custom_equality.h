@@ -6,7 +6,7 @@
 #define PARETO_FRONT_CUSTOM_EQUALITY_H
 
 #include <pybind11/pybind11.h>
-#include <pareto/common.h>
+#include <pareto/common/common.h>
 
 // create a custom equality operator for py::object
 namespace pareto {
