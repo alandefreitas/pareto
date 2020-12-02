@@ -2,7 +2,7 @@
 
 > Efficient Pareto fronts and archives for Python and C++
 
-[![Two-dimensional front](docs/img/pareto_cover.svg)](https://alandefreitas.github.io/pareto-front/)
+[![Two-dimensional front](docs/img/pareto_cover.svg)](https://alandefreitas.github.io/pareto/)
 
 <br/>
 
@@ -11,23 +11,23 @@ This library provides a STL-like container representing a data structure to cach
 
 <br/>
 
-[![Build Status](https://img.shields.io/github/workflow/status/alandefreitas/pareto-front/ParetoFront?event=push&label=Build&logo=Github-Actions)](https://github.com/alandefreitas/pareto-front/actions?query=workflow%3AParetoFront+event%3Apush)
-[![Latest Release](https://img.shields.io/github/release/alandefreitas/pareto-front.svg?label=Download)](https://GitHub.com/alandefreitas/pareto-front/releases/)
-[![Website lbesson.bitbucket.org](https://img.shields.io/website-up-down-green-red/http/alandefreitas.github.io/pareto-front.svg?label=Documentation)](https://alandefreitas.github.io/pareto-front/)
+[![Build Status](https://img.shields.io/github/workflow/status/alandefreitas/pareto/ParetoFront?event=push&label=Build&logo=Github-Actions)](https://github.com/alandefreitas/pareto/actions?query=workflow%3AParetoFront+event%3Apush)
+[![Latest Release](https://img.shields.io/github/release/alandefreitas/pareto.svg?label=Download)](https://GitHub.com/alandefreitas/pareto/releases/)
+[![Website lbesson.bitbucket.org](https://img.shields.io/website-up-down-green-red/http/alandefreitas.github.io/pareto.svg?label=Documentation)](https://alandefreitas.github.io/pareto/)
 
 <br/>
 
 <!-- https://github.com/bradvin/social-share-urls -->
-[![Facebook](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+Facebook&logo=facebook)](https://www.facebook.com/sharer/sharer.php?t=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python&u=https://github.com/alandefreitas/pareto-front/)
-[![QZone](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+QZone&logo=qzone)](http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=https://github.com/alandefreitas/pareto-front/&title=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python&summary=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
-[![Weibo](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+Weibo&logo=sina-weibo)](http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=https://github.com/alandefreitas/pareto-front/&title=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python&summary=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
-[![Reddit](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+Reddit&logo=reddit)](http://www.reddit.com/submit?url=https://github.com/alandefreitas/pareto-front/&title=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
-[![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?label=Share+on+Twitter&style=social)](https://twitter.com/intent/tweet?text=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python&url=https://github.com/alandefreitas/pareto-front/&hashtags=MOO,MultiObjectiveOptimization,Cpp,ScientificComputing,Optimization,Developers)
-[![LinkedIn](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+LinkedIn&logo=linkedin)](https://www.linkedin.com/shareArticle?mini=false&url=https://github.com/alandefreitas/pareto-front/&title=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
-[![WhatsApp](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+WhatsApp&logo=whatsapp)](https://api.whatsapp.com/send?text=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python:+https://github.com/alandefreitas/pareto-front/)
-[![Line.me](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+Line.me&logo=line)](https://lineit.line.me/share/ui?url=https://github.com/alandefreitas/pareto-front/&text=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
-[![Telegram.me](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+Telegram.me&logo=telegram)](https://telegram.me/share/url?url=https://github.com/alandefreitas/pareto-front/&text=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
-[![HackerNews](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+HackerNews&logo=y-combinator)](https://news.ycombinator.com/submitlink?u=https://github.com/alandefreitas/pareto-front/&t=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
+[![Facebook](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+Facebook&logo=facebook)](https://www.facebook.com/sharer/sharer.php?t=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python&u=https://github.com/alandefreitas/pareto/)
+[![QZone](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+QZone&logo=qzone)](http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=https://github.com/alandefreitas/pareto/&title=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python&summary=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
+[![Weibo](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+Weibo&logo=sina-weibo)](http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=https://github.com/alandefreitas/pareto/&title=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python&summary=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
+[![Reddit](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+Reddit&logo=reddit)](http://www.reddit.com/submit?url=https://github.com/alandefreitas/pareto/&title=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
+[![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?label=Share+on+Twitter&style=social)](https://twitter.com/intent/tweet?text=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python&url=https://github.com/alandefreitas/pareto/&hashtags=MOO,MultiObjectiveOptimization,Cpp,ScientificComputing,Optimization,Developers)
+[![LinkedIn](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+LinkedIn&logo=linkedin)](https://www.linkedin.com/shareArticle?mini=false&url=https://github.com/alandefreitas/pareto/&title=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
+[![WhatsApp](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+WhatsApp&logo=whatsapp)](https://api.whatsapp.com/send?text=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python:+https://github.com/alandefreitas/pareto/)
+[![Line.me](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+Line.me&logo=line)](https://lineit.line.me/share/ui?url=https://github.com/alandefreitas/pareto/&text=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
+[![Telegram.me](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+Telegram.me&logo=telegram)](https://telegram.me/share/url?url=https://github.com/alandefreitas/pareto/&text=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
+[![HackerNews](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Share+on+HackerNews&logo=y-combinator)](https://news.ycombinator.com/submitlink?u=https://github.com/alandefreitas/pareto/&t=Pareto%20Fronts%20and%20Archives%20/%20C%2B%2B%20and%20Python)
 
 <br/>
 
@@ -657,10 +657,10 @@ The default tag for fronts and archives is converted to an appropriate data stru
 
 ### Packages
 
-Get one of binary packages from the [release section](https://github.com/alandefreitas/pareto-front/releases). 
+Get one of binary packages from the [release section](https://github.com/alandefreitas/pareto/releases). 
 
 * Python Binary <OS>: this is only the binary for Python. Copy this file to your site-packages directory.
-* pareto-front-<version>-<OS>.<package extension>: these packages contain the Python bindings and the C++ library.
+* pareto-<version>-<OS>.<package extension>: these packages contain the Python bindings and the C++ library.
 * Binary Packages <OS>: these packages contain all packages for a given OS.
 
 If using one the installers, make sure you install the Python bindings to your site-packages directory (this is the default directory for most packages). You can find your site-packages directory with:
@@ -669,7 +669,7 @@ If using one the installers, make sure you install the Python bindings to your s
 python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib());"
 ``` 
 
-These binaries refer to the last release version. If you need a more recent version of pareto-front, you can download the [binary packages from the CI artifacts](https://github.com/alandefreitas/pareto-front/actions?query=workflow%3AParetoFront+event%3Apush) or build the library [from the source files](#build-from-source). 
+These binaries refer to the last release version. If you need a more recent version of pareto, you can download the [binary packages from the CI artifacts](https://github.com/alandefreitas/pareto/actions?query=workflow%3AParetoFront+event%3Apush) or build the library [from the source files](#build-from-source). 
 
 Once the package is installed, you can use the Python library with
 
@@ -677,11 +677,11 @@ Once the package is installed, you can use the Python library with
 import pyfront
 ```
  
-or link your C++ program to the library and include the directories where you installed pareto-front. 
+or link your C++ program to the library and include the directories where you installed pareto. 
 
 Unless you changed the default options, the C++ library is likely to be in `/usr/local/` (Linux / Mac OS) or `C:/Program Files/` (Windows). The installer will try to find the directory where you usually keep your  libraries but that's not always perfect.
 
-If you are using CMake, you can then find pareto-front with the usual `find_package` command:
+If you are using CMake, you can then find pareto with the usual `find_package` command:
 
 ```cmake
 find_package(ParetoFront REQUIRED)
@@ -702,7 +702,7 @@ target_link_libraries(my_target PUBLIC pareto_front)
 
 #### Dependencies
 
-This section lists the dependencies you need before installing pareto-front from source. The build script will try to find all these dependencies for you:
+This section lists the dependencies you need before installing pareto from source. The build script will try to find all these dependencies for you:
 
 * C++17
 * CMake 3.14 or higher
@@ -866,9 +866,9 @@ cmake --build . -j 2 --config Release
 
 On windows, replace `-O2` with `/O2`.
 
-#### Installing pareto-front from Source
+#### Installing pareto from Source
 
-This will install pareto-front on your system:
+This will install pareto on your system:
 
 ```bash
 mkdir build
@@ -882,7 +882,7 @@ On windows, replace `-O2` with `/O2`. You might need `sudo` for this last comman
 
 #### Building the packages
 
-This will create the binary packages you can use to install pareto-front on your system:
+This will create the binary packages you can use to install pareto on your system:
 
 ```bash
 mkdir build
@@ -928,7 +928,7 @@ Or to use Pareto archives:
 
 #### Use it as a CMake subdirectory
 
-You can use pareto-front directly in CMake projects without installing it. Check if you have [Cmake](http://cmake.org) 3.14+ installed:
+You can use pareto directly in CMake projects without installing it. Check if you have [Cmake](http://cmake.org) 3.14+ installed:
 
 ```bash
 cmake -version
@@ -937,20 +937,20 @@ cmake -version
 Clone the whole project
  
 ```bash
-git clone https://github.com/alandefreitas/pareto-front/
+git clone https://github.com/alandefreitas/pareto/
 ```
 
 and add the subdirectory to your CMake project:
 
 ```cmake
-add_subdirectory(pareto-front)
+add_subdirectory(pareto)
 ```
 
 When creating your executable, link the library to the targets you want:
 
 ```
 add_executable(my_target main.cpp)
-target_link_libraries(my_target PUBLIC pareto-front)
+target_link_libraries(my_target PUBLIC pareto)
 ```
 
 Add this header to your source files:
@@ -980,11 +980,11 @@ Install [CPM.cmake](https://github.com/TheLartians/CPM.cmake) and then:
 ```cmake
 CPMAddPackage(
     NAME ParetoFront
-    GITHUB_REPOSITORY alandefreitas/pareto-front
+    GITHUB_REPOSITORY alandefreitas/pareto
     GIT_TAG origin/master # or whatever tag you want
 )
 # ...
-target_link_libraries(my_target PUBLIC pareto-front)
+target_link_libraries(my_target PUBLIC pareto)
 ```
 
 Then add this header to your source files:
@@ -1046,12 +1046,12 @@ cmake --build . -j 2 --config Release
 
 There are many ways in which you can contribute to this library:
 
-* Testing the library in new environments <sup>see [1](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22cross-platform+issue+-+windows%22), [2](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22cross-platform+issue+-+linux%22), [3](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22cross-platform+issue+-+macos%22) </sup>
+* Testing the library in new environments <sup>see [1](https://github.com/alandefreitas/pareto/issues?q=is%3Aopen+is%3Aissue+label%3A%22cross-platform+issue+-+windows%22), [2](https://github.com/alandefreitas/pareto/issues?q=is%3Aopen+is%3Aissue+label%3A%22cross-platform+issue+-+linux%22), [3](https://github.com/alandefreitas/pareto/issues?q=is%3Aopen+is%3Aissue+label%3A%22cross-platform+issue+-+macos%22) </sup>
 * Contributing with interesting examples <sup>see [1](examples)</sup>
 * Including new indicators <sup>see [1](#indicators)</sup>
-* Improving this documentation <sup>see [1](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22enhancement+-+documentation%22) </sup>
-* New spacial data structures <sup>see [1](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22enhancement+-+data+structures%22) </sup>
-* Finding bugs in general <sup>see [1](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug+-+compilation+error%22), [2](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug+-+compilation+warning%22), [3](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug+-+runtime+error%22), [4](https://github.com/alandefreitas/pareto-front/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug+-+runtime+warning%22) </sup>
+* Improving this documentation <sup>see [1](https://github.com/alandefreitas/pareto/issues?q=is%3Aopen+is%3Aissue+label%3A%22enhancement+-+documentation%22) </sup>
+* New spacial data structures <sup>see [1](https://github.com/alandefreitas/pareto/issues?q=is%3Aopen+is%3Aissue+label%3A%22enhancement+-+data+structures%22) </sup>
+* Finding bugs in general <sup>see [1](https://github.com/alandefreitas/pareto/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug+-+compilation+error%22), [2](https://github.com/alandefreitas/pareto/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug+-+compilation+warning%22), [3](https://github.com/alandefreitas/pareto/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug+-+runtime+error%22), [4](https://github.com/alandefreitas/pareto/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug+-+runtime+warning%22) </sup>
 * Whatever idea seems interesting to you
 
 If contributing with code, please leave the pedantic mode ON (`-DBUILD_WITH_PEDANTIC_WARNINGS=ON`).

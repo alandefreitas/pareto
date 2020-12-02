@@ -20,23 +20,23 @@ Install [CPM.cmake](https://github.com/TheLartians/CPM.cmake) and then:
 ```cmake
 CPMAddPackage(
     NAME ParetoFront
-    GITHUB_REPOSITORY alandefreitas/pareto-front
+    GITHUB_REPOSITORY alandefreitas/pareto
     GIT_TAG origin/master # or whatever tag you want
 )
 # ...
-target_link_libraries(my_target PUBLIC pareto-front)
+target_link_libraries(my_target PUBLIC pareto)
 ```
 
 Then add this header to your source files:
 
 ```cpp
-#include <pareto/front.h>
+#include <pareto_front/front.h>
 ```
 
 Or to use Pareto archives:
 
 ```cpp
-#include <pareto/archives.h>
+#include <pareto_front/archives.h>
 ```
 
 However, it's always recommended to look for ParetoFront with `find_package` before including it as a subdirectory. You can use:

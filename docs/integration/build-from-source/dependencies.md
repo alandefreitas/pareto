@@ -9,7 +9,7 @@ has_toc: false
 ---
 # Dependencies
 
-This section lists the dependencies you need before installing pareto-front from source. The build script will try to find all these dependencies for you:
+This section lists the dependencies you need before installing pareto from source. The build script will try to find all these dependencies for you:
 
 * C++17
 * CMake 3.14 or higher

@@ -1,15 +1,15 @@
 ---
 layout: default
-title: Installing pareto-front from Source
+title: Installing pareto from Source
 nav_order: 3
 has_children: false
 parent: Build from source
 grand_parent: Integration
 has_toc: false
 ---
-# Installing pareto-front from Source
+# Installing pareto from Source
 
-This will install pareto-front on your system:
+This will install pareto on your system:
 
 ```bash
 mkdir build
