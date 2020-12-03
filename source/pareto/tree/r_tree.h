@@ -895,7 +895,7 @@ namespace pareto {
             void sort_predicates() {
                 // If there is any disjoint predicate
                 number_type volume_root = 0.;
-                if (predicates_.contains_disjoint()) {
+                if (predicates_.size() > 1 && predicates_.contains_disjoint()) {
                     // find root node
                     auto root = current_node_;
                     while (root->parent_ != nullptr) {

@@ -172,7 +172,7 @@ namespace pareto {
                 begin,
                 end
             };
-
+            using predicate_list_type = predicate_list<number_type, number_of_compile_dimensions_, mapped_type>;
 
             /// Default
             explicit iterator_impl() : iterator_impl(nullptr, nullptr) {}
@@ -199,7 +199,8 @@ namespace pareto {
                     : iterator_impl(context, root_, predicate_list.begin(), predicate_list.end()) {}
 
             /// Iterator with predicate vector
-            iterator_impl(context_pointer_type context, node_pointer_type root_, const std::vector<predicate_variant_type> &predicate_list)
+            iterator_impl(context_pointer_type context, node_pointer_type root_,
+                          const predicate_list_type &predicate_list)
                     : iterator_impl(context, root_, predicate_list.begin(), predicate_list.end()) {}
 
             /// Iterator with iterators to predicates
@@ -220,12 +221,7 @@ namespace pareto {
                       predicates_(rhs.predicates_), nearest_predicate_(nullptr),
                       nearest_points_iterated_(rhs.nearest_points_iterated_) {
                 if (rhs.nearest_predicate_ != nullptr) {
-                    for (auto &p: predicates_) {
-                        if (p.is_nearest()) {
-                            nearest_predicate_ = &p.as_nearest();
-                            break;
-                        }
-                    }
+                    nearest_predicate_ = predicates_.get_nearest();
                 }
                 nearest_queue_.reserve(rhs.nearest_queue_.size());
                 for (const auto&[a, b, c]: rhs.nearest_queue_) {
@@ -239,12 +235,7 @@ namespace pareto {
                       predicates_(rhs.predicates_), nearest_predicate_(nullptr),
                       nearest_points_iterated_(rhs.nearest_points_iterated_) {
                 if (rhs.nearest_predicate_ != nullptr) {
-                    for (auto &p: predicates_) {
-                        if (p.is_nearest()) {
-                            nearest_predicate_ = &p.as_nearest();
-                            break;
-                        }
-                    }
+                    nearest_predicate_ = predicates_.get_nearest();
                 }
                 nearest_queue_.reserve(rhs.nearest_queue_.size());
                 for (const auto&[a, b, c]: rhs.nearest_queue_) {
@@ -261,12 +252,7 @@ namespace pareto {
                 current_node_ = rhs.current_node_;
                 predicates_ = nullptr;
                 if (rhs.nearest_predicate_ != nullptr) {
-                    for (auto &p: predicates_) {
-                        if (p.is_nearest()) {
-                            nearest_predicate_ = &p.as_nearest();
-                            break;
-                        }
-                    }
+                    nearest_predicate_ = predicates_.get_nearest();
                 }
                 nearest_points_iterated_ = rhs.nearest_points_iterated_;
                 nearest_queue_ = rhs.nearest_queue_;
@@ -370,39 +356,19 @@ namespace pareto {
             }
 
             bool passes_predicates(const box_type &b) const {
-                for (const auto &p: predicates_) {
-                    if (!p.pass_predicate(b)) {
-                        return false;
-                    }
-                }
-                return true;
+                return predicates_.pass_predicate(b);
             }
 
             bool passes_predicates(const value_type &pnt) const {
-                for (const auto &p: predicates_) {
-                    if (!p.pass_predicate(pnt)) {
-                        return false;
-                    }
-                }
-                return true;
+                return predicates_.pass_predicate(pnt);
             }
 
             bool might_pass_predicates(const box_type &b) const {
-                for (const auto &p: predicates_) {
-                    if (!p.might_pass_predicate(b)) {
-                        return false;
-                    }
-                }
-                return true;
+                return predicates_.might_pass_predicate(b);
             }
 
             void normalize_nearest_queries() {
-                for (auto &p: predicates_) {
-                    if (p.is_nearest()) {
-                        nearest_predicate_ = &p.as_nearest();
-                        break;
-                    }
-                }
+                nearest_predicate_ = predicates_.get_nearest();
                 if (nearest_predicate_ == nullptr) {
                     return;
                 }
@@ -762,31 +728,8 @@ namespace pareto {
             }
 
             void sort_predicates() {
-                // handle the most trivial cases
-                // there is nothing to sort if there are less than 2 elements
-                if (predicates_.size() < 2) {
-                    return;
-                }
-                // if it's a query box and a predicate, just swap or not
-                if (predicates_.size() == 2) {
-                    if (predicates_[0].is_intersects() || predicates_[0].is_within() || predicates_[0].is_disjoint()) {
-                        if (predicates_[1].is_satisfies() || predicates_[1].is_nearest()) {
-                            return;
-                        }
-                    }
-                    if (predicates_[0].is_satisfies() || predicates_[0].is_nearest()) {
-                        if (predicates_[1].is_intersects() || predicates_[1].is_within() ||
-                            predicates_[1].is_disjoint()) {
-                            std::swap(predicates_[0], predicates_[1]);
-                            return;
-                        }
-                    }
-                }
-                // for the more general case
                 number_type volume_root = 0.;
-                // if there is any disjoint predicate, we need the root volume
-                if (std::find_if(predicates_.begin(), predicates_.end(),
-                                 [](const auto &x) { return x.is_disjoint(); }) != predicates_.end()) {
+                if (predicates_.size() > 1 && predicates_.contains_disjoint()) {
                     // find root node
                     auto root = current_node_;
                     while (root->parent_ != nullptr) {
@@ -795,10 +738,7 @@ namespace pareto {
                     // calculate volume of root minimum bounding rectangle
                     volume_root = root->bounds_.volume();
                 }
-                // sort predicates by how restrictive they are
-                std::sort(predicates_.begin(), predicates_.end(), [&volume_root](const auto &a, const auto &b) {
-                    return a.is_more_restrictive(b, volume_root);
-                });
+                predicates_.sort(volume_root);
             }
 
             /// Stack as we are doing iteration instead of recursion
@@ -808,7 +748,7 @@ namespace pareto {
             node_pointer_type current_node_;
 
             /// Predicate constraining the search area
-            std::vector<predicate_variant<number_type, number_of_compile_dimensions_, mapped_type>> predicates_;
+            predicate_list_type predicates_;
 
             /// Pointer to a nearest predicate
             nearest<number_type, number_of_compile_dimensions_> *nearest_predicate_ = nullptr;

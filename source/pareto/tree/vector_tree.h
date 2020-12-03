@@ -7,6 +7,7 @@
 #include <pareto/point.h>
 #include <pareto/memory/memory_pool.h>
 #include <pareto/query/query_box.h>
+#include <pareto/query/predicate_list.h>
 
 namespace pareto {
 
@@ -332,22 +333,31 @@ namespace pareto {
             });;
         }
 
-        const_iterator find(const point_type& p) const {
-            auto vec_begin = std::find_if(data_.begin(), data_.end(), [&p](const value_type& v) { return v.first == p; });
+        const_iterator find(const point_type &p) const {
+            auto vec_begin = std::find_if(data_.begin(), data_.end(),
+                                          [&p](const value_type &v) { return v.first == p; });
             return const_iterator(vec_begin, data_.end());
         }
 
-        iterator find(const point_type& p) {
-            auto vec_begin = std::find_if(data_.begin(), data_.end(), [&p](const value_type& v) { return v.first == p; });
+        iterator find(const point_type &p) {
+            auto vec_begin = std::find_if(data_.begin(), data_.end(),
+                                          [&p](const value_type &v) { return v.first == p; });
             return iterator(vec_begin, data_.end());
         }
 
-        const_iterator begin_intersection(const point_type& min_corner, const point_type& max_corner) const {
+        const_iterator
+        begin_predicates(const predicate_list<number_type, number_of_compile_dimensions, mapped_type> &l) const {
+            return const_iterator(data_, [l](const value_type &p) {
+                return l.pass_predicate(p);
+            });
+        }
+
+        const_iterator begin_intersection(const point_type &min_corner, const point_type &max_corner) const {
             point_type min_corner_ = min_corner;
             point_type max_corner_ = max_corner;
             normalize_corners(min_corner_, max_corner_);
             box_type query_box(min_corner_, max_corner_);
-            return const_iterator(data_, [query_box, this](const value_type& p) {
+            return const_iterator(data_, [query_box, this](const value_type &p) {
                 return intersects(p.first, query_box);
             });
         }
