@@ -41,7 +41,6 @@ function(set_master_project_vars)
     else()
         set(MASTER_PROJECT OFF PARENT_SCOPE)
     endif()
-    message("MASTER_PROJECT=${MASTER_PROJECT}")
 endfunction()
 
 function(set_debug_booleans)
