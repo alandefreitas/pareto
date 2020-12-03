@@ -344,25 +344,29 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
     pf.def(py::init<const pareto_front_type &>());
 
     // Helper functions to construct appropriate point types in python
-    pf.def("point", [](const pareto_front_type &s){
-      return point_type(s.dimensions());
+    pf.def("point", [](const pareto_front_type &s) {
+        return point_type(s.dimensions());
     });
 
-    pf.def("point", [](const pareto_front_type &s, const std::vector<double>& v) {
-      return point_type(v.begin(), v.end());
+    // the used parameter needs to be here to generate the proper binding in the object: pf.point(...)
+    pf.def("point", [](const pareto_front_type &, const std::vector<double> &v) {
+        return point_type(v.begin(), v.end());
     });
 
-    pf.def("point", [](const pareto_front_type &s, std::initializer_list<double> v){
-      return point_type(v);
+    // the used parameter needs to be here to generate the proper binding in the object: pf.point(...)
+    pf.def("point", [](const pareto_front_type &, std::initializer_list<double> v) {
+        return point_type(v);
     });
 
-    pf.def("point", [](const pareto_front_type &s, const point_type& p){
-      return point_type(p);
+    // the used parameter needs to be here to generate the proper binding in the object: pf.point(...)
+    pf.def("point", [](const pareto_front_type &, const point_type &p) {
+        return point_type(p);
     });
 
     if constexpr (N != 0) {
-        pf.def("point", [](const pareto_front_type &s, const point<number_type,0> &p2){
-          return point_type(p2);
+        // the used parameter needs to be here to generate the proper binding in the object: pf.point(...)
+        pf.def("point", [](const pareto_front_type &, const point<number_type, 0> &p2) {
+            return point_type(p2);
         });
     }
 
@@ -780,24 +784,28 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
 
     // Helper functions to construct appropriate point types in python
     ar.def("point", [](const pareto_archive_type &s) {
-      return point_type(s.dimensions());
+        return point_type(s.dimensions());
     });
 
-    ar.def("point", [](const pareto_archive_type &s, const std::vector<double>& v) {
-      return point_type(v.begin(), v.end());
+    // the used parameter needs to be here to generate the proper binding in the object: ar.point(...)
+    ar.def("point", [](const pareto_archive_type &, const std::vector<double> &v) {
+        return point_type(v.begin(), v.end());
     });
 
-    ar.def("point", [](const pareto_archive_type &s, std::initializer_list<double> v){
-      return point_type(v);
+    // the used parameter needs to be here to generate the proper binding in the object: ar.point(...)
+    ar.def("point", [](const pareto_archive_type &, std::initializer_list<double> v) {
+        return point_type(v);
     });
 
-    ar.def("point", [](const pareto_archive_type &s, const point_type& p){
-      return point_type(p);
+    // the used parameter needs to be here to generate the proper binding in the object: ar.point(...)
+    ar.def("point", [](const pareto_archive_type &, const point_type &p) {
+        return point_type(p);
     });
 
     if constexpr (N != 0) {
-        ar.def("point", [](const pareto_archive_type &s, const point<number_type,0> &p2){
-          return point_type(p2);
+        // the used parameter needs to be here to generate the proper binding in the object: ar.point(...)
+        ar.def("point", [](const pareto_archive_type &, const point<number_type, 0> &p2) {
+            return point_type(p2);
         });
     }
 
