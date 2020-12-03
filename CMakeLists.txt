@@ -33,18 +33,14 @@ option(BUILD_PACKAGE "Build an installation package" ${MASTER_PROJECT})
 
 # How to build
 option(BUILD_LONG_TESTS "Build the Data Structure Benchmark (It takes very long)" ON)
-option(BUILD_BOOST_TREE "Include R-Tree using Boost Geometry (Boost dependency)" OFF)
+option(BUILD_BOOST_TREE "Include R-Tree using Boost.Geometry (Boost dependency). This was initially used for our benchmarks and it's soon to be deprecated. Performance is very poor." OFF)
 
 set_debug_booleans()
-if (DEBUG_MODE)
-    set(DEFAULT_MAX_NUM_DIMENSIONS_PYTHON 3)
-else()
-    set(DEFAULT_MAX_NUM_DIMENSIONS_PYTHON 10)
-endif()
+set(DEFAULT_MAX_NUM_DIMENSIONS_PYTHON 3)
 option(MAX_NUM_DIMENSIONS_PYTHON "Max number of compile-time dimensions for fronts in the Python bindings. Higher dimensions will be set at runtime." ${DEFAULT_MAX_NUM_DIMENSIONS_PYTHON})
 
 if (NOT MAX_NUM_DIMENSIONS_PYTHON)
-    set(MAX_NUM_DIMENSIONS_PYTHON 10)
+    set(MAX_NUM_DIMENSIONS_PYTHON ${DEFAULT_MAX_NUM_DIMENSIONS_PYTHON})
 endif()
 message("MAX_NUM_DIMENSIONS_PYTHON=${MAX_NUM_DIMENSIONS_PYTHON}")
 
