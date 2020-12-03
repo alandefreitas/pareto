@@ -385,7 +385,7 @@ namespace pareto {
                       predicates_(predicate_begin, predicate_end), nearest_predicate_(nullptr),
                       nearest_queue_{}, nearest_points_iterated_(0) {
                 sort_predicates();
-                normalize_nearest_queries();
+                initialize_nearest_algorithm();
                 advance_if_invalid();
             }
 
@@ -508,14 +508,14 @@ namespace pareto {
                     // if there is no nearest predicate
                     if (nearest_predicate_ == nullptr) {
                         // we check if it passes other predicates
-                        if (!passes_predicates(current_node_->branches_[current_branch_].as_value())) {
+                        if (!predicates_.pass_predicate(current_node_->branches_[current_branch_].as_value())) {
                             // advance if current is not valid
                             advance_to_next_valid(false);
                         }
                     } else {
                         // if there is a nearest predicate
                         if (nearest_points_iterated_ == 0 ||
-                            !passes_predicates(current_node_->branches_[current_branch_].as_value())) {
+                            !predicates_.pass_predicate(current_node_->branches_[current_branch_].as_value())) {
                             // if we haven't iterated nearest points, we advance even
                             // if it might pass the predicate by coincidence
                             advance_to_next_valid(false);
@@ -558,19 +558,7 @@ namespace pareto {
                 current_branch_ = 0;
             }
 
-            bool passes_predicates(const box_type &b) const {
-                return predicates_.pass_predicate(b);
-            }
-
-            bool passes_predicates(const value_type &pnt) const {
-                return predicates_.pass_predicate(pnt);
-            }
-
-            bool might_pass_predicates(const box_type &b) const {
-                return predicates_.might_pass_predicate(b);
-            }
-
-            void normalize_nearest_queries() {
+            void initialize_nearest_algorithm() {
                 nearest_predicate_ = predicates_.get_nearest();
                 if (nearest_predicate_ == nullptr) {
                     return;
@@ -641,7 +629,7 @@ namespace pareto {
                 }
 
                 // We go to the real algorithm after dealing with the trivial cases
-                // The first steps were executed in 'normalize_nearest_queries'
+                // The first steps were executed in 'initialize_nearest_algorithm'
                 // The advance step starts the loop that looks for more nearest elements
                 // 3. while not IsEmpty(Queue) do
                 while (!nearest_queue_.empty()) {
@@ -661,7 +649,7 @@ namespace pareto {
                         // 9.     Report Element
                         // in our version, we only report it if it also passes
                         // the other predicates
-                        if (passes_predicates(element.as_value())) {
+                        if (predicates_.pass_predicate(element.as_value())) {
                             ++nearest_points_iterated_;
                             current_node_ = element_node;
                             current_branch_ = element_index;
@@ -745,7 +733,7 @@ namespace pareto {
                         for (size_t index = current_branch_ + !first_time_in_this_branch;
                              index < current_node_->count_; ++index) {
                             // if value passes the predicate
-                            if (passes_predicates(current_node_->branches_[index].as_value())) {
+                            if (predicates_.pass_predicate(current_node_->branches_[index].as_value())) {
                                 // found a value branch in a node
                                 // point to it and return
                                 current_branch_ = index;
@@ -763,7 +751,7 @@ namespace pareto {
                         for (size_t index = current_branch_ + !first_time_in_this_branch;
                              index < current_node_->count_; ++index) {
                             // If branch might have nodes that pass all predicates
-                            if (might_pass_predicates(current_node_->branches_[index].as_branch().first)) {
+                            if (predicates_.might_pass_predicate(current_node_->branches_[index].as_branch().first)) {
                                 // Found a value branch in a node
                                 // Point to it and continue looking until we find a value branch
                                 current_node_ = current_node_->branches_[index].as_branch().second;
@@ -798,7 +786,7 @@ namespace pareto {
                         for (size_t index = current_branch_ - !first_time_in_this_branch;
                              index >= 0; --index) {
                             // if value passes the predicate
-                            if (passes_predicates(current_node_->branches_[index].as_value())) {
+                            if (predicates_.pass_predicate(current_node_->branches_[index].as_value())) {
                                 // found a value branch in a node
                                 // point to it and return
                                 current_branch_ = index;
@@ -825,7 +813,7 @@ namespace pareto {
                         bool predicate_might_pass = false;
                         for (size_t index = current_branch_ - !first_time_in_this_branch; index >= 0; --index) {
                             // If branch might have nodes that pass all predicates
-                            if (might_pass_predicates(current_node_->branches_[index].as_branch().first)) {
+                            if (predicates_.might_pass_predicate(current_node_->branches_[index].as_branch().first)) {
                                 // Found a value branch in a node
                                 // Point to it and continue looking until we find a value branch
                                 current_node_ = current_node_->branches_[index].as_branch().second;

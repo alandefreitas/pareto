@@ -210,7 +210,7 @@ namespace pareto {
                       predicates_(predicate_begin, predicate_end), nearest_predicate_(nullptr),
                       nearest_queue_{}, nearest_points_iterated_(0) {
                 sort_predicates();
-                normalize_nearest_queries();
+                initialize_nearest_algorithm();
                 advance_if_invalid();
             }
 
@@ -328,7 +328,7 @@ namespace pareto {
                     return;
                 }
                 const bool need_to_iterate_to_nearest = nearest_predicate_ != nullptr ? nearest_points_iterated_ == 0 : false;
-                if (need_to_iterate_to_nearest || !passes_predicates(current_node_->value_)) {
+                if (need_to_iterate_to_nearest || !predicates_.pass_predicate(current_node_->value_)) {
                     // advance if current is not valid
                     advance_to_next_valid(false);
                 }
@@ -355,19 +355,7 @@ namespace pareto {
                 return !is_end();
             }
 
-            bool passes_predicates(const box_type &b) const {
-                return predicates_.pass_predicate(b);
-            }
-
-            bool passes_predicates(const value_type &pnt) const {
-                return predicates_.pass_predicate(pnt);
-            }
-
-            bool might_pass_predicates(const box_type &b) const {
-                return predicates_.might_pass_predicate(b);
-            }
-
-            void normalize_nearest_queries() {
+            void initialize_nearest_algorithm() {
                 nearest_predicate_ = predicates_.get_nearest();
                 if (nearest_predicate_ == nullptr) {
                     return;
@@ -452,7 +440,7 @@ namespace pareto {
                 }
 
                 // We go to the real algorithm after dealing with the trivial cases
-                // The first steps (1 and 2) were executed in 'normalize_nearest_queries'
+                // The first steps (1 and 2) were executed in 'initialize_nearest_algorithm'
                 // The advance step starts the loop that looks for more nearest elements
                 // 3. while not IsEmpty(Queue) do
                 while (!nearest_queue_.empty()) {
@@ -472,7 +460,7 @@ namespace pareto {
                         // 9.     Report Element
                         // in our version, we only report it if it also passes
                         // the other predicates
-                        if (passes_predicates(element)) {
+                        if (predicates_.pass_predicate(element)) {
                             ++nearest_points_iterated_;
                             current_node_ = element_node;
                             // put it in the pre-processed set of results
@@ -560,7 +548,7 @@ namespace pareto {
                     // return if first time
                     // if we haven't checked the current node yet
                     if (first_time_in_this_branch) {
-                        if (passes_predicates(current_node_->value_)) {
+                        if (predicates_.pass_predicate(current_node_->value_)) {
                             // found a valid value in current node
                             // point to it (already does) and return
                             return;
@@ -573,14 +561,16 @@ namespace pareto {
                         // if it has children, try to go to its first child
                         // that might pass the predicate
                         // If node children might have nodes that pass all predicates
-                        if (current_node_->l_child && might_pass_predicates(current_node_->l_child->bounds_)) {
+                        if (current_node_->l_child &&
+                            predicates_.might_pass_predicate(current_node_->l_child->bounds_)) {
                             // Found a child that might pass predicates
                             // Point to it and continue looking until we find a value_type
                             // that actually passes the predicate
                             current_node_ = current_node_->l_child;
                             predicate_might_pass = true;
                             first_time_in_this_branch = true;
-                        } else if (current_node_->r_child && might_pass_predicates(current_node_->r_child->bounds_)) {
+                        } else if (current_node_->r_child &&
+                                   predicates_.might_pass_predicate(current_node_->r_child->bounds_)) {
                             current_node_ = current_node_->r_child;
                             predicate_might_pass = true;
                             first_time_in_this_branch = true;
@@ -607,7 +597,7 @@ namespace pareto {
                 while (!is_begin()) {
                     // return if first time
                     if (first_time_in_this_branch) {
-                        if (passes_predicates(current_node_->value_)) {
+                        if (predicates_.pass_predicate(current_node_->value_)) {
                             // found a valid value in current node
                             // point to it (already does) and return
                             return;
@@ -628,10 +618,12 @@ namespace pareto {
                             bool children_might_pass_predicate = true;
                             while (children_might_pass_predicate) {
                                 children_might_pass_predicate = false;
-                                if (current_node_->r_child && might_pass_predicates(current_node_->r_child->bounds_)) {
+                                if (current_node_->r_child &&
+                                    predicates_.might_pass_predicate(current_node_->r_child->bounds_)) {
                                     current_node_ = current_node_->r_child;
                                     children_might_pass_predicate = true;
-                                } else if (current_node_->l_child && might_pass_predicates(current_node_->l_child->bounds_)) {
+                                } else if (current_node_->l_child &&
+                                           predicates_.might_pass_predicate(current_node_->l_child->bounds_)) {
                                     current_node_ = current_node_->l_child;
                                     children_might_pass_predicate = true;
                                 }
@@ -689,7 +681,7 @@ namespace pareto {
                         if (branch_index == left) {
                             branch_ptr = current_node_->r_child;
                             if (branch_ptr != nullptr) {
-                                if (might_pass_predicates(branch_ptr->bounds_)) {
+                                if (predicates_.might_pass_predicate(branch_ptr->bounds_)) {
                                     current_node_ = branch_ptr;
                                     return;
                                 }
@@ -702,7 +694,7 @@ namespace pareto {
                             branch_ptr = current_node_->l_child;
                             // try to pass the predicate there
                             if (branch_ptr != nullptr) {
-                                if (might_pass_predicates(branch_ptr->bounds_)) {
+                                if (predicates_.might_pass_predicate(branch_ptr->bounds_)) {
                                     current_node_ = branch_ptr;
                                     return;
                                 }
