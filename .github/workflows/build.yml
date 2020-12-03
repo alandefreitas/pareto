@@ -89,7 +89,7 @@ jobs:
             build/bindings/Release/pyfront.cp*-*.*
       - name: Test
         working-directory: ./build
-        run: ctest -j ${{ matrix.config.cores }} -C Release
+        run: ctest -j ${{ matrix.config.cores }} -C Release --verbose
       - name: Install
         working-directory: ./build
         run: ${{ matrix.config.sudocmd }} cmake --install .
