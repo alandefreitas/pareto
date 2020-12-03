@@ -416,10 +416,10 @@ namespace pareto {
             }
         }
 
-        template <typename... Targs>
-        mapped_type& operator()(const number_type& k, const Targs&... ks) {
+        template<typename... Targs>
+        mapped_type &operator()(const number_type &k, const number_type &k2, const Targs &... ks) {
             // constexpr size_t d = sizeof...(Targs) + 1;
-            point_type p(k, ks...);
+            point_type p(k, k2, ks...);
             return operator[](p);
         }
 
