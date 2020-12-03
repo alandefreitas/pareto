@@ -43,6 +43,11 @@ namespace pareto {
         using mapped_type = ELEMENT_TYPE;
         using value_type = std::pair<key_type, mapped_type>;
         using predicate_variant_type = predicate_variant<NUMBER_T, DimensionCount, ELEMENT_TYPE>;
+        using intersects_type = intersects<number_type, number_of_compile_dimensions>;
+        using disjoint_type = disjoint<number_type, number_of_compile_dimensions>;
+        using within_type = within<number_type, number_of_compile_dimensions>;
+        using nearest_type = nearest<number_type, number_of_compile_dimensions>;
+        using satisfies_type = satisfies<number_type, number_of_compile_dimensions, ELEMENT_TYPE>;
         using vector_type = std::vector<predicate_variant_type>;
 
     public /* constructors */:
@@ -56,12 +61,12 @@ namespace pareto {
 
         /// \brief Construct from a list of predicates
         predicate_list(std::initializer_list<predicate_variant_type> predicates) :
-            predicates_(predicates.begin(), predicates.end()) {
+                predicates_(predicates.begin(), predicates.end()) {
             compress();
         }
 
         /// \brief Construct from iterators
-        template <class Iterator>
+        template<class Iterator>
         predicate_list(Iterator predicates_begin, Iterator predicates_end) :
                 predicates_(predicates_begin, predicates_end) {
             compress();
@@ -87,23 +92,23 @@ namespace pareto {
         explicit predicate_list(const predicate_variant_type &predicate) : predicates_({predicate}) {}
 
         /// \brief Construct from a intersects predicate
-        explicit predicate_list(const intersects <number_type, number_of_compile_dimensions> &predicate)
+        explicit predicate_list(const intersects<number_type, number_of_compile_dimensions> &predicate)
                 : predicates_({predicate_variant_type(predicate)}) {}
 
         /// \brief Construct from a disjoint predicate
-        explicit predicate_list(const disjoint <number_type, number_of_compile_dimensions> &predicate)
+        explicit predicate_list(const disjoint<number_type, number_of_compile_dimensions> &predicate)
                 : predicates_({predicate_variant_type(predicate)}) {}
 
         /// \brief Construct from a within predicate
-        explicit predicate_list(const within <number_type, number_of_compile_dimensions> &predicate)
+        explicit predicate_list(const within<number_type, number_of_compile_dimensions> &predicate)
                 : predicates_({predicate_variant_type(predicate)}) {}
 
         /// \brief Construct from a nearest predicate
-        explicit predicate_list(const nearest <number_type, number_of_compile_dimensions> &predicate)
+        explicit predicate_list(const nearest<number_type, number_of_compile_dimensions> &predicate)
                 : predicates_({predicate_variant_type(predicate)}) {}
 
         /// \brief Construct from a satisfies predicate
-        explicit predicate_list(const satisfies <number_type, number_of_compile_dimensions, mapped_type> &predicate)
+        explicit predicate_list(const satisfies<number_type, number_of_compile_dimensions, mapped_type> &predicate)
                 : predicates_({predicate_variant_type(predicate)}) {}
 
     public /* vector functions */:
@@ -142,77 +147,77 @@ namespace pareto {
     public:
         /// \brief Check if predicate is of type intersects
         [[nodiscard]] bool contains_intersects() const {
-            return std::any_of(predicates_.begin(), predicates_.end(), [](const auto& p) {
+            return std::any_of(predicates_.begin(), predicates_.end(), [](const auto &p) {
                 return p.is_intersects();
             });
         }
 
         /// \brief Check if predicate is of type disjoint
         [[nodiscard]] bool contains_disjoint() const {
-            return std::any_of(predicates_.begin(), predicates_.end(), [](const auto& p) {
+            return std::any_of(predicates_.begin(), predicates_.end(), [](const auto &p) {
                 return p.is_disjoint();
             });
         }
 
         /// \brief Check if predicate is of type within
         [[nodiscard]] bool contains_within() const {
-            return std::any_of(predicates_.begin(), predicates_.end(), [](const auto& p) {
+            return std::any_of(predicates_.begin(), predicates_.end(), [](const auto &p) {
                 return p.is_within();
             });
         }
 
         /// \brief Check if predicate is of type nearest
         [[nodiscard]] bool contains_nearest() const {
-            return std::any_of(predicates_.begin(), predicates_.end(), [](const auto& p) {
+            return std::any_of(predicates_.begin(), predicates_.end(), [](const auto &p) {
                 return p.is_nearest();
             });
         }
 
         /// \brief Check if predicate is of type satisfies
         [[nodiscard]] bool contains_satisfies() const {
-            return std::any_of(predicates_.begin(), predicates_.end(), [](const auto& p) {
+            return std::any_of(predicates_.begin(), predicates_.end(), [](const auto &p) {
                 return p.is_satisfies();
             });
         }
 
-                /// \brief Check if predicate is of type intersects
+        /// \brief Check if predicate is of type intersects
         [[nodiscard]] bool is_all_intersects() const {
-            return std::all_of(predicates_.begin(), predicates_.end(), [](const auto& p) {
+            return std::all_of(predicates_.begin(), predicates_.end(), [](const auto &p) {
                 return p.is_intersects();
             });
         }
 
         /// \brief Check if predicate is of type disjoint
         [[nodiscard]] bool is_all_disjoint() const {
-            return std::all_of(predicates_.begin(), predicates_.end(), [](const auto& p) {
+            return std::all_of(predicates_.begin(), predicates_.end(), [](const auto &p) {
                 return p.is_disjoint();
             });
         }
 
         /// \brief Check if predicate is of type within
         [[nodiscard]] bool is_all_within() const {
-            return std::all_of(predicates_.begin(), predicates_.end(), [](const auto& p) {
+            return std::all_of(predicates_.begin(), predicates_.end(), [](const auto &p) {
                 return p.is_within();
             });
         }
 
         /// \brief Check if predicate is of type nearest
         [[nodiscard]] bool is_all_nearest() const {
-            return std::all_of(predicates_.begin(), predicates_.end(), [](const auto& p) {
+            return std::all_of(predicates_.begin(), predicates_.end(), [](const auto &p) {
                 return p.is_nearest();
             });
         }
 
         /// \brief Check if predicate is of type satisfies
         [[nodiscard]] bool is_all_satisfies() const {
-            return std::all_of(predicates_.begin(), predicates_.end(), [](const auto& p) {
+            return std::all_of(predicates_.begin(), predicates_.end(), [](const auto &p) {
                 return p.is_satisfies();
             });
         }
 
         /// \brief Get a predicate of type intersects if the list contains any
-        const intersects<number_type, number_of_compile_dimensions>* get_intersects() const {
-            for (const auto& p : predicates_) {
+        const intersects<number_type, number_of_compile_dimensions> *get_intersects() const {
+            for (const auto &p : predicates_) {
                 if (p.is_intersects()) {
                     return &p.as_intersects();
                 }
@@ -221,8 +226,8 @@ namespace pareto {
         }
 
         /// \brief Get a predicate of type disjoint if the list contains any
-        const disjoint <number_type, number_of_compile_dimensions>* get_disjoint() const {
-            for (const auto& p : predicates_) {
+        const disjoint<number_type, number_of_compile_dimensions> *get_disjoint() const {
+            for (const auto &p : predicates_) {
                 if (p.is_disjoint()) {
                     return &p.as_disjoint();
                 }
@@ -231,8 +236,8 @@ namespace pareto {
         }
 
         /// \brief Get a predicate of type within if the list contains any
-        const within <number_type, number_of_compile_dimensions>* get_within() const {
-            for (const auto& p : predicates_) {
+        const within<number_type, number_of_compile_dimensions> *get_within() const {
+            for (const auto &p : predicates_) {
                 if (p.is_within()) {
                     return &p.as_within();
                 }
@@ -241,8 +246,8 @@ namespace pareto {
         }
 
         /// \brief Get a predicate of type nearest if the list contains any
-        const nearest <number_type, number_of_compile_dimensions>* get_nearest() const {
-            for (const auto& p : predicates_) {
+        const nearest<number_type, number_of_compile_dimensions> *get_nearest() const {
+            for (const auto &p : predicates_) {
                 if (p.is_nearest()) {
                     return &p.as_nearest();
                 }
@@ -251,8 +256,8 @@ namespace pareto {
         }
 
         /// \brief Get a predicate of type satisfies if the list contains any
-        const satisfies <number_type, number_of_compile_dimensions, mapped_type>* get_satisfies() const {
-            for (const auto& p : predicates_) {
+        const satisfies<number_type, number_of_compile_dimensions, mapped_type> *get_satisfies() const {
+            for (const auto &p : predicates_) {
                 if (p.is_satisfies()) {
                     return &p.as_satisfies();
                 }
@@ -261,8 +266,8 @@ namespace pareto {
         }
 
         /// \brief Get predicate of type intersects if the list contains any
-        intersects <number_type, number_of_compile_dimensions> *get_intersects() {
-            for (auto& p : predicates_) {
+        intersects<number_type, number_of_compile_dimensions> *get_intersects() {
+            for (auto &p : predicates_) {
                 if (p.is_intersects()) {
                     return &p.as_intersects();
                 }
@@ -271,8 +276,8 @@ namespace pareto {
         }
 
         /// \brief Get predicate of type disjoint if the list contains any
-        disjoint <number_type, number_of_compile_dimensions> *get_disjoint() {
-            for (auto& p : predicates_) {
+        disjoint<number_type, number_of_compile_dimensions> *get_disjoint() {
+            for (auto &p : predicates_) {
                 if (p.is_disjoint()) {
                     return &p.as_disjoint();
                 }
@@ -281,8 +286,8 @@ namespace pareto {
         }
 
         /// \brief Get predicate of type within if the list contains any
-        within <number_type, number_of_compile_dimensions> *get_within() {
-            for (auto& p : predicates_) {
+        within<number_type, number_of_compile_dimensions> *get_within() {
+            for (auto &p : predicates_) {
                 if (p.is_within()) {
                     return &p.as_within();
                 }
@@ -291,8 +296,8 @@ namespace pareto {
         }
 
         /// \brief Get predicate of type nearest if the list contains any
-        nearest <number_type, number_of_compile_dimensions> *get_nearest() {
-            for (auto& p : predicates_) {
+        nearest<number_type, number_of_compile_dimensions> *get_nearest() {
+            for (auto &p : predicates_) {
                 if (p.is_nearest()) {
                     return &p.as_nearest();
                 }
@@ -301,8 +306,8 @@ namespace pareto {
         }
 
         /// \brief Get predicate of type satisfies if the list contains any
-        satisfies <number_type, number_of_compile_dimensions, mapped_type> *get_satisfies() {
-            for (auto& p : predicates_) {
+        satisfies<number_type, number_of_compile_dimensions, mapped_type> *get_satisfies() {
+            for (auto &p : predicates_) {
                 if (p.is_satisfies()) {
                     return &p.as_satisfies();
                 }
@@ -313,7 +318,7 @@ namespace pareto {
         /// \brief Does the box pass the predicate list
         /// It passes the list if it passes all predicates there
         bool pass_predicate(const query_box_type &rhs) const {
-            return std::all_of(predicates_.begin(), predicates_.end(), [&rhs](const auto& p) {
+            return std::all_of(predicates_.begin(), predicates_.end(), [&rhs](const auto &p) {
                 return p.pass_predicate(rhs);
             });
         }
@@ -321,7 +326,7 @@ namespace pareto {
         /// \brief Can a child in this box pass the predicate list
         /// It might pass the list if it might pass all predicates there
         bool might_pass_predicate(const query_box_type &rhs) const {
-            return std::all_of(predicates_.begin(), predicates_.end(), [&rhs](const auto& p) {
+            return std::all_of(predicates_.begin(), predicates_.end(), [&rhs](const auto &p) {
                 return p.might_pass_predicate(rhs);
             });
         }
@@ -329,7 +334,7 @@ namespace pareto {
         /// \brief Does the point pass the predicate list
         /// It passes the list if it passes all predicates there
         bool pass_predicate(const point_type &rhs) const {
-            return std::all_of(predicates_.begin(), predicates_.end(), [&rhs](const auto& p) {
+            return std::all_of(predicates_.begin(), predicates_.end(), [&rhs](const auto &p) {
                 return p.pass_predicate(rhs);
             });
         }
@@ -387,60 +392,191 @@ namespace pareto {
         void compress() {
             for (size_t i = 0; i < predicates_.size() - 1; ++i) {
                 for (size_t j = i + 1; j < predicates_.size(); ++i) {
-                    predicate_variant_type& p = predicates_[i];
-                    predicate_variant_type& q = predicates_[j];
-                    if (p.is_intersects()) {
-                        if (q.is_intersects()) {
-                            const query_box_type& pq = p.as_intersects().data();
-                            const query_box_type& qq = q.as_intersects().data();
-                            const bool q_is_already_in_p = pq.contains(qq);
-                            if (q_is_already_in_p) {
-                                p = q;
-                                predicates_.erase(predicates_.begin() + j);
-                                --i;
-                            } else if (qq.contains(pq)) {
-                                predicates_.erase(predicates_.begin() + j);
-                                --i;
-                            }
-                        } else if (q.is_disjoint()) {
-                            const query_box_type& pq = p.as_intersects().data();
-                            const query_box_type& qq = q.as_disjoint().data();
-                            const bool disjoint_not_queried_anyway = !pq.contains(qq);
-                            if (disjoint_not_queried_anyway) {
-                                predicates_.erase(predicates_.begin() + j);
-                                --i;
-                            } else {
-                                const bool impossible_query = qq.contains(pq);
-                                if (impossible_query) {
-                                    predicates_ = {disjoint<number_type,DimensionCount>(point_type(qq.dimensions(), -std::numeric_limits<number_type>::max()), point_type(qq.dimensions(), std::numeric_limits<number_type>::max()))};
-                                    return;
-                                }
-                            }
-                        }
-                    } else if (p.is_nearest()) {
-                        if (q.is_nearest()) {
-                            const nearest<number_type,DimensionCount>& pn = p.as_nearest();
-                            const nearest<number_type,DimensionCount>& qn = q.as_nearest();
-                            const size_t& pk = pn.k();
-                            const size_t& qk = qn.k();
-                            p.as_nearest().k(std::min(pk,qk));
-                            query_box_type new_box;
-                            if (pn.has_reference_point()) {
-                                new_box.stretch(pn.reference_point());
-                            } else {
-                                new_box.stretch(pn.reference_box());
-                            }
-                            if (qn.has_reference_point()) {
-                                new_box.stretch(qn.reference_point());
-                            } else {
-                                new_box.stretch(qn.reference_box());
-                            }
-                            p.as_nearest().reference_box(new_box);
-                            predicates_.erase(predicates_.begin() + j);
-                            --i;
-                        }
+                    auto compressed_predicate = compress(predicates_[i], predicates_[j]);
+                    if (compressed_predicate) {
+                        predicates_[i] = *compressed_predicate;
+                        predicates_.erase(predicates_.begin() + j);
+                        --j;
                     }
                 }
+            }
+        }
+
+        /// \brief Attempt to compress a pair of predicate variants
+        /// This function goes though all valid kinds of compression.
+        /// If the two variants are good candidates for compression, we convert the predicates
+        /// to their underlying type and call the corresponding function.
+        /// If the pair cannot be compressed, we return std::nullopt so the
+        /// calling function knows we could not compress anything.
+        /// Within/intersects/disjoint predicate can be compressed by throwing away
+        /// redundant predicates.
+        /// Nearest predicates can be compressed to their lowest number of nearest
+        /// points.
+        /// The only predicate that can never be compressed in a satisfies predicate
+        std::optional<predicate_variant_type>
+        compress(const predicate_variant_type &a, const predicate_variant_type &b) {
+            if (a.is_intersects()) {
+                if (b.is_intersects()) {
+                    return compress(a.as_intersects(), b.as_intersects());
+                } else if (b.is_disjoint()) {
+                    return compress(a.as_intersects(), b.as_within());
+                } else if (b.is_disjoint()) {
+                    return compress(a.as_intersects(), b.as_disjoint());
+                }
+            } else if (a.is_within()) {
+                if (b.is_intersects()) {
+                    return compress(a.as_within(), b.as_intersects());
+                } else if (b.is_disjoint()) {
+                    return compress(a.as_within(), b.as_within());
+                } else if (b.is_disjoint()) {
+                    return compress(a.as_within(), b.as_disjoint());
+                }
+            } else if (a.is_disjoint()) {
+                if (b.is_intersects()) {
+                    return compress(a.as_disjoint(), b.as_intersects());
+                } else if (b.is_disjoint()) {
+                    return compress(a.as_disjoint(), b.as_within());
+                } else if (b.is_disjoint()) {
+                    return compress(a.as_disjoint(), b.as_disjoint());
+                }
+            } else if (a.is_nearest()) {
+                if (b.is_nearest()) {
+                    return compress(a.as_nearest(), b.as_nearest());
+                }
+            }
+            return std::nullopt;
+        }
+
+        /// \brief Compress a pair of predicates <intersects, intersects>
+        /// If you predicate contains the other, we can remove the predicate
+        /// with the largest hyperbox
+        std::optional<predicate_variant_type> compress(const intersects_type &a, const intersects_type &b) {
+            const query_box_type &pq = a.data();
+            const query_box_type &qq = b.data();
+            const bool q_is_already_in_p = pq.contains(qq);
+            if (q_is_already_in_p) {
+                return a;
+            } else if (qq.contains(pq)) {
+                return b;
+            }
+            return std::nullopt;
+        }
+
+        /// \brief Compress a pair of predicates <intersects, within>
+        /// If you predicate contains the other, we can remove the predicate
+        /// with the largest hyperbox.
+        /// We have to take care of the borders though.
+        /// Intersects contains within: retain within
+        /// Within contains intersects:
+        /// * Intersects is on the borders / same hyperbox: retain within
+        /// * Intersects does not touch the borders / both hyperbox points different: retain intersects
+        /// * Intersects touches one of the borders / only one hyperbox point is equal: cannot compress
+        std::optional<predicate_variant_type> compress(const intersects_type &a, const within_type &b) {
+            const query_box_type &aq = a.data();
+            const query_box_type &bq = b.data();
+            if (aq.contains(bq)) {
+                return b;
+            } else if (bq.contains(aq)) {
+                bool touch_min_border = aq.min() == bq.min();
+                bool touch_max_border = aq.max() == bq.max();
+                if (touch_min_border && touch_max_border) {
+                    return b;
+                } else if (!touch_min_border && !touch_max_border) {
+                    return a;
+                }
+            }
+            return std::nullopt;
+        }
+
+        /// \brief Compress a pair of predicates <within, intersects>
+        /// \copydetails std::optional<predicate_variant_type> compress(const intersects_type& a, const within_type & b)
+        std::optional<predicate_variant_type> compress(const within_type &a, const intersects_type &b) {
+            return compress(b, a);
+        }
+
+        /// \brief Compress a pair of predicates <intersects, disjoint>
+        /// If the disjoint and intersects don't overlap, we can just throw the disjoint away
+        /// If the intersects is inside the disjoint, the query is impossible (return any impossible query)
+        std::optional<predicate_variant_type> compress(const intersects_type &a, const disjoint_type &b) {
+            const query_box_type &aq = a.data();
+            const query_box_type &bq = b.data();
+            if (!aq.overlap(bq)) {
+                return a;
+            } else if (bq.contains(aq)) {
+                bool max_number = std::numeric_limits<number_type>::max();
+                return disjoint_type(point_type(bq.dimensions(), -max_number), point_type(bq.dimensions(), max_number));
+            }
+            return std::nullopt;
+        }
+
+        /// \brief Compress a pair of predicates <intersects, disjoint>
+        /// If the disjoint and intersects don't overlap, we can just throw the disjoint away
+        /// If the intersects is inside the disjoint, the query is impossible (return any impossible query)
+        std::optional<predicate_variant_type> compress(const disjoint_type &a, const intersects_type &b) {
+            return compress(b, a);
+        }
+
+        /// \brief Compress a pair of predicates <within, within>
+        /// If you predicate contains the other, we can remove the predicate
+        /// with the largest hyperbox.
+        /// This is akin to compressing <intersects, intersects> pairs
+        std::optional<predicate_variant_type> compress(const within_type &a, const within_type &b) {
+            const query_box_type &pq = a.data();
+            const query_box_type &qq = b.data();
+            const bool q_is_already_in_p = pq.contains(qq);
+            if (q_is_already_in_p) {
+                return a;
+            } else if (qq.contains(pq)) {
+                return b;
+            }
+            return std::nullopt;
+        }
+
+        /// \brief Compress a pair of predicates <within, disjoint>
+        /// If the disjoint and within don't overlap, we can just throw the disjoint away
+        /// If the within is inside the disjoint, the query is impossible (return any impossible query)
+        std::optional<predicate_variant_type> compress(const within_type &a, const disjoint_type &b) {
+            const query_box_type &aq = a.data();
+            const query_box_type &bq = b.data();
+            if (!aq.overlap(bq)) {
+                return a;
+            } else if (bq.contains(aq)) {
+                bool max_number = std::numeric_limits<number_type>::max();
+                return disjoint_type(point_type(bq.dimensions(), -max_number), point_type(bq.dimensions(), max_number));
+            }
+            return std::nullopt;
+        }
+
+        /// \brief Compress a pair of predicates <within, disjoint>
+        /// If the disjoint and within don't overlap, we can just throw the disjoint away
+        /// If the within is inside the disjoint, the query is impossible (return any impossible query)
+        std::optional<predicate_variant_type> compress(const disjoint_type &a, const within_type &b) {
+            return compress(b, a);
+        }
+
+        /// \brief Compress a pair of predicates <nearest, nearest>
+        /// Because a nearest type predicate changes how the query algorithm works,
+        /// only one nearest predicate is allowed per predicate list.
+        /// If there are two of these, instead of throwing an error, we
+        /// create a new nearest predicate with the lowest k between them and,
+        /// if the points are different, we look for an intermediary point.
+        /// In the future, we can look at some other alternatives:
+        /// * Keeping a list of reference points so that we would consider the
+        ///   distance to the closest point in the list of reference points
+        /// * Creating one stack per nearest predicate and updating all stacks
+        ///   per point visited. This would considerably change how things work now.
+        std::optional<predicate_variant_type> compress(const nearest_type &a, const nearest_type &b) {
+            const size_t new_k = std::min(a.k(), b.k());
+            if (a.has_reference_point() && b.has_reference_point()) {
+                query_box_type q(a.reference_point(), b.reference_point());
+                return nearest(q.center(), new_k);
+            } else {
+                query_box_type qa = a.has_reference_box() ? a.reference_box() : query_box_type(a.reference_point(),
+                                                                                               a.has_reference_point());
+                query_box_type qb = b.has_reference_box() ? b.reference_box() : query_box_type(b.reference_point(),
+                                                                                               b.has_reference_point());
+                qa.stretch(qb);
+                return nearest(qa, new_k);
             }
         }
 
