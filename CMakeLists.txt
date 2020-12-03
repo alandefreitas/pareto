@@ -3,7 +3,7 @@
 #######################################################
 # Project information
 cmake_minimum_required(VERSION 3.14)
-project(pareto VERSION 1.1.0)
+project(pareto VERSION 1.1.1)
 set(CMAKE_CXX_STANDARD 17)
 set(PARETO_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
