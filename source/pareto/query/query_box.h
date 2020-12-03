@@ -143,7 +143,7 @@ namespace pareto {
         }
 
         /// \brief Return the half width of a hyperbox in a given dimension
-        point_type half_width(size_t index) const {
+        number_type half_width(size_t index) const {
             return (second_[index] - first_[index]) / 2.0;
         }
 
