@@ -1,6 +1,6 @@
 #include <benchmark/benchmark.h>
 #include <pareto/front.h>
-#include "benchmark_helpers.h"
+#include "../test_helpers.h"
 
 template<size_t dimensions, size_t runtime_dimensions>
 typename pareto::front<double, dimensions, unsigned>::point_type random_point() {

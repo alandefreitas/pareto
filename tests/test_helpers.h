@@ -2,29 +2,29 @@
 // Created by Alan Freitas on 12/1/20.
 //
 
-#ifndef PARETO_BENCHMARK_HELPERS_H
-#define PARETO_BENCHMARK_HELPERS_H
+#ifndef PARETO_TEST_HELPERS_H
+#define PARETO_TEST_HELPERS_H
 
 #include <iostream>
 #include <algorithm>
 #include <random>
 #include <thread>
 #include <vector>
+#include <pareto/front.h>
 
-uint64_t seed() {
-//    static uint64_t seed = static_cast<uint64_t>(std::random_device()()) |
+inline uint64_t seed() {
     static uint64_t seed = static_cast<unsigned int>(std::random_device()()) |
                            static_cast<unsigned int>(std::chrono::high_resolution_clock::now().time_since_epoch().count());
     std::cout << "Test seed: " << seed << std::endl;
     return seed;
 }
 
-std::mt19937 &generator() {
+inline std::mt19937 &generator() {
     static std::mt19937 g(seed());
     return g;
 }
 
-bool rand_flip() {
+inline bool rand_flip() {
     static std::uniform_int_distribution<unsigned> ud(0, 1);
     return ud(generator());
 }
@@ -79,4 +79,24 @@ create_vector_with_values(size_t n) {
     return v;
 }
 
-#endif //PARETO_BENCHMARK_HELPERS_H
+using uint8_t_vector_iterator = std::vector<uint8_t>::iterator;
+
+inline bool next_combination(uint8_t_vector_iterator first,
+                      uint8_t_vector_iterator last, uint8_t max_value) {
+    using value_type = uint8_t;
+    if (first == last)
+        return false;
+    auto i = last;
+    do {
+        --i;
+        if (*i == max_value) {
+            *i = std::numeric_limits<value_type>::min();
+        } else {
+            ++(*i);
+            return true;
+        }
+    } while (i != first);
+    return false;
+}
+
+#endif //PARETO_TEST_HELPERS_H

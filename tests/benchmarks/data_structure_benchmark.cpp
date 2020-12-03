@@ -1,6 +1,6 @@
 #include <benchmark/benchmark.h>
 #include <pareto/front.h>
-#include "benchmark_helpers.h"
+#include "../test_helpers.h"
 
 template <size_t dimensions, typename TAG>
 void create_front_from_vector(benchmark::State &state) {
