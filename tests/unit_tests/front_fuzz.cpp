@@ -154,7 +154,7 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         REQUIRE(pf.dimensions() == test_dimension);
     }
 
-        // Erasing items
+    // Erasing items
     SECTION("Erasing " + section_name) {
         auto pf = random_pareto_front();
         auto pf2 = pf;

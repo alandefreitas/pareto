@@ -84,7 +84,7 @@ target_msvc_compile_options(unit_test_trees /wd4305)
 catch_discover_tests(unit_test_trees)
 
 #######################################################
-### Test Pareto fronts                              ###
+### Test Pareto fronts (fuzz)                       ###
 #######################################################
 # Create explicit template instantiations for fronts
 add_library(tests_front_instantiation
@@ -101,13 +101,24 @@ target_exception_options(tests_front_instantiation)
 target_bigobj_options(tests_front_instantiation)
 
 # Create test with the tests_front_instantiation
-add_executable(unit_test_pareto_front fronts.cpp)
-target_link_libraries(unit_test_pareto_front PUBLIC tests_front_instantiation Catch2)
-target_longtests_definitions(unit_test_pareto_front)
-target_exception_options(unit_test_pareto_front)
-target_bigobj_options(unit_test_pareto_front)
-target_pedantic_options(unit_test_pareto_front)
-catch_discover_tests(unit_test_pareto_front)
+add_executable(unit_test_front_fuzz front_fuzz.cpp)
+target_link_libraries(unit_test_front_fuzz PUBLIC tests_front_instantiation Catch2)
+target_longtests_definitions(unit_test_front_fuzz)
+target_exception_options(unit_test_front_fuzz)
+target_bigobj_options(unit_test_front_fuzz)
+target_pedantic_options(unit_test_front_fuzz)
+catch_discover_tests(unit_test_front_fuzz)
+
+#######################################################
+### Test Pareto fronts (interface)                  ###
+#######################################################
+add_executable(unit_test_front_interface front_interface.cpp)
+target_link_libraries(unit_test_front_interface PUBLIC pareto Catch2)
+target_longtests_definitions(unit_test_front_interface)
+target_exception_options(unit_test_front_interface)
+target_bigobj_options(unit_test_front_interface)
+target_pedantic_options(unit_test_front_interface)
+catch_discover_tests(unit_test_front_interface)
 
 #######################################################
 ### Test Pareto archives                            ###
