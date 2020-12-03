@@ -391,7 +391,7 @@ namespace pareto {
         /// \brief This function merges predicates with that same meaning
         void compress() {
             for (size_t i = 0; i < predicates_.size() - 1; ++i) {
-                for (size_t j = i + 1; j < predicates_.size(); ++i) {
+                for (size_t j = i + 1; j < predicates_.size(); ++j) {
                     auto compressed_predicate = compress(predicates_[i], predicates_[j]);
                     if (compressed_predicate) {
                         predicates_[i] = *compressed_predicate;
