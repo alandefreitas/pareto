@@ -628,8 +628,10 @@ namespace pareto {
 
         template <typename... Targs>
         mapped_type& operator()(const number_type& k, const Targs&... ks) {
-            // constexpr size_t d = sizeof...(Targs) + 1;
-            point_type p(k, ks...);
+            constexpr size_t m = sizeof...(Targs) + 1;
+            assert(number_of_compile_dimensions == 0 || number_of_compile_dimensions == m);
+            point_type p(m);
+            copy_pack(p.begin(), k, ks...);
             return operator[](p);
         }
 

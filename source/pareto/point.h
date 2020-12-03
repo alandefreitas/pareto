@@ -73,25 +73,6 @@ namespace pareto {
             std::copy(il.begin(), il.end(), values_.begin());
         }
 
-        /// \brief Construct from list of values
-        /// Each value is a point component
-        /// The number of components is accessible in compile-time so we
-        /// can use that to resize the vector if needed
-        /// This is useful for the operator() on fronts, to allow
-        /// pf(-2.57664, -1.52034, 0.600798)
-        /// instead of
-        /// pf({-2.57664, -1.52034, 0.600798})
-        /// This function with two arguments, however, is ambiguous
-        /// with point(size,value)
-        /// So we need to forbid this case here. Other libraries
-        /// can work around that with other constructors when m=2
-        template<typename... Targs>
-        point(const number_type &k1, const number_type &k2, const Targs &... ks) {
-            constexpr size_t pack_dimension = sizeof...(Targs) + 2;
-            maybe_resize(values_, pack_dimension);
-            copy_pack(0, k1, k2, ks...);
-        }
-
         /// \brief Construct with size n
         /// Has no effect if dimension is set at compile-time
         explicit point(size_t n) {
@@ -551,21 +532,6 @@ namespace pareto {
                 os << ", " << point.values_[i];
             }
             return os << ")";
-        }
-
-    private /* Helpers */:
-
-        /// \brief Copy values of a pack of size 2+ to the point components
-        template<typename... Targs>
-        inline void copy_pack(size_t i, const number_type &k, const Targs &... ks) {
-            values_[i] = k;
-            copy_pack(i + 1, ks...);
-        }
-
-        /// \brief Copy values of a pack of size 1 to the point components
-        template<typename... Targs>
-        inline void copy_pack(size_t i, const number_type &k) {
-            values_[i] = k;
         }
 
     private:

@@ -22,6 +22,8 @@
 #include <pareto/tree/quad_tree.h>
 #include <pareto/tree/kd_tree.h>
 
+#include <pareto/common/metaprogramming.h>
+
 #ifdef BUILD_BOOST_TREE
 #include <pareto/tree/boost_tree.h>
 #endif
@@ -417,9 +419,11 @@ namespace pareto {
         }
 
         template<typename... Targs>
-        mapped_type &operator()(const number_type &k, const number_type &k2, const Targs &... ks) {
-            // constexpr size_t d = sizeof...(Targs) + 1;
-            point_type p(k, k2, ks...);
+        mapped_type &operator()(const number_type &x1, const Targs &... xs) {
+            constexpr size_t m = sizeof...(Targs) + 1;
+            assert(number_of_compile_dimensions == 0 || number_of_compile_dimensions == m);
+            point_type p(m);
+            copy_pack(p.begin(), x1, xs...);
             return operator[](p);
         }
 
