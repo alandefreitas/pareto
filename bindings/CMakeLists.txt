@@ -13,7 +13,7 @@
 CPMAddPackage(
         NAME pybind11
         GIT_REPOSITORY https://github.com/pybind/pybind11/
-        VERSION 2.5.0
+        VERSION 2.6.1
         OPTIONS "PYBIND11_TEST OFF" "PYBIND11_INSTALL OFF"
 )
 
