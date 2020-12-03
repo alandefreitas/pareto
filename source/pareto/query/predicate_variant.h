@@ -7,6 +7,11 @@
 
 #include <pareto/point.h>
 #include <pareto/query/query_box.h>
+#include <pareto/query/disjoint.h>
+#include <pareto/query/intersects.h>
+#include <pareto/query/nearest.h>
+#include <pareto/query/satisfies.h>
+#include <pareto/query/within.h>
 
 namespace pareto {
 
