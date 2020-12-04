@@ -25,6 +25,7 @@
 namespace pareto {
     template<typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename TAG>
     class front;
+
     struct quad_tree_tag;
 
     /// \class quad_tree
@@ -57,6 +58,7 @@ namespace pareto {
         using mapped_type = ELEMENT_TYPE;
         using value_type = std::pair<key_type, mapped_type>;
         using box_type = query_box<number_type, number_of_compile_dimensions_>;
+        using predicate_list_type = predicate_list<number_type, number_of_compile_dimensions_, mapped_type>;
 
         template<typename VALUE_TYPE>
         using allocator_type = ALLOCATOR<VALUE_TYPE>;
@@ -66,9 +68,6 @@ namespace pareto {
         using const_reference = value_type const &;
         using pointer = value_type *;
         using const_pointer = value_type const *;
-
-        // Better split classification, may be slower on some systems
-        static constexpr bool rtree_use_spherical_volume_ = true;
 
         // Max and min number of elements in a node
         static constexpr size_t tmaxnodes_ = 8;
@@ -85,37 +84,40 @@ namespace pareto {
         /// size of a node constant. This makes it possible to use
         /// allocators efficiently.
         struct quadtree_node {
+            /// \brief Construct empty root node
             quadtree_node() : quadtree_node(nullptr) {}
 
-            quadtree_node(quadtree_node* parent)
+            /// \brief Construct child node
+            explicit quadtree_node(quadtree_node *parent)
                     : parent_(parent) {}
 
-            quadtree_node(quadtree_node* parent, const value_type& value)
+            /// \brief Construct child node with value
+            quadtree_node(quadtree_node *parent, const value_type &value)
                     : value_(value), parent_(parent), bounds_(box_type(value.first)) {}
 
-            /// An internal node, contains other nodes
-            bool is_internal_node() const {
+            /// \brief An internal node, contains other nodes
+            [[nodiscard]] bool is_internal_node() const {
                 return !children_.empty();
             }
 
-            /// A leaf, contains data only
-            bool is_leaf_node() const {
+            /// \brief A leaf, contains data only
+            [[nodiscard]] bool is_leaf_node() const {
                 return children_.empty();
             }
 
-            /// Value: a quad-tree node holds a value itself.
+            /// \brief Value: a quad-tree node holds a value itself.
             value_type value_;
 
-            /// Node children
+            /// \brief Node children
             /// Unlike other data structures, we use a map instead of
             /// an array because a quad_tree node can potentially have
             /// 2^n children. We cannot waste space with an exponential
             /// number of children that don't exist on every node.
-            using children_map = std::map<size_t, quadtree_node*>;
+            using children_map = std::map<size_t, quadtree_node *>;
             children_map children_;
 
 
-            /// Parent node
+            /// \brief Parent node
             /// The quad-tree nodes only need values and branches. All other
             /// member elements are conveniences for faster queries.
             /// Keeping track of parent nodes is important for more efficient
@@ -125,7 +127,7 @@ namespace pareto {
             /// have to move forward until a predicate is valid.
             quadtree_node *parent_;
 
-            /// Minimal Bounding Rectangle
+            /// \brief Minimal Bounding Rectangle
             /// The bounds are useful to make queries faster
             /// We can eliminate branches by only checking their
             /// bounds.
@@ -139,7 +141,7 @@ namespace pareto {
 
         /// Check if using the fast allocator
         constexpr static bool is_using_default_fast_allocator() {
-            return std::is_same_v<node_allocator_type, fast_memory_pool<quadtree_node>>;
+            return std::is_same_v<node_allocator_type, fast_memory_pool < quadtree_node>>;
         }
 
     public /* iterators */:
@@ -169,38 +171,40 @@ namespace pareto {
             };
             using predicate_list_type = predicate_list<number_type, number_of_compile_dimensions_, mapped_type>;
 
-            /// Default
+            /// \brief Default
             explicit iterator_impl() : iterator_impl(nullptr, nullptr) {}
 
-            /// Begin or end iterator
+            /// \brief Begin or end iterator
             iterator_impl(context_pointer_type context, iterator_tag is_end)
                     : iterator_impl(context, is_end == iterator_tag::begin ? context->root_ : nullptr) {}
 
-            /// Begin or end iterator
-            iterator_impl(context_pointer_type context)
+            /// \brief Begin or end iterator
+            explicit iterator_impl(context_pointer_type context)
                     : iterator_impl(context, iterator_tag::begin) {}
 
-            /// Tree and root node
+            /// \brief Tree and root node
             /// When the current pointer == nullptr, we are at end().
             /// We need the context so that a.end() != b.end().
             iterator_impl(context_pointer_type context, node_pointer_type root_)
-            : context_(context), current_node_(root_), nearest_predicate_(nullptr),
-              nearest_queue_{}, nearest_points_iterated_(0) {
+                    : context_(context), current_node_(root_), nearest_predicate_(nullptr),
+                      nearest_queue_{}, nearest_points_iterated_(0) {
                 advance_if_invalid();
             }
 
-            /// Iterator with predicate initializer list
-            iterator_impl(context_pointer_type context, node_pointer_type root_, std::initializer_list<predicate_variant_type> predicate_list)
+            /// \brief Iterator with predicate initializer list
+            iterator_impl(context_pointer_type context, node_pointer_type root_,
+                          std::initializer_list<predicate_variant_type> predicate_list)
                     : iterator_impl(context, root_, predicate_list.begin(), predicate_list.end()) {}
 
-            /// Iterator with predicate vector
+            /// \brief Iterator with predicate vector
             iterator_impl(context_pointer_type context, node_pointer_type root_,
                           const predicate_list_type &predicate_list)
                     : iterator_impl(context, root_, predicate_list.begin(), predicate_list.end()) {}
 
-            /// Iterator with iterators to predicates
+            /// \brief Iterator with iterators to predicates
             template<class predicate_iterator_type>
-            iterator_impl(context_pointer_type context, node_pointer_type root_, predicate_iterator_type predicate_begin, predicate_iterator_type predicate_end)
+            iterator_impl(context_pointer_type context, node_pointer_type root_,
+                          predicate_iterator_type predicate_begin, predicate_iterator_type predicate_end)
                     : context_(context), current_node_(root_),
                       predicates_(predicate_begin, predicate_end), nearest_predicate_(nullptr),
                       nearest_queue_{}, nearest_points_iterated_(0) {
@@ -209,9 +213,11 @@ namespace pareto {
                 advance_if_invalid();
             }
 
-            /// Copy constructor
+            /// \brief Copy constructor
             template<bool constness>
-            iterator_impl(const iterator_impl<constness> &rhs)
+            // NOLINTNEXTLINE(google-explicit-constructor): Iterators should be implicitly convertible
+            iterator_impl(
+                    const iterator_impl<constness> &rhs)
                     : context_(rhs.context_), current_node_(rhs.current_node_),
                       predicates_(rhs.predicates_), nearest_predicate_(nullptr),
                       nearest_points_iterated_(rhs.nearest_points_iterated_) {
@@ -225,6 +231,7 @@ namespace pareto {
                 advance_if_invalid();
             }
 
+            /// \brief Copy constructor
             iterator_impl(const iterator_impl &rhs)
                     : context_(rhs.context_), current_node_(rhs.current_node_),
                       predicates_(rhs.predicates_), nearest_predicate_(nullptr),
@@ -239,8 +246,10 @@ namespace pareto {
                 advance_if_invalid();
             }
 
+            /// \brief Destructor
             ~iterator_impl() = default;
 
+            /// \brief Copy assignment
             template<bool constness>
             iterator_impl &operator=(const iterator_impl<constness> &rhs) {
                 context_ = rhs.context_;
@@ -254,39 +263,44 @@ namespace pareto {
                 return *this;
             }
 
-            /// The equality operator ignores the predicates
+            /// \brief The equality operator ignores the predicates
             /// It only matters if they point to the same element here
             bool operator==(const iterator_impl &rhs) const {
                 return (current_node_ == rhs.current_node_) && (context_ == rhs.context_);
             }
 
+            /// \brief Inequality operator
             bool operator!=(const iterator_impl &rhs) const {
-                return !(*this == rhs);
+                return !(this->operator==(rhs));
             }
 
-            /// Find the next data element
+            /// \brief Find the next data element
             iterator_impl &operator++() {
                 advance_to_next_valid();
                 return *this;
             }
 
-            const iterator_impl operator++(int) {
+            /// \brief Advance iterator
+            iterator_impl operator++(int) { // NOLINT(cert-dcl21-cpp): This is the expected return type for iterators
                 auto tmp = *this;
                 advance_to_next_valid();
                 return tmp;
             }
 
+            /// \brief Go to previous element
             iterator_impl &operator--() {
                 return_to_previous_valid();
                 return *this;
             }
 
-            const iterator_impl operator--(int) {
+            /// \brief Go to previous element with copy
+            iterator_impl operator--(int) { // NOLINT(cert-dcl21-cpp): This is the expected return type for iterators
                 auto tmp = *this;
                 return_to_previous_valid();
                 return tmp;
             }
 
+            /// \brief Dereference iterator
             template<bool _constness = is_const>
             std::enable_if_t<_constness, reference>
             operator*() const {
@@ -294,6 +308,7 @@ namespace pareto {
                 return current_node_->value_;
             }
 
+            /// \brief Dereference iterator
             template<bool _constness = is_const>
             std::enable_if_t<!_constness, reference>
             operator*() const {
@@ -305,12 +320,14 @@ namespace pareto {
                 return const_ref;
             }
 
+            /// \brief Dereference iterator
             template<bool _constness = is_const>
             std::enable_if_t<_constness, pointer>
             operator->() const {
                 return &operator*();
             }
 
+            /// \brief Dereference iterator
             template<bool _constness = is_const>
             std::enable_if_t<!_constness, pointer>
             operator->() const {
@@ -318,25 +335,26 @@ namespace pareto {
             }
 
         private:
+            /// \brief Advance to next element if current element is invalid
             void advance_if_invalid() {
                 if (is_end()) {
                     return;
                 }
-                const bool need_to_iterate_to_nearest = nearest_predicate_ != nullptr ? nearest_points_iterated_ == 0 : false;
+                const bool need_to_iterate_to_nearest = nearest_predicate_ != nullptr && nearest_points_iterated_ == 0;
                 if (need_to_iterate_to_nearest || !predicates_.pass_predicate(current_node_->value_)) {
                     // advance if current is not valid
                     advance_to_next_valid(false);
                 }
             }
 
-            /// Is iterator_impl at the end
-            bool is_end() const {
+            /// \brief Is iterator_impl at the end
+            [[nodiscard]] bool is_end() const {
                 // We represent the "end" by keeping a pointer to nullptr
                 return current_node_ == nullptr || context_ == nullptr;
             }
 
-            /// Is iterator_impl at the begin
-            bool is_begin() const {
+            /// \brief Is iterator_impl at the begin
+            [[nodiscard]] bool is_begin() const {
                 // if there's no object, this can be both begin and end
                 if (context_ == nullptr) {
                     return true;
@@ -345,11 +363,12 @@ namespace pareto {
                 return current_node_ == context_->root_;
             }
 
-            /// Is iterator_impl pointing to valid data
-            bool is_not_null() const {
+            /// \brief Is iterator_impl pointing to valid data
+            [[nodiscard]] bool is_not_null() const {
                 return !is_end();
             }
 
+            /// \brief Initialize queue for the nearest element algorithm
             void initialize_nearest_algorithm() {
                 nearest_predicate_ = predicates_.get_nearest();
                 if (nearest_predicate_ == nullptr) {
@@ -394,7 +413,7 @@ namespace pareto {
                 nearest_queue_.emplace_back(current_node_, true,
                                             nearest_predicate_->distance(current_node_->value_.first));
                 std::push_heap(nearest_queue_.begin(), nearest_queue_.end(), queue_comp);
-                for (auto& child: current_node_->children_) {
+                for (auto &child: current_node_->children_) {
                     nearest_queue_.emplace_back(child.second, false,
                                                 nearest_predicate_->distance(current_node_->bounds_));
                     std::push_heap(nearest_queue_.begin(), nearest_queue_.end(), queue_comp);
@@ -406,6 +425,7 @@ namespace pareto {
                 // return the nearest points.
             }
 
+            /// \brief Advance to the next valid element through the nearest element algorithm
             void advance_to_next_valid_through_nearest() {
                 // If we already iterated all nearest points the predicate asked for
                 if (nearest_points_iterated_ >= nearest_predicate_->k()) {
@@ -432,7 +452,7 @@ namespace pareto {
                 // 3. while not IsEmpty(Queue) do
                 while (!nearest_queue_.empty()) {
                     // 4. Element <- Dequeue(Queue)
-                    auto [element_node, is_value, distance] = nearest_queue_.front();
+                    auto[element_node, is_value, distance] = nearest_queue_.front();
                     auto &element = element_node->value_;
                     std::pop_heap(nearest_queue_.begin(), nearest_queue_.end(), queue_comp);
                     nearest_queue_.pop_back();
@@ -474,7 +494,7 @@ namespace pareto {
                         nearest_queue_.emplace_back(element_node, true,
                                                     nearest_predicate_->distance(element_node->value_.first));
                         std::push_heap(nearest_queue_.begin(), nearest_queue_.end(), queue_comp);
-                        for (auto& child: element_node->children_) {
+                        for (auto &child: element_node->children_) {
                             // 13. Enqueue(Queue, [Object], Dist(QueryObject, Rect))
                             // 17. Enqueue(Queue, Node,     Dist(QueryObject, Rect))
                             nearest_queue_.emplace_back(child.second, false,
@@ -487,6 +507,9 @@ namespace pareto {
                 advance_to_end();
             }
 
+            /// \brief Return to previous valid element with the nearest element algorithm
+            /// When using this algorithm backwards, we calculate all nearest elements
+            /// before iterating because it's the only way to get it backwards
             void return_to_previous_valid_through_nearest() {
                 // If previous point is already iterated we get the results from there
                 while (nearest_points_iterated_ == 0 || nearest_points_iterated_ - 1 < nearest_set_.size()) {
@@ -498,7 +521,8 @@ namespace pareto {
                         // if nearest_points_iterated_ - 1 is already pre-processed
                         bool is_value;
                         bool passed_predicate;
-                        std::tie(current_node_, is_value, passed_predicate) = nearest_set_[nearest_points_iterated_ - 1];
+                        std::tie(current_node_, is_value, passed_predicate) = nearest_set_[nearest_points_iterated_ -
+                                                                                           1];
                         assert(is_value);
                         --nearest_points_iterated_;
                         if (passed_predicate) {
@@ -511,16 +535,19 @@ namespace pareto {
                 throw std::logic_error("We should have the pre-processed results for the nearest points");
             }
 
+            /// \brief Advance to the end iterator
             void advance_to_end() {
                 current_node_ = nullptr;
             }
 
+            /// \brief Return to the begin iterator
             void return_to_begin() {
                 if (context_ != nullptr) {
                     current_node_ = context_->root_;
                 }
             }
 
+            /// \brief Go to next element with depth first search (when there's no nearest predicate)
             void advance_to_next_valid_depth_first(bool first_time_in_this_branch = false) {
                 // this should usually be the case at the start
                 while (!is_end()) {
@@ -539,7 +566,7 @@ namespace pareto {
                         bool predicate_might_pass = false;
                         // if it has children, try to go to its first child
                         // that might pass the predicate
-                        for (auto& child: current_node_->children_) {
+                        for (auto &child: current_node_->children_) {
                             // If node children might have nodes that pass all predicates
                             if (predicates_.might_pass_predicate(child.second->bounds_)) {
                                 // Found a child that might pass predicates
@@ -568,6 +595,7 @@ namespace pareto {
                 }
             }
 
+            /// \brief Go to previous valid element with backwards depth first search
             void return_to_previous_valid_depth_first(bool first_time_in_this_branch = false) {
                 // this should usually be the case at the start
                 while (!is_begin()) {
@@ -594,8 +622,9 @@ namespace pareto {
                             bool children_might_pass_predicate = true;
                             while (children_might_pass_predicate) {
                                 children_might_pass_predicate = false;
-                                for (auto child_it = current_node_->children_.rbegin(); child_it != current_node_->children_.rend(); ++child_it) {
-                                    auto& child = *child_it;
+                                for (auto child_it = current_node_->children_.rbegin();
+                                     child_it != current_node_->children_.rend(); ++child_it) {
+                                    auto &child = *child_it;
                                     if (predicates_.might_pass_predicate(child.second->bounds_)) {
                                         current_node_ = child.second;
                                         children_might_pass_predicate = true;
@@ -627,6 +656,7 @@ namespace pareto {
                 }
             }
 
+            /// \brief Go to previous valid element (nearest search or depth first search)
             void return_to_previous_valid(bool first_time_in_this_branch = false) {
                 if (nearest_predicate_ != nullptr) {
                     return_to_previous_valid_through_nearest();
@@ -635,6 +665,7 @@ namespace pareto {
                 }
             }
 
+            /// \brief Go to the next sibling node
             void go_to_sibling(bool move_right = true) {
                 // if we are at the "end" element and we are moving right
                 if (!move_right && current_node_ == nullptr) {
@@ -690,6 +721,7 @@ namespace pareto {
                 }
             }
 
+            /// \brief Sort predicates in the predicate list
             void sort_predicates() {
                 // for the more general case
                 number_type volume_root = 0.;
@@ -706,17 +738,17 @@ namespace pareto {
                 predicates_.sort(volume_root);
             }
 
-            /// Stack as we are doing iteration instead of recursion
+            /// \brief Stack as we are doing iteration instead of recursion
             context_pointer_type context_;
 
-            /// Stack as we are doing iteration instead of recursion
+            /// \brief Stack as we are doing iteration instead of recursion
             node_pointer_type current_node_;
 
-            /// Predicate constraining the search area
+            /// \brief Predicate constraining the search area
             predicate_list_type predicates_;
 
-            /// Pointer to a nearest predicate
-            nearest<number_type, number_of_compile_dimensions_> *nearest_predicate_ = nullptr;
+            /// \brief Pointer to a nearest predicate
+            nearest <number_type, number_of_compile_dimensions_> *nearest_predicate_ = nullptr;
 
             // Pair with branch (node or object) and distance to the reference point
             // The branch is represented by the node and a boolean marking
@@ -725,7 +757,7 @@ namespace pareto {
             using queue_element = std::tuple<node_pointer_type, bool, distance_type>;
 
             // Function to compare queue_elements by their distance to the reference point
-            static const std::function<bool(const queue_element&, const queue_element&)> queue_comp;
+            static const std::function<bool(const queue_element &, const queue_element &)> queue_comp;
 
             // Queue <- NewPriorityQueue()
             std::vector<queue_element> nearest_queue_;
@@ -748,10 +780,11 @@ namespace pareto {
 
     public:
         /// Construct
-        quad_tree() : root_(nullptr), size_(0), dimensions_(number_of_compile_dimensions_), alloc_(new node_allocator_type()) {}
+        quad_tree() : root_(nullptr), size_(0), dimensions_(number_of_compile_dimensions_),
+                      alloc_(new node_allocator_type()) {}
 
         /// Constructor that shares an external allocator
-        quad_tree(std::shared_ptr<node_allocator_type>& external_alloc) :
+        explicit quad_tree(std::shared_ptr<node_allocator_type> &external_alloc) :
                 root_(nullptr),
                 size_(0),
                 dimensions_(number_of_compile_dimensions_),
@@ -778,6 +811,9 @@ namespace pareto {
 
         /// Copy constructor
         quad_tree &operator=(const quad_tree &other) {
+            if (&other == this) {
+                return *this;
+            }
             remove_all_records();
             size_ = other.size_;
             dimensions_ = other.dimensions_;
@@ -797,35 +833,52 @@ namespace pareto {
         }
 
     public /* iterators */:
-
+        /// \brief Get iterator to first element
         const_iterator begin() const noexcept {
             return root_ ? const_iterator(this, root_) : end();
         }
 
+        /// \brief Get iterator to first element that passes the list of predicates
+        const_iterator begin(const predicate_list_type &ps) const noexcept {
+            return root_ ? const_iterator(this, root_, ps) : end();
+        }
+
+        /// \brief Get iterator to last + 1 element
         const_iterator end() const noexcept {
             return const_iterator(this, const_iterator::iterator_tag::end);
         }
 
+        /// \brief Get iterator to first element
         iterator begin() noexcept {
             return root_ ? iterator(this, root_) : end();
         }
 
+        /// \brief Get iterator to first element that passes the list of predicates
+        iterator begin(const predicate_list_type &ps) noexcept {
+            return root_ ? iterator(this, root_, ps) : end();
+        }
+
+        /// \brief Get iterator to last + 1 element
         iterator end() noexcept {
             return iterator(this, iterator::iterator_tag::end);
         }
 
+        /// \brief Get iterator to first element in reverse
         std::reverse_iterator<const_iterator> rbegin() const noexcept {
             return std::reverse_iterator<const_iterator>(end());
         }
 
+        /// \brief Get iterator to last element in reverse
         std::reverse_iterator<const_iterator> rend() const noexcept {
             return std::reverse_iterator<const_iterator>(begin());
         }
 
+        /// \brief Get iterator to first element in reverse
         std::reverse_iterator<iterator> rbegin() noexcept {
             return std::reverse_iterator<iterator>(end());
         }
 
+        /// \brief Get iterator to last element in reverse
         std::reverse_iterator<iterator> rend() noexcept {
             return std::reverse_iterator<iterator>(begin());
         }
@@ -841,29 +894,33 @@ namespace pareto {
         /// We implement it this way because this operation is the only
         /// one we need for our front application.
         bool operator==(const self_type &rhs) const {
-            return std::equal(begin(), end(), rhs.begin(), rhs.end(), [](const auto& a, const auto& b) {
+            return std::equal(begin(), end(), rhs.begin(), rhs.end(), [](const auto &a, const auto &b) {
                 return a.first == b.first && mapped_type_custom_equality_operator(a.second, b.second);
             });
         }
 
+        /// \brief Inequality operator
         bool operator!=(const self_type &rhs) const {
-            return !std::equal(begin(), end(), rhs.begin(), rhs.end(), [](const auto& a, const auto& b) {
+            return !std::equal(begin(), end(), rhs.begin(), rhs.end(), [](const auto &a, const auto &b) {
                 return a.first == b.first && mapped_type_custom_equality_operator(a.second, b.second);
             });
         }
 
+        /// \brief Find point
         const_iterator find(const point_type &p) const {
             const_iterator it = begin_intersection(p, p);
             it.predicates_.clear();
             return it;
         }
 
+        /// \brief Find point
         iterator find(const point_type &p) {
             iterator it = begin_intersection(p, p);
             it.predicates_.clear();
             return it;
         }
 
+        /// \brief Find intersection between points and query box
         iterator begin_intersection(const point_type &min_corner, const point_type &max_corner) {
             point_type min_corner_ = min_corner;
             point_type max_corner_ = max_corner;
@@ -871,6 +928,7 @@ namespace pareto {
             return iterator(this, root_, {intersects(min_corner_, max_corner_)});
         }
 
+        /// \brief Find intersection between points and query box
         const_iterator begin_intersection(const point_type &min_corner, const point_type &max_corner) const {
             point_type min_corner_ = min_corner;
             point_type max_corner_ = max_corner;
@@ -878,6 +936,7 @@ namespace pareto {
             return const_iterator(this, root_, {intersects(min_corner_, max_corner_)});
         }
 
+        /// \brief Find intersection between points and query box
         iterator begin_intersection(const point_type &min_corner, const point_type &max_corner,
                                     std::function<bool(const value_type &)> fn) {
             point_type min_corner_ = min_corner;
@@ -886,6 +945,7 @@ namespace pareto {
             return iterator(this, root_, {intersects(min_corner_, max_corner_), satisfies(fn)});
         }
 
+        /// \brief Find intersection between points and query box
         const_iterator begin_intersection(const point_type &min_corner, const point_type &max_corner,
                                           std::function<bool(const value_type &)> fn) const {
             point_type min_corner_ = min_corner;
@@ -894,6 +954,7 @@ namespace pareto {
             return const_iterator(this, root_, {intersects(min_corner_, max_corner_), satisfies(fn)});
         }
 
+        /// \brief Get points inside a box (excluding borders)
         iterator begin_within(const point_type &min_corner, const point_type &max_corner) {
             point_type min_corner_ = min_corner;
             point_type max_corner_ = max_corner;
@@ -901,6 +962,7 @@ namespace pareto {
             return iterator(this, root_, {within(min_corner_, max_corner_)});
         }
 
+        /// \brief Find points within a query box
         const_iterator begin_within(const point_type &min_corner, const point_type &max_corner) const {
             point_type min_corner_ = min_corner;
             point_type max_corner_ = max_corner;
@@ -908,6 +970,7 @@ namespace pareto {
             return const_iterator(this, root_, {within(min_corner_, max_corner_)});
         }
 
+        /// \brief Get outside inside a box (excluding borders)
         iterator begin_disjoint(const point_type &min_corner, const point_type &max_corner) {
             point_type min_corner_ = min_corner;
             point_type max_corner_ = max_corner;
@@ -915,6 +978,7 @@ namespace pareto {
             return iterator(this, root_, {disjoint(min_corner_, max_corner_)});
         }
 
+        /// \brief Find points outside a query box
         const_iterator begin_disjoint(const point_type &min_corner, const point_type &max_corner) const {
             point_type min_corner_ = min_corner;
             point_type max_corner_ = max_corner;
@@ -932,44 +996,54 @@ namespace pareto {
             return iterator(this, root_, {nearest(p)});
         }
 
+        /// \brief Find points closest to a reference point
         const_iterator begin_nearest(const point_type &p) const {
             return const_iterator(this, root_, {nearest(p)});
         }
 
+        /// \brief Get points closest to a reference point or box
         iterator begin_nearest(const point_type &p, size_t k) {
             return iterator(this, root_, {nearest(p, k)});
         }
 
+        /// \brief Find points closest to a reference point
         const_iterator begin_nearest(const point_type &p, size_t k) const {
             return const_iterator(this, root_, {nearest(p, k)});
         }
 
+        /// \brief Get points closest to a reference point or box
         iterator begin_nearest(const box_type &b, size_t k) {
             return iterator(this, root_, {nearest(b, k)});
         }
 
+        /// \brief Find points closest to a reference point
         const_iterator begin_nearest(const box_type &b, size_t k) const {
             return const_iterator(this, root_, {nearest(b, k)});
         }
 
+        /// \brief Get points closest to a reference point or box
         iterator begin_nearest(const point_type &p, size_t k, std::function<bool(const value_type &)> fn) {
             return iterator(this, root_, {nearest(p, k), satisfies(fn)});
         }
 
+        /// \brief Find points closest to a reference point
         const_iterator begin_nearest(const point_type &p, size_t k, std::function<bool(const value_type &)> fn) const {
             return const_iterator(this, root_, {nearest(p, k), satisfies(fn)});
         }
 
     public /* non-modifying functions */:
-        bool empty() const noexcept {
+        /// \brief True if container is empty
+        [[nodiscard]] bool empty() const noexcept {
             return root_ == nullptr;
         }
 
-        size_t size() const noexcept {
+        /// \brief Get container size
+        [[nodiscard]] size_t size() const noexcept {
             return size_;
         }
 
-        size_t dimensions() const noexcept {
+        /// \brief Get container dimensions
+        [[nodiscard]] size_t dimensions() const noexcept {
             if constexpr (number_of_compile_dimensions_ != 0) {
                 return number_of_compile_dimensions_;
             } else {
@@ -977,15 +1051,18 @@ namespace pareto {
             }
         }
 
+        /// \brief Get maximum value in a given dimension
         number_type max_value(size_t dimension) const {
             return root_ ? root_->bounds_.max()[dimension] : std::numeric_limits<number_type>::max();
         }
 
+        /// \brief Get minimum value in a given dimension
         number_type min_value(size_t dimension) const {
             return root_ ? root_->bounds_.min()[dimension] : std::numeric_limits<number_type>::min();
         }
 
 
+        /// \brief Get iterator to element with maximum value in a given dimension
         iterator max_element(size_t dimension) {
             if (empty()) {
                 return end();
@@ -993,6 +1070,7 @@ namespace pareto {
             return iterator(this, recursive_max_element(root_, dimension));
         }
 
+        /// \brief Get iterator to element with maximum value in a given dimension
         const_iterator max_element(size_t dimension) const {
             if (empty()) {
                 return end();
@@ -1000,6 +1078,7 @@ namespace pareto {
             return const_iterator(this, recursive_max_element(root_, dimension));
         }
 
+        /// \brief Get iterator to element with minimum value in a given dimension
         iterator min_element(size_t dimension) {
             if (empty()) {
                 return end();
@@ -1007,6 +1086,7 @@ namespace pareto {
             return iterator(this, recursive_min_element(root_, dimension));
         }
 
+        /// \brief Get iterator to element with minimum value in a given dimension
         const_iterator min_element(size_t dimension) const {
             if (empty()) {
                 return end();
@@ -1020,7 +1100,7 @@ namespace pareto {
         /// \return Iterator to the new element
         /// \return True if insertion happened successfully
         std::pair<iterator, bool> insert(const value_type &v) {
-            quadtree_node* destination_node = insert_branch(v, root_);
+            quadtree_node *destination_node = insert_branch(v, root_);
             return {iterator(this, destination_node), true};
         }
 
@@ -1036,7 +1116,7 @@ namespace pareto {
         /// Erase element
         size_t erase(iterator position) {
             // we will remove this node and all nodes under it
-            quadtree_node* node_to_remove = position.current_node_;
+            quadtree_node *node_to_remove = position.current_node_;
 
             // if this is empty
             if (node_to_remove == nullptr) {
@@ -1051,10 +1131,11 @@ namespace pareto {
             move_to_reinsert(node_to_remove, reinsert_list, false);
 
             // remove the root
-            quadtree_node* current_node = node_to_remove->parent_;
+            quadtree_node *current_node = node_to_remove->parent_;
             if (node_to_remove != root_) {
                 // find it in the parent node and erase it from the children
-                auto it = current_node->children_.find(current_node->value_.first.quadrant(node_to_remove->value_.first));
+                auto it = current_node->children_.find(
+                        current_node->value_.first.quadrant(node_to_remove->value_.first));
                 assert(it != current_node->children_.end());
                 current_node->children_.erase(it);
             } else {
@@ -1079,6 +1160,7 @@ namespace pareto {
             return 1;
         }
 
+        /// \brief Erase value
         size_t erase(const value_type &v) {
             // Look for the item
             iterator it = find(v.first);
@@ -1086,7 +1168,7 @@ namespace pareto {
             return !it.is_end() ? erase(it) : 0;
         }
 
-        /// Remove range of iterators from the front
+        /// \brief Remove range of iterators from the front
         size_t erase(const_iterator first, const_iterator last) {
             // get copy of all elements in the query
             std::vector<value_type> v(first, last);
@@ -1098,7 +1180,7 @@ namespace pareto {
             return s;
         }
 
-        /// erase all entries from tree
+        /// \brief erase all entries from tree
         void clear() {
             // Delete all existing nodes
             remove_all_records();
@@ -1106,7 +1188,7 @@ namespace pareto {
             size_ = 0;
         }
 
-        /// Swap the content of two fronts
+        /// \brief Swap the content of two fronts
         void swap(self_type &m) {
             std::swap(root_, m.root_);
             std::swap(size_, m.size_);
@@ -1115,26 +1197,31 @@ namespace pareto {
 
     protected:
 
-        /// Bulk insertion inserts the median before other elements
+        /// \brief Bulk insertion inserts the median before other elements
         template<class InputIterator>
-        void bulk_insert(InputIterator l_begin, InputIterator l_end, const value_type& v, InputIterator r_begin, InputIterator r_end) {
+        void bulk_insert(InputIterator l_begin, InputIterator l_end, const value_type &v, InputIterator r_begin,
+                         InputIterator r_end) {
             bulk_insert(l_begin, l_end, v, r_begin, r_end, root_);
         }
 
-        void bulk_insert(const std::vector<value_type> &v, quadtree_node*& node) {
+        /// \brief Bulk insertion inserts the median before other elements
+        void bulk_insert(const std::vector<value_type> &v, quadtree_node *&node) {
             // bulk insert ranges {1, median - 1}, median, { median + 1, end()}
             if (!v.empty()) {
                 if (v.size() == 1) {
                     insert_branch(v[0], node);
                 } else {
                     size_t median_pos = v.size() / 2;
-                    bulk_insert(v.begin(), v.begin() + median_pos, v[median_pos], v.begin() + median_pos + 1, v.end(), node);
+                    bulk_insert(v.begin(), v.begin() + median_pos, v[median_pos], v.begin() + median_pos + 1, v.end(),
+                                node);
                 }
             }
         }
 
+        /// \brief Bulk insertion inserts the median before other elements
         template<class InputIterator>
-        void bulk_insert(InputIterator l_begin, InputIterator l_end, const value_type& v, InputIterator r_begin, InputIterator r_end, quadtree_node*& node) {
+        void bulk_insert(InputIterator l_begin, InputIterator l_end, const value_type &v, InputIterator r_begin,
+                         InputIterator r_end, quadtree_node *&node) {
             insert_branch(v, node);
             size_t l_size = std::distance(l_begin, l_end);
             if (l_size != 0) {
@@ -1142,7 +1229,8 @@ namespace pareto {
                     insert_branch(*l_begin, node);
                 } else {
                     size_t l_median_pos = l_size / 2;
-                    bulk_insert(l_begin, l_begin + l_median_pos, *(l_begin + l_median_pos), l_begin + l_median_pos + 1, l_end, node);
+                    bulk_insert(l_begin, l_begin + l_median_pos, *(l_begin + l_median_pos), l_begin + l_median_pos + 1,
+                                l_end, node);
                 }
             }
             size_t r_size = std::distance(r_begin, r_end);
@@ -1151,7 +1239,8 @@ namespace pareto {
                     insert_branch(*r_begin, node);
                 } else {
                     size_t r_median_pos = r_size / 2;
-                    bulk_insert(r_begin, r_begin + r_median_pos, *(r_begin + r_median_pos), r_begin + r_median_pos + 1, r_end, node);
+                    bulk_insert(r_begin, r_begin + r_median_pos, *(r_begin + r_median_pos), r_begin + r_median_pos + 1,
+                                r_end, node);
                 }
             }
         }
@@ -1165,7 +1254,7 @@ namespace pareto {
         /// \return return 1 if root was split, 0 if it was not.
         /// \return Pointer to the node containing the value we inserted
         /// \return Index of the element we inserted in the node that contains it
-        quadtree_node* insert_branch(const value_type &v, quadtree_node *&root_node) {
+        quadtree_node *insert_branch(const value_type &v, quadtree_node *&root_node) {
             if constexpr (number_of_compile_dimensions_ == 0) {
                 if (dimensions_ == 0) {
                     dimensions_ = v.first.dimensions();
@@ -1178,8 +1267,8 @@ namespace pareto {
                 return root_node;
             }
 
-            /// Find the region that would contain the point P.
-            quadtree_node* current = root_node;
+            /// \brief Find the region that would contain the point P.
+            quadtree_node *current = root_node;
             size_t quadrant = current->value_.first.quadrant(v.first);
             auto quadrant_it = current->children_.find(quadrant);
             while (quadrant_it != current->children_.end()) {
@@ -1188,12 +1277,12 @@ namespace pareto {
                 quadrant_it = current->children_.find(quadrant);
             }
 
-            /// Add point where you fall off the tree.
+            /// \brief Add point where you fall off the tree.
             /// The element would be in current->children_[quadrant]
-            quadtree_node* new_node = allocate_quadtree_node(current, v);
+            quadtree_node *new_node = allocate_quadtree_node(current, v);
             current->children_.emplace(quadrant, new_node);
 
-            /// Adjust the minimum bounds up to the root
+            /// \brief Adjust the minimum bounds up to the root
             current->bounds_.stretch(v.first);
             while (current->parent_ != nullptr) {
                 current = current->parent_;
@@ -1204,40 +1293,46 @@ namespace pareto {
             return new_node;
         }
 
-        template <class... Args>
-        quadtree_node *allocate_quadtree_node(Args&&... args) {
+        /// \brief Allocate a tree node
+        template<class... Args>
+        quadtree_node *allocate_quadtree_node(Args &&... args) {
             auto p = alloc_->allocate(1);
             new(p) quadtree_node(args...);
             return p;
         }
 
+        /// \brief Deallocate a tree node
         void deallocate_quadtree_node(quadtree_node *p) {
             p->~quadtree_node();
             alloc_->deallocate(p, 1);
         }
 
-        /// Find the smallest rectangle that includes all rectangles in branches of a node.
+        /// \brief Find the smallest rectangle that includes all rectangles in branches of a node.
         box_type minimum_bounding_rectangle(quadtree_node *a_node) {
             assert(a_node);
             box_type rect = box_type(a_node->value_.first);
-            for (auto& [quadrant, child]: a_node->children_) {
+            for (auto&[quadrant, child]: a_node->children_) {
                 rect.stretch(child->bounds_);
             }
             return rect;
         }
 
+        /// \brief Copy contents of the whole tree
         void copy_recursive(quadtree_node *current, quadtree_node *current_parent, const quadtree_node *other) {
             current->value_ = other->value_;
             current->bounds_ = other->bounds_;
             current->parent_ = current_parent;
-            for (const auto& [quadrant, child]: other->children_) {
+            for (const auto&[quadrant, child]: other->children_) {
                 auto l_child = allocate_quadtree_node();
-                current->children_.emplace(quadrant,l_child);
+                current->children_.emplace(quadrant, l_child);
                 copy_recursive(l_child, current, child);
             }
         }
 
-        void move_to_reinsert(quadtree_node*& node_to_remove, std::vector<value_type>& reinsert_list, bool move_root) {
+        /// \brief Copy elements from the node to a list so that we can reinsert them again later
+        /// This is the part of the algorithm to remove nodes from the quadtree
+        /// It's a *very* inefficient operation
+        void move_to_reinsert(quadtree_node *&node_to_remove, std::vector<value_type> &reinsert_list, bool move_root) {
             for (auto &[quadrant, child_node]: node_to_remove->children_) {
                 if (child_node->children_.empty()) {
                     reinsert_list.emplace_back(child_node->value_);
@@ -1254,7 +1349,8 @@ namespace pareto {
             }
         }
 
-        quadtree_node * recursive_max_element(quadtree_node *parent_node, size_t dimension) const {
+        /// \brief Recursively find the max element
+        quadtree_node *recursive_max_element(quadtree_node *parent_node, size_t dimension) const {
             if (parent_node->children_.empty()) {
                 return parent_node;
             }
@@ -1269,7 +1365,8 @@ namespace pareto {
                                            parent_node->children_.end(),
                                            [&dimension](const typename quadtree_node::children_map::value_type &a,
                                                         const typename quadtree_node::children_map::value_type &b) {
-                                               return a.second->bounds_.second()[dimension] < b.second->bounds_.second()[dimension];
+                                               return a.second->bounds_.second()[dimension] <
+                                                      b.second->bounds_.second()[dimension];
                                            });
             assert(max_it != parent_node->children_.end());
             if (parent_node->value_.first[dimension] >= max_it->second->bounds_.second()[dimension]) {
@@ -1279,7 +1376,8 @@ namespace pareto {
             }
         }
 
-        quadtree_node * recursive_min_element(quadtree_node *parent_node, size_t dimension) const {
+        /// \brief Recursively find the min element
+        quadtree_node *recursive_min_element(quadtree_node *parent_node, size_t dimension) const {
             if (parent_node->children_.empty()) {
                 return parent_node;
             }
@@ -1290,7 +1388,8 @@ namespace pareto {
                                            parent_node->children_.end(),
                                            [&dimension](const typename quadtree_node::children_map::value_type &a,
                                                         const typename quadtree_node::children_map::value_type &b) {
-                                               return a.second->bounds_.first()[dimension] < b.second->bounds_.first()[dimension];
+                                               return a.second->bounds_.first()[dimension] <
+                                                      b.second->bounds_.first()[dimension];
                                            });
             assert(min_it != parent_node->children_.end());
             if (parent_node->value_.first[dimension] <= min_it->second->bounds_.first()[dimension]) {
@@ -1300,6 +1399,7 @@ namespace pareto {
             }
         }
 
+        /// \brief Remove all points from the tree
         void remove_all_records() {
             if (root_ == nullptr) {
                 return;
@@ -1307,10 +1407,11 @@ namespace pareto {
             remove_all_records(root_);
         }
 
+        /// \brief Remove all points from the tree
         void remove_all_records(quadtree_node *node) {
             assert(node);
             if (node->is_internal_node()) {
-                for (auto& child: node->children_) {
+                for (auto &child: node->children_) {
                     assert(child.second != node->parent_);
                     assert(child.second->parent_ == node);
                     remove_all_records(child.second);
@@ -1319,39 +1420,43 @@ namespace pareto {
             deallocate_quadtree_node(node);
         }
 
-        std::string to_string() const {
+        /// \brief Convert tree to string
+        /// For debugging only
+        [[nodiscard, maybe_unused]] std::string to_string() const {
             std::string str;
             // auto current = root_;
             str += to_string(root_, 0);
             return str;
         }
 
-        std::string to_string(const quadtree_node* current, size_t level) const {
-            std::string str(level*2,' ');
+        /// \brief Convert tree to string
+        /// For debugging only
+        std::string to_string(const quadtree_node *current, size_t level) const {
+            std::string str(level * 2, ' ');
             std::stringstream ss;
             ss << current->value_.first;
             // ss << current->value_.first << ": " << current->value_.second;
             assert(current->bounds_.contains(current->value_.first));
             str += ss.str() + "\n";
-            for (const auto& child: current->children_) {
+            for (const auto &child: current->children_) {
                 str += to_string(child.second, level + 1);
             }
             return str;
         }
 
-        /// Root of tree
+        /// \brief Tree root node
         quadtree_node *root_;
 
-        /// Number of elements in the tree
+        /// \brief Number of elements in the tree
         /// We cache the size at each insertion/removal.
         /// Otherwise it would cost us O(n log(n)) to find out the size
         size_t size_{0};
 
-        /// Number of dimensions of this rtree
+        /// \brief Number of dimensions of this rtree
         /// This is only needed when the dimension will be defined at runtime
         size_t dimensions_{0};
 
-        /// Node allocator
+        /// \brief Node allocator
         /// It's fundamental to allocate our nodes with an efficient allocator
         /// to have a tree that can compete with vectors
         /// This is a shared ptr because trees can also share the same
@@ -1364,11 +1469,12 @@ namespace pareto {
 
     // MSVC hack (we cannot define it inside iterator_impl)
     template<class NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, class ELEMENT_TYPE, template<typename> class ALLOCATOR>
-    template <bool constness>
-    const std::function<bool(const typename quad_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element&,
-                             const typename quad_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element&)> quad_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::iterator_impl<constness>::queue_comp = [](
-            const typename quad_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element& a,
-            const typename quad_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element& b) -> bool {
+    template<bool constness>
+    const std::function<bool(
+            const typename quad_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element &,
+            const typename quad_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element &)> quad_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::iterator_impl<constness>::queue_comp = [](
+            const typename quad_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element &a,
+            const typename quad_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>::template iterator_impl<constness>::queue_element &b) -> bool {
         return std::get<2>(a) > std::get<2>(b);
     };
 

@@ -18,8 +18,10 @@ namespace pareto {
         using point_type = point<NUMBER_T, DimensionCount>;
         using distance_type = typename point_type::distance_type;
     public /* constructors */:
+        /// \brief Construct predicate from query box
         explicit disjoint(const query_box_type &data) : data_(data) {}
 
+        /// \brief Construct predicate from query box corners
         disjoint(const point_type &min_corner, const point_type &max_corner) : data_(query_box_type(min_corner,max_corner)) {}
 
     public:

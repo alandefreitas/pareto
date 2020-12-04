@@ -69,6 +69,7 @@ namespace pareto {
         using mapped_type = ELEMENT_TYPE;
         using value_type = std::pair<key_type, mapped_type>;
         using box_type = query_box<number_type, number_of_compile_dimensions_>;
+        using predicate_list_type = predicate_list<number_type, number_of_compile_dimensions_, mapped_type>;
 
         template<typename VALUE_TYPE>
         using allocator_type = ALLOCATOR<VALUE_TYPE>;
@@ -108,11 +109,11 @@ namespace pareto {
 
             explicit branch_variant(const value_type &v) : data_(variant_type(v)) {}
 
-            bool is_branch() const {
+            [[nodiscard]] bool is_branch() const {
                 return std::holds_alternative<box_and_node>(data_);
             }
 
-            bool is_value() const {
+            [[nodiscard]] bool is_value() const {
                 return std::holds_alternative<value_type>(data_);
             }
 
@@ -198,6 +199,7 @@ namespace pareto {
                 return as_value().first;
             }
 
+            /// \brief Equality operator
             bool operator==(const branch_variant &rhs) const {
                 if (is_branch() != rhs.is_branch()) {
                     return false;
@@ -210,8 +212,9 @@ namespace pareto {
                 }
             }
 
+            /// \brief Inequality operator
             bool operator!=(const branch_variant &rhs) const {
-                return !(*this == rhs);
+                return !(this->operator==(rhs));
             }
 
         private:
@@ -230,13 +233,13 @@ namespace pareto {
                     : parent_(nullptr), count_(count), level_(level) {}
 
             /// An internal node, contains other nodes
-            bool is_internal_node() const {
+            [[nodiscard]] bool is_internal_node() const {
                 return (level_ > 0);
                 // or return std::holds_alternative<node_array>(data_)
             }
 
             /// A leaf, contains data
-            bool is_leaf_node() const {
+            [[nodiscard]] bool is_leaf_node() const {
                 return (level_ == 0);
                 // or return std::holds_alternative<value_array>(data_)
             }
@@ -245,7 +248,7 @@ namespace pareto {
                 return branches_[index];
             }
 
-            const box_type rectangle(size_t index) const {
+            box_type rectangle(size_t index) const {
                 return branches_[index].rectangle();
             }
 
@@ -307,7 +310,7 @@ namespace pareto {
 
             std::array<branch_variant, maxnodes_ + 1> branch_buffer_{};
 
-            size_t branch_count_;
+            size_t branch_count_{0};
 
             box_type cover_split_;
 
@@ -338,7 +341,7 @@ namespace pareto {
                 begin,
                 end
             };
-            using predicate_list_type = predicate_list <number_type, number_of_compile_dimensions_, mapped_type>;
+            using predicate_list_type = predicate_list<number_type, number_of_compile_dimensions_, mapped_type>;
 
             /// Default
             explicit iterator_impl() : iterator_impl(nullptr, 0) {}
@@ -381,7 +384,9 @@ namespace pareto {
             }
 
             template<bool constness>
-            iterator_impl(const iterator_impl<constness> &rhs)
+            // NOLINTNEXTLINE(google-explicit-constructor): Iterators should be implicitly convertible
+            iterator_impl(
+                    const iterator_impl<constness> &rhs)
                     : current_node_(rhs.current_node_), current_branch_(rhs.current_branch_),
                       predicates_(rhs.predicates_), nearest_predicate_(rhs.nearest_predicate_),
                       nearest_points_iterated_(rhs.nearest_points_iterated_) {
@@ -395,6 +400,7 @@ namespace pareto {
                 advance_if_invalid();
             }
 
+            /// \brief Copy constructor
             iterator_impl(const iterator_impl &rhs)
                     : current_node_(rhs.current_node_), current_branch_(rhs.current_branch_),
                       predicates_(rhs.predicates_), nearest_predicate_(rhs.nearest_predicate_),
@@ -409,8 +415,10 @@ namespace pareto {
                 advance_if_invalid();
             }
 
+            /// \brief Destructor
             ~iterator_impl() = default;
 
+            /// \brief Copy assignment
             template<bool constness>
             iterator_impl &operator=(const iterator_impl<constness> &rhs) {
                 current_node_ = rhs.current_node_;
@@ -433,8 +441,9 @@ namespace pareto {
                 return current_branch_ == rhs.current_branch_;
             }
 
+            /// \brief Inequality operator
             bool operator!=(const iterator_impl &rhs) const {
-                return !(*this == rhs);
+                return !(this->operator==(rhs));
             }
 
             /// Find the next data element
@@ -443,23 +452,27 @@ namespace pareto {
                 return *this;
             }
 
-            const iterator_impl operator++(int) {
+            /// \brief Advance iterator
+            iterator_impl operator++(int) { // NOLINT(cert-dcl21-cpp): This is the expected return type for iterators
                 auto tmp = *this;
                 advance_to_next_valid();
                 return tmp;
             }
 
+            /// \brief Go to previous element
             iterator_impl &operator--() {
                 return_to_previous_valid();
                 return *this;
             }
 
-            const iterator_impl operator--(int) {
+            /// \brief Go to previous element with copy
+            iterator_impl operator--(int) { // NOLINT(cert-dcl21-cpp): This is the expected return type for iterators
                 auto tmp = *this;
                 return_to_previous_valid();
                 return tmp;
             }
 
+            /// \brief Dereference iterator
             template<bool _constness = is_const>
             std::enable_if_t<_constness, reference>
             operator*() const {
@@ -467,6 +480,7 @@ namespace pareto {
                 return current_node_->branches_[current_branch_].as_value();
             }
 
+            /// \brief Dereference iterator
             template<bool _constness = is_const>
             std::enable_if_t<!_constness, reference>
             operator*() const {
@@ -478,12 +492,14 @@ namespace pareto {
                 return const_ref;
             }
 
+            /// \brief Dereference iterator
             template<bool _constness = is_const>
             std::enable_if_t<_constness, pointer>
             operator->() const {
                 return &operator*();
             }
 
+            /// \brief Dereference iterator
             template<bool _constness = is_const>
             std::enable_if_t<!_constness, pointer>
             operator->() const {
@@ -491,6 +507,7 @@ namespace pareto {
             }
 
         private:
+            /// \brief Advance to next element if current element is invalid
             void advance_if_invalid() {
                 if (is_end()) {
                     return;
@@ -518,7 +535,7 @@ namespace pareto {
             }
 
             /// Is iterator_impl at the end
-            bool is_end() const {
+            [[nodiscard]] bool is_end() const {
                 if (current_node_ == nullptr) {
                     return true;
                 }
@@ -528,7 +545,7 @@ namespace pareto {
             }
 
             /// Is iterator_impl at the begin
-            bool is_begin() const {
+            [[nodiscard]] bool is_begin() const {
                 auto root = current_node_;
                 while (root->parent_ != nullptr) {
                     root = root->parent_;
@@ -537,7 +554,7 @@ namespace pareto {
             }
 
             /// Is iterator_impl pointing to valid data
-            bool is_not_null() const {
+            [[nodiscard]] bool is_not_null() const {
                 return !is_end();
             }
 
@@ -549,6 +566,7 @@ namespace pareto {
                 current_branch_ = 0;
             }
 
+            /// \brief Initialize queue for the nearest element algorithm
             void initialize_nearest_algorithm() {
                 for (auto &p: predicates_) {
                     if (p.is_nearest()) {
@@ -606,6 +624,7 @@ namespace pareto {
                 // return the nearest points.
             }
 
+            /// \brief Advance to the next valid element through the nearest element algorithm
             void advance_to_next_valid_through_nearest() {
                 // If we already iterated all nearest points the predicate asked for
                 if (nearest_points_iterated_ >= nearest_predicate_->k()) {
@@ -683,6 +702,9 @@ namespace pareto {
                 advance_to_end();
             }
 
+            /// \brief Return to previous valid element with the nearest element algorithm
+            /// When using this algorithm backwards, we calculate all nearest elements
+            /// before iterating because it's the only way to get it backwards
             void return_to_previous_valid_through_nearest() {
                 // If previous point is already iterated we get the results from there
                 while (nearest_points_iterated_ == 0 || nearest_points_iterated_ - 1 < nearest_set_.size()) {
@@ -706,6 +728,7 @@ namespace pareto {
                 throw std::logic_error("We should have the pre-processed results for the nearest points");
             }
 
+            /// \brief Advance to the end iterator
             void advance_to_end() {
                 while (current_node_->parent_ != nullptr) {
                     go_to_parent();
@@ -713,6 +736,7 @@ namespace pareto {
                 current_branch_ = current_node_->count_;
             }
 
+            /// \brief Return to the begin iterator
             void return_to_begin() {
                 while (current_node_->parent_ != nullptr) {
                     current_node_ = current_node_->parent_;
@@ -720,6 +744,7 @@ namespace pareto {
                 current_branch_ = 0;
             }
 
+            /// \brief Go to next element with depth first search (when there's no nearest predicate)
             void advance_to_next_valid_depth_first(bool first_time_in_this_branch = false) {
                 while (!is_end()) {
                     // this should usually be the case at the start
@@ -766,6 +791,7 @@ namespace pareto {
                 }
             }
 
+            /// \brief Go to previous valid element with backwards depth first search
             void return_to_previous_valid_depth_first(bool first_time_in_this_branch = false) {
                 while (!is_begin()) {
                     if (current_node_->is_leaf_node()) {
@@ -846,6 +872,7 @@ namespace pareto {
                 }
             }
 
+            /// \brief Go to previous valid element (nearest search or depth first search)
             void return_to_previous_valid(bool first_time_in_this_branch = false) {
                 if (nearest_predicate_ != nullptr) {
                     return_to_previous_valid_through_nearest();
@@ -880,6 +907,7 @@ namespace pareto {
                 }
             }
 
+            /// \brief Sort predicates in the predicate list
             void sort_predicates() {
                 // If there is any disjoint predicate
                 number_type volume_root = 0.;
@@ -904,7 +932,7 @@ namespace pareto {
             pointer_type current_node_;
 
             /// Top of stack index
-            size_t current_branch_;
+            size_t current_branch_{0};
 
             /// Predicate constraining the search area
             predicate_list_type predicates_;
@@ -951,7 +979,7 @@ namespace pareto {
         }
 
         /// \brief Constructor that shares an external allocator
-        r_tree(std::shared_ptr<node_allocator_type> &external_alloc) :
+        explicit r_tree(std::shared_ptr<node_allocator_type> &external_alloc) :
                 size_(0),
                 dimensions_(number_of_compile_dimensions_),
                 alloc_(external_alloc),
@@ -986,6 +1014,9 @@ namespace pareto {
 
         /// \brief Copy constructor
         r_tree &operator=(const r_tree &other) {
+            if (&other == this) {
+                return *this;
+            }
             remove_all_records(root_);
             size_ = other.size_;
             dimensions_ = other.dimensions_;
@@ -1003,86 +1034,95 @@ namespace pareto {
             remove_all_records(root_);
         }
 
-    public /* iterators */:
-
+    public /* iterators */:        /// \brief Get iterator to first element
         const_iterator begin() const noexcept {
-            if (root_) {
-                return const_iterator(root_);
-            } else {
-                return end();
-            }
+            return root_ ? const_iterator(root_) : end();
         }
 
+        /// \brief Get iterator to first element that passes the list of predicates
+        const_iterator begin(const predicate_list_type &ps) const noexcept {
+            return root_ ? const_iterator(root_, ps) : end();
+        }        /// \brief Get iterator to last + 1 element
         const_iterator end() const noexcept {
             return const_iterator(root_, const_iterator::iterator_tag::end);
-        }
-
+        }        /// \brief Get iterator to first element
         iterator begin() noexcept {
-            if (root_) {
-                return iterator(root_);
-            } else {
-                return end();
-            }
+            return root_ ? iterator(root_) : end();
         }
 
+        /// \brief Get iterator to first element that passes the list of predicates
+        iterator begin(const predicate_list_type &ps) noexcept {
+            return root_ ? iterator(root_, ps) : end();
+        }        /// \brief Get iterator to last + 1 element
         iterator end() noexcept {
             return iterator(root_, iterator::iterator_tag::end);
         }
 
+        /// \brief Get iterator to first element in reverse
         std::reverse_iterator<const_iterator> rbegin() const noexcept {
             return std::reverse_iterator<const_iterator>(end());
         }
 
+        /// \brief Get iterator to last element in reverse
         std::reverse_iterator<const_iterator> rend() const noexcept {
             return std::reverse_iterator<const_iterator>(begin());
         }
 
+        /// \brief Get iterator to first element in reverse
         std::reverse_iterator<iterator> rbegin() noexcept {
             return std::reverse_iterator<iterator>(end());
         }
 
+        /// \brief Get iterator to last element in reverse
         std::reverse_iterator<iterator> rend() noexcept {
             return std::reverse_iterator<iterator>(begin());
         }
 
+        /// \brief Equality operator
         bool operator==(const self_type &rhs) const {
             return std::equal(begin(), end(), rhs.begin(), rhs.end());
         }
 
+        /// \brief Inequality operator
         bool operator!=(const self_type &rhs) const {
-            return !(rhs == *this);
+            return !(rhs.operator==(*this));
         }
 
+        /// \brief Find point
         const_iterator find(const point_type &p) const {
             const_iterator it = begin_intersection(p, p);
             it.predicates_.clear();
             return it;
         }
 
+        /// \brief Find point
         iterator find(const point_type &p) {
             iterator it = begin_intersection(p, p);
             it.predicates_.clear();
             return it;
         }
 
+        /// \brief Find point
         iterator find(const value_type &v) {
             iterator it = begin_intersection(v.first, v.first,
                                              [&v](const value_type &x) {
-                                                 return mapped_type_custom_equality_operator(x.second, v.second);;
+                                                 return mapped_type_custom_equality_operator(x.second, v.second);
                                              });
             it.predicates_.clear();
             return it;
         }
 
+        /// \brief Find point
         const_iterator find(const value_type &v) const {
             const_iterator it = begin_intersection(v.first, v.first,
                                                    [&v](const value_type &x) {
-                                                       return mapped_type_custom_equality_operator(x.second, v.second);;
+                                                       return mapped_type_custom_equality_operator(x.second, v.second);
                                                    });
             it.predicates_.clear();
             return it;
         }
 
+        /// \brief Find intersection between points and query box
         iterator begin_intersection(const point_type &min_corner, const point_type &max_corner) {
             point_type min_corner_ = min_corner;
             point_type max_corner_ = max_corner;
@@ -1090,6 +1130,7 @@ namespace pareto {
             return iterator(root_, {intersects(min_corner_, max_corner_)});
         }
 
+        /// \brief Find intersection between points and query box
         const_iterator begin_intersection(const point_type &min_corner, const point_type &max_corner) const {
             point_type min_corner_ = min_corner;
             point_type max_corner_ = max_corner;
@@ -1097,6 +1138,7 @@ namespace pareto {
             return const_iterator(root_, {intersects(min_corner_, max_corner_)});
         }
 
+        /// \brief Find intersection between points and query box
         iterator begin_intersection(const point_type &min_corner, const point_type &max_corner,
                                     std::function<bool(const value_type &)> fn) {
             point_type min_corner_ = min_corner;
@@ -1105,6 +1147,7 @@ namespace pareto {
             return iterator(root_, {intersects(min_corner_, max_corner_), satisfies(fn)});
         }
 
+        /// \brief Find intersection between points and query box
         const_iterator begin_intersection(const point_type &min_corner, const point_type &max_corner,
                                           std::function<bool(const value_type &)> fn) const {
             point_type min_corner_ = min_corner;
@@ -1113,6 +1156,7 @@ namespace pareto {
             return const_iterator(root_, {intersects(min_corner_, max_corner_), satisfies(fn)});
         }
 
+        /// \brief Get points inside a box (excluding borders)
         iterator begin_within(const point_type &min_corner, const point_type &max_corner) {
             point_type min_corner_ = min_corner;
             point_type max_corner_ = max_corner;
@@ -1120,6 +1164,7 @@ namespace pareto {
             return iterator(root_, {within(min_corner_, max_corner_)});
         }
 
+        /// \brief Find points within a query box
         const_iterator begin_within(const point_type &min_corner, const point_type &max_corner) const {
             point_type min_corner_ = min_corner;
             point_type max_corner_ = max_corner;
@@ -1127,6 +1172,7 @@ namespace pareto {
             return const_iterator(root_, {within(min_corner_, max_corner_)});
         }
 
+        /// \brief Get outside inside a box (excluding borders)
         iterator begin_disjoint(const point_type &min_corner, const point_type &max_corner) {
             point_type min_corner_ = min_corner;
             point_type max_corner_ = max_corner;
@@ -1134,6 +1180,7 @@ namespace pareto {
             return iterator(root_, {disjoint(min_corner_, max_corner_)});
         }
 
+        /// \brief Find points outside a query box
         const_iterator begin_disjoint(const point_type &min_corner, const point_type &max_corner) const {
             point_type min_corner_ = min_corner;
             point_type max_corner_ = max_corner;
@@ -1149,44 +1196,54 @@ namespace pareto {
             return iterator(root_, {nearest(p)});
         }
 
+        /// \brief Find points closest to a reference point
         const_iterator begin_nearest(const point_type &p) const {
             return const_iterator(root_, {nearest(p)});
         }
 
+        /// \brief Get points closest to a reference point or box
         iterator begin_nearest(const point_type &p, size_t k) {
             return iterator(root_, {nearest(p, k)});
         }
 
+        /// \brief Find points closest to a reference point
         const_iterator begin_nearest(const point_type &p, size_t k) const {
             return const_iterator(root_, {nearest(p, k)});
         }
 
+        /// \brief Get points closest to a reference point or box
         iterator begin_nearest(const box_type &b, size_t k) {
             return iterator(root_, {nearest(b, k)});
         }
 
+        /// \brief Find points closest to a reference point
         const_iterator begin_nearest(const box_type &b, size_t k) const {
             return const_iterator(root_, {nearest(b, k)});
         }
 
+        /// \brief Get points closest to a reference point or box
         iterator begin_nearest(const point_type &p, size_t k, std::function<bool(const value_type &)> fn) {
             return iterator(root_, {nearest(p, k), satisfies(fn)});
         }
 
+        /// \brief Find points closest to a reference point
         const_iterator begin_nearest(const point_type &p, size_t k, std::function<bool(const value_type &)> fn) const {
             return const_iterator(root_, {nearest(p, k), satisfies(fn)});
         }
 
     public /* non-modifying functions */:
-        bool empty() const noexcept {
+        /// \brief True if container is empty
+        [[nodiscard]] bool empty() const noexcept {
             return root_->count_ == 0;
         }
 
-        size_t size() const noexcept {
+        /// \brief Get container size
+        [[nodiscard]] size_t size() const noexcept {
             return size_;
         }
 
-        size_t dimensions() const noexcept {
+        /// \brief Get container dimensions
+        [[nodiscard]] size_t dimensions() const noexcept {
             if constexpr (number_of_compile_dimensions_ != 0) {
                 return number_of_compile_dimensions_;
             } else {
@@ -1194,6 +1251,7 @@ namespace pareto {
             }
         }
 
+        /// \brief Get maximum value in a given dimension
         number_type max_value(size_t dimension) const {
             auto max_it = std::max_element(root_->branches_.begin(), root_->branches_.begin() + root_->count_,
                                            [&dimension](const branch_variant &a, const branch_variant &b) {
@@ -1211,26 +1269,34 @@ namespace pareto {
         }
 
 
+        /// \brief Get iterator to element with maximum value in a given dimension
         iterator max_element(size_t dimension) {
             auto[node, index] = recursive_max_element(root_, dimension);
             return iterator(node, index);
         }
 
-        const_iterator max_element(size_t dimension) const {
+        /// \brief Get iterator to element with maximum value in a given dimension
+        const_iterator
+        max_element(size_t
+                    dimension) const {
             auto[node, index] = recursive_max_element(root_, dimension);
             return const_iterator(node, index);
         }
 
+        /// \brief Get iterator to element with minimum value in a given dimension
         iterator min_element(size_t dimension) {
             auto[node, index] = recursive_min_element(root_, dimension);
             return iterator(node, index);
         }
 
-        const_iterator min_element(size_t dimension) const {
+        /// \brief Get iterator to element with minimum value in a given dimension
+        const_iterator
+        min_element(size_t dimension) const {
             auto[node, index] = recursive_min_element(root_, dimension);
             return const_iterator(node, index);
         }
 
+        /// \brief Get minimum value in a given dimension
         number_type min_value(size_t dimension) const {
             auto min_it = std::min_element(root_->branches_.begin(), root_->branches_.begin() + root_->count_,
                                            [&dimension](const branch_variant &a, const branch_variant &b) {
@@ -1286,6 +1352,7 @@ namespace pareto {
             return s;
         }
 
+        /// \brief Erase value
         size_t erase(const value_type &v) {
             auto s = erase_query_box(box_type(v.first), v.second, root_);
             size_ -= s;
@@ -1884,6 +1951,7 @@ namespace pareto {
             }
         }
 
+        /// \brief Erase value
         size_t erase_query_box_bottom_up(iterator &node_to_erase) {
             // reinsert list in case removal needs to reorganize branches
             node_list reinsert_list(list_alloc_);
@@ -2013,6 +2081,7 @@ namespace pareto {
             }
         }
 
+        /// \brief Copy contents of the whole tree
         void copy_recursive(rtree_node *current, rtree_node *current_parent, const rtree_node *other) {
             current->level_ = other->level_;
             current->count_ = other->count_;
@@ -2102,9 +2171,9 @@ namespace pareto {
                 // number_type v0 = 1.;
                 // number_type v1 = 2.;
                 size_t i = 2;
-                number_type vi_minus_2 = static_cast<number_type>(1.);
-                number_type vi_minus_1 = static_cast<number_type>(2.);
-                number_type vi = static_cast<number_type>(
+                auto vi_minus_2 = static_cast<number_type>(1.);
+                auto vi_minus_1 = static_cast<number_type>(2.);
+                auto vi = static_cast<number_type>(
                         (static_cast<number_type>(2.) * static_cast<number_type>(pi)) / static_cast<number_type>(i) *
                         vi_minus_2);
                 while (i < number_of_compile_dimensions_) {
@@ -2149,6 +2218,7 @@ namespace pareto {
             return recursive_min_element(min_it->as_node(), dimension);
         }
 
+        /// \brief Remove all points from the tree
         void remove_all_records(rtree_node *node) {
             assert(node);
             assert(node->level_ >= 0);

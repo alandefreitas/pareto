@@ -42,18 +42,6 @@ target_include_directories(pareto
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 target_link_libraries(pareto INTERFACE hv Threads::Threads)
-if (BUILD_FRONTS_WITH_TRASE)
-    target_link_libraries(pareto INTERFACE trase)
-    # Retroactively make trase -fPIC
-    set_target_properties(trase PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
-    target_compile_definitions(pareto INTERFACE BUILD_FRONTS_WITH_TRASE)
-endif()
-
-if (BUILD_BOOST_TREE)
-    target_include_directories(pareto INTERFACE ${Boost_INCLUDE_DIR})
-    target_compile_definitions(pareto INTERFACE BUILD_BOOST_TREE)
-endif()
-
 # Set warning levels to about the same level for MSVC, GCC, and Clang
 if (BUILD_WITH_PEDANTIC_WARNINGS)
     if (MSVC)
@@ -64,6 +52,20 @@ if (BUILD_WITH_PEDANTIC_WARNINGS)
         target_compile_options(pareto INTERFACE -Wall -Wextra -pedantic -Werror -Wno-self-assign-overloaded)
     endif()
 endif()
+
+if (BUILD_BOOST_TREE)
+    target_include_directories(pareto INTERFACE ${Boost_INCLUDE_DIR})
+    target_compile_definitions(pareto INTERFACE BUILD_BOOST_TREE)
+    target_compile_options(pareto INTERFACE -Wno-\#pragma-messages -Wno-unused-parameter)
+endif()
+
+if (BUILD_FRONTS_WITH_TRASE)
+    target_link_libraries(pareto INTERFACE trase)
+    # Retroactively make trase -fPIC
+    set_target_properties(trase PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+    target_compile_definitions(pareto INTERFACE BUILD_FRONTS_WITH_TRASE)
+endif()
+
 
 
 #######################################################

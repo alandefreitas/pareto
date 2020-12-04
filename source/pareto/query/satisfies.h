@@ -28,8 +28,10 @@ namespace pareto {
         using value_predicate = std::function<bool(const value_type&)>;
         using predicate_function = std::variant<point_predicate, value_predicate>;
     public /* constructors */:
+        /// \brief Construct predicate from function that depends on value_type pair <point, mapped_type>
         explicit satisfies(const std::function<bool(const value_type &)> &predicate) : predicate_(predicate) {}
 
+        /// \brief Construct predicate from function that depends on point_type only
         explicit satisfies(const std::function<bool(const point_type &)> &predicate) : predicate_(predicate) {}
 
     public:

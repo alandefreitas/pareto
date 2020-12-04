@@ -26,10 +26,16 @@ namespace pareto {
         using object_variant = std::variant<point_type, query_box_type>;
 
     public /* constructors */:
+        /// \brief Construct predicate from point and k nearest
         nearest(const point_type &data, size_t k) : k_(k), data_(data) {}
+        /// \brief Construct predicate from point and one nearest
         explicit nearest(const point_type &data) : k_(1), data_(object_variant(data)) {}
 
+
+        /// \brief Construct predicate from query box and k nearest
         nearest(const query_box_type &data, size_t k) : k_(k), data_(object_variant(data)) {}
+
+        /// \brief Construct predicate from query box and one nearest
         explicit nearest(const query_box_type &data) : k_(1), data_(object_variant(data)) {}
 
     public:

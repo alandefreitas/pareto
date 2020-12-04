@@ -100,7 +100,7 @@ namespace pareto {
                     : iterator_impl(begins, ar, !begins.empty() ? begins[0].second : ar->data_.back().end(), 0) {}
 
             /// Construct from archive pointer
-            iterator_impl(archive_pointer ar) {
+            explicit iterator_impl(archive_pointer ar) {
                 if (ar) {
                     for (size_t i = 0; i < ar->data_.size(); ++i) {
                         pareto_iterator it = ar->data_[i].begin();
@@ -117,7 +117,7 @@ namespace pareto {
 
             /// Copy constructor if this is const_iterator other is non-const iterator (iterator_impl<false>)
             template<bool _constness = is_const>
-            iterator_impl(const std::enable_if_t<_constness, iterator_impl<false>> &rhs)
+            iterator_impl(const std::enable_if_t<_constness, iterator_impl<false>> &rhs) // NOLINT(google-explicit-constructor): Iterators should be implicitly convertible
                     : ar_(rhs.ar_), current_iter_(rhs.current_iter_), current_front_(rhs.current_front_) {
                 for (auto& [index, it]: rhs.begins_) {
                     begins_.emplace_back(index, pareto_iterator(it));
@@ -127,7 +127,7 @@ namespace pareto {
 
             /// Copy constructor if this is non-const iterator (iterator_impl<false>) other is non-const iterator (iterator_impl<false>)
             template<bool _constness = is_const>
-            iterator_impl(const std::enable_if_t<!_constness, iterator_impl<false>> &rhs)
+            iterator_impl(const std::enable_if_t<!_constness, iterator_impl<false>> &rhs) // NOLINT(google-explicit-constructor): Iterators should be implicitly convertible
                     : begins_(rhs.begins_), ar_(rhs.ar_), current_iter_(rhs.current_iter_),
                       current_front_(rhs.current_front_) {
                 advance_to_next_valid();
@@ -136,7 +136,7 @@ namespace pareto {
             /// Copy constructor if other is const_iterator
             /// SFINAE: "this" cannot be be iterator (iterator_impl<false>)
             template<bool _constness = is_const>
-            iterator_impl(const std::enable_if_t<_constness, iterator_impl<true>> &rhs)
+            iterator_impl(const std::enable_if_t<_constness, iterator_impl<true>> &rhs) // NOLINT(google-explicit-constructor): Iterators should be implicitly convertible
                     : begins_(rhs.begins_), ar_(rhs.ar_), current_iter_(rhs.current_iter_),
                       current_front_(rhs.current_front_) {
                 advance_to_next_valid();
@@ -170,7 +170,7 @@ namespace pareto {
             }
 
             bool operator!=(const iterator_impl &rhs) const {
-                return !(*this == rhs);
+                return !(this->operator==(rhs));
             }
 
             iterator_impl &operator++() {
@@ -179,7 +179,7 @@ namespace pareto {
                 return *this;
             }
 
-            const iterator_impl operator++(int) {
+            iterator_impl operator++(int) { // NOLINT(cert-dcl21-cpp): This is the expected return type for iterators
                 auto tmp = *this;
                 current_iter_.operator++();
                 advance_to_next_valid();
@@ -199,7 +199,7 @@ namespace pareto {
                 return *this;
             }
 
-            const iterator_impl operator--(int) {
+            iterator_impl operator--(int) { // NOLINT(cert-dcl21-cpp): This is the expected return type for iterators
                 auto tmp = *this;
                 return_to_previous_valid();
                 return tmp;
@@ -214,7 +214,7 @@ namespace pareto {
             }
 
         private:
-            bool is_end() const {
+            [[nodiscard]] bool is_end() const {
                 if (!ar_ || begins_.empty()) {
                     return true;
                 }
@@ -224,7 +224,7 @@ namespace pareto {
                 return false;
             }
 
-            bool is_begin() const {
+            [[nodiscard]] bool is_begin() const {
                 // There are 0 elements
                 if (!ar_ || begins_.empty()) {
                     // So it has to also be begin (besides being end)
@@ -311,7 +311,7 @@ namespace pareto {
             pareto_iterator current_iter_;
 
             /// Current front from the begins list we are iterating
-            size_t current_front_;
+            size_t current_front_{0};
         };
 
         using iterator = iterator_impl<false>;
@@ -328,7 +328,7 @@ namespace pareto {
         archive() : archive(1000) {}
 
         /// Empty minimization archive
-        archive(size_t max_size) : archive(max_size, true) {}
+        explicit archive(size_t max_size) : archive(max_size, true) {}
 
         /// Create an empty pareto set and determine whether it is minimization
         explicit archive(size_t max_size, bool is_minimization)
@@ -416,7 +416,7 @@ namespace pareto {
                 : archive(max_size, il.begin(), il.end(), is_minimization) {}
 
         /// Create a pareto set from a list of value pairs and determine whether each dimension is minimization
-        archive(size_t max_size, std::initializer_list<value_type> il, std::vector<uint8_t> is_minimization)
+        archive(size_t max_size, std::initializer_list<value_type> il, const std::vector<uint8_t>& is_minimization)
                 : archive(max_size, il.begin(), il.end(), is_minimization) {}
 
         /// Create a pareto set from a list of value pairs and determine whether each dimension is minimization
@@ -432,7 +432,7 @@ namespace pareto {
                 : archive(max_size, v.begin(), v.end(), is_minimization) {}
 
         /// Create a pareto set from a list of value pairs and determine whether each dimension is minimization
-        archive(size_t max_size, const std::vector<value_type> &v, std::vector<uint8_t> is_minimization)
+        archive(size_t max_size, const std::vector<value_type> &v, const std::vector<uint8_t>& is_minimization)
                 : archive(max_size, v.begin(), v.end(), is_minimization) {}
 
         /// Create a pareto set from a list of value pairs and determine whether each dimension is minimization
@@ -521,7 +521,7 @@ namespace pareto {
         }
 
     public /* capacity */:
-        bool empty() const noexcept {
+        [[nodiscard]] bool empty() const noexcept {
             return data_.empty() ||
                    std::all_of(data_.begin(), data_.end(), [](const pareto_front_type &pf) { return pf.empty(); });
         }
@@ -661,7 +661,7 @@ namespace pareto {
         }
 
         bool operator!=(const archive &rhs) const {
-            return !(rhs == *this);
+            return !(this->operator==(rhs));
         }
 
     public /* modifiers */:
@@ -724,7 +724,7 @@ namespace pareto {
                     ++begin_it;
                 }
                 // remove all of them from the current front
-                data_[i].erase(dominated_it, data_[i].data_.end());
+                data_[i].erase(dominated_it, typename pareto_front_type::const_iterator(data_[i].data_.end()));
                 // recursively insert all of them to higher fronts i+1, i+2, ...
                 for (const auto &v2: dominated_solutions) {
                     try_insert(i + 1, v2);
@@ -1389,7 +1389,7 @@ namespace pareto {
             return c_ab;
         }
 
-        double normalized_direct_conflict(const size_t a, const size_t b) const {
+        [[nodiscard]] double normalized_direct_conflict(const size_t a, const size_t b) const {
             // max value in each term is max_a-min_a or max_b-min_b
             number_type worst_a = worst(a);
             number_type worst_b = worst(b);
@@ -1410,7 +1410,7 @@ namespace pareto {
         ///  many-objective optimization." Information Sciences 298 (2015): 288-314.
         /// Page 299
         /// Table 2
-        double maxmin_conflict(const size_t a, const size_t b) const {
+        [[nodiscard]] double maxmin_conflict(const size_t a, const size_t b) const {
             number_type worst_a = worst(a);
             number_type worst_b = worst(b);
             number_type ideal_a = ideal(a);
@@ -1426,7 +1426,7 @@ namespace pareto {
             return c_ab;
         }
 
-        double normalized_maxmin_conflict(const size_t a, const size_t b) const {
+        [[nodiscard]] double normalized_maxmin_conflict(const size_t a, const size_t b) const {
             return maxmin_conflict(a,b)/size();
         }
 
@@ -1443,7 +1443,7 @@ namespace pareto {
         ///  many-objective optimization." Information Sciences 298 (2015): 288-314.
         /// Page 299
         /// Table 2
-        double conflict(const size_t a, const size_t b) const {
+        [[nodiscard]] double conflict(const size_t a, const size_t b) const {
             // get sorted values in objectives a and b
             std::vector<number_type> x_a;
             std::vector<number_type> x_b;
@@ -1480,11 +1480,11 @@ namespace pareto {
             return static_cast<double>(c_ab);
         }
 
-        double normalized_conflict(const size_t a, const size_t b) const {
+        [[nodiscard]] double normalized_conflict(const size_t a, const size_t b) const {
             double denominator = 0.;
-            double n = static_cast<double>(size());
+            auto n = static_cast<double>(size());
             for (size_t i = 1; i <= size(); ++i) {
-                denominator += abs(2*i-n-1);
+                denominator += abs(2.*i-n-1);
             }
             return static_cast<double>(conflict(a,b))/denominator;
         }
@@ -1821,7 +1821,7 @@ namespace pareto {
         internal_minimization_type is_minimization_;
 
         /// Max number of elements in the archive
-        size_t max_size_;
+        size_t max_size_{1000};
 
         /// Allocator the pareto fronts will share
         std::shared_ptr<node_allocator_type> alloc_;

@@ -25,7 +25,7 @@ namespace pareto {
     /// \class This is a memory pool we can use for contiguous containers
     /// Although this version of the memory pool works for contiguous containers
     /// the standard new/delete operators are probably going to work better than this
-    template <typename T, size_t INITIAL_BLOCK_SIZE = 512 * sizeof(T)>
+    template <typename T>
     using contiguous_memory_pool = interleaved_memory_pool<T, true>;
 }
 

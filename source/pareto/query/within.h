@@ -23,8 +23,10 @@ namespace pareto {
         query_box_type data_;
 
     public /* constructors */:
+        /// \brief Construct predicate from query box
         explicit within(const query_box_type &data) : data_(data) {}
 
+        /// \brief Construct predicate from query box corners
         within(const point_type &min_corner, const point_type &max_corner) : data_(query_box_type(min_corner,max_corner)) {}
 
     public:

@@ -695,7 +695,7 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
     pf.def("uniformity", &pareto_front_type::uniformity);
     pf.def("average_distance", &pareto_front_type::average_distance);
     pf.def("average_nearest_distance", &pareto_front_type::average_nearest_distance);
-    pf.def("crowding_distance",  py::overload_cast<const point_type&>(&pareto_front_type::crowding_distance));
+    pf.def("crowding_distance", py::overload_cast<const point_type&>(&pareto_front_type::crowding_distance, py::const_));
     pf.def("average_crowding_distance", &pareto_front_type::average_crowding_distance);
 
     pf.def("direct_conflict", &pareto_front_type::direct_conflict);

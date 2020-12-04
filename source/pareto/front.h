@@ -32,19 +32,25 @@
 #include <pareto/tree/r_star_tree.h>
 
 namespace pareto {
-    struct vector_tree_tag {};
-    struct quad_tree_tag {};
-    struct kd_tree_tag {};
-    struct boost_tree_tag {};
-    struct r_tree_tag {};
-    struct r_star_tree_tag {};
+    struct vector_tree_tag {
+    };
+    struct quad_tree_tag {
+    };
+    struct kd_tree_tag {
+    };
+    struct boost_tree_tag {
+    };
+    struct r_tree_tag {
+    };
+    struct r_star_tree_tag {
+    };
 
 #ifdef BUILD_BOOST_TREE
     template <class nt, size_t ncd, class mt>
   using default_type_for_boost_tree_tag = boost_tree<nt,ncd,mt>;
 #else
-    template <class nt, size_t ncd, class mt>
-    using default_type_for_boost_tree_tag = r_tree<nt,ncd,mt>;
+    template<class nt, size_t ncd, class mt>
+    using default_type_for_boost_tree_tag = r_tree<nt, ncd, mt>;
 #endif
 
     constexpr bool minimization = true;
@@ -53,14 +59,32 @@ namespace pareto {
     constexpr bool max = false;
 
     template <size_t NUMBER_OF_DIMENSIONS>
-    using default_tag = std::conditional<NUMBER_OF_DIMENSIONS == 1, vector_tree_tag, kd_tree_tag>;
+    struct default_tag_value {
+        using value = kd_tree_tag;
+    };
+
+    template <>
+    struct default_tag_value<1> {
+        using value = vector_tree_tag;
+    };
+
+    template<size_t NUMBER_OF_DIMENSIONS>
+    using default_tag = typename default_tag_value<NUMBER_OF_DIMENSIONS>::value;
 
     template<typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename TAG>
     class archive;
 
+
+    /// \class Pareto Front
+    /// The fronts have their dimension set at compile time
+    /// If we set the dimension to 0, then it's defined at runtime
+    /// Defining at runtime is only useful for the python bindings
+    /// When dimensions are set a runtime, we find out about the dimension
+    /// when we insert the first element in the front. At this point,
+    /// the front dimension is set and we cannot change it.
     template<typename NUMBER_TYPE = double, size_t NUMBER_OF_DIMENSIONS = 2, typename ELEMENT_TYPE = unsigned, typename TAG = default_tag<NUMBER_OF_DIMENSIONS>>
     class front {
-      public:
+    public:
         friend archive<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, TAG>;
         using self_type =
         front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, TAG>;
@@ -78,34 +102,34 @@ namespace pareto {
         using pointer = value_type *;
         using const_pointer = value_type const *;
         using size_type = size_t;
+        using predicate_list_type = predicate_list<number_type, number_of_compile_dimensions, mapped_type>;
 
         using internal_type =
         std::conditional_t<
-            std::is_same_v<TAG, vector_tree_tag>,
-            vector_tree<number_type, number_of_compile_dimensions, mapped_type>,
-            std::conditional_t<
-                std::is_same_v<TAG, quad_tree_tag>,
-                quad_tree<number_type, number_of_compile_dimensions, mapped_type>,
+                std::is_same_v<TAG, vector_tree_tag>,
+                vector_tree<number_type, number_of_compile_dimensions, mapped_type>,
                 std::conditional_t<
-                    std::is_same_v<TAG, kd_tree_tag>,
-                    kd_tree<number_type, number_of_compile_dimensions, mapped_type>,
-                    std::conditional_t<
-                        std::is_same_v<TAG, boost_tree_tag>,
-                        std::conditional_t<number_of_compile_dimensions == 0,
-                            r_tree<number_type, number_of_compile_dimensions, mapped_type>,
-                            default_type_for_boost_tree_tag<number_type, number_of_compile_dimensions, mapped_type>
-                        >,
+                        std::is_same_v<TAG, quad_tree_tag>,
+                        quad_tree<number_type, number_of_compile_dimensions, mapped_type>,
                         std::conditional_t<
-                            std::is_same_v<TAG, r_tree_tag>,
-                            r_tree<number_type, number_of_compile_dimensions, mapped_type>,
-                            // r*-tree is the only option left
-                            r_star_tree<number_type, number_of_compile_dimensions, mapped_type>
+                                std::is_same_v<TAG, kd_tree_tag>,
+                                kd_tree<number_type, number_of_compile_dimensions, mapped_type>,
+                                std::conditional_t<
+                                        std::is_same_v<TAG, boost_tree_tag>,
+                                        std::conditional_t<number_of_compile_dimensions == 0,
+                                                r_tree<number_type, number_of_compile_dimensions, mapped_type>,
+                                                default_type_for_boost_tree_tag<number_type, number_of_compile_dimensions, mapped_type>
+                                        >,
+                                        std::conditional_t<
+                                                std::is_same_v<TAG, r_tree_tag>,
+                                                r_tree<number_type, number_of_compile_dimensions, mapped_type>,
+                                                // r*-tree is the only option left
+                                                r_star_tree<number_type, number_of_compile_dimensions, mapped_type>
+                                        >
+                                >
                         >
-                    >
                 >
-            >
         >;
-
 
         /// Is the internal type using the fast allocator
         constexpr static bool is_using_default_fast_allocator() {
@@ -115,71 +139,129 @@ namespace pareto {
         using node_allocator_type = typename internal_type::node_allocator_type;
 
         using iterator = typename internal_type::iterator;
-
         using const_iterator = typename internal_type::const_iterator;
 
         using internal_minimization_type = std::conditional_t<number_of_compile_dimensions == 0,
-            std::vector<uint8_t>, std::array<uint8_t, number_of_compile_dimensions>>;
+                std::vector<uint8_t>, std::array<uint8_t, number_of_compile_dimensions>>;
 
         using difference_type = typename internal_type::difference_type;
 
-      public /* constructors */:
-        /// \brief Create an empty pareto set / minimization
-        front()
-            : front(true) {}
+    public /* constructors */:
+        /// \brief Create a pareto set from value range and is_minimization range
+        /// This is the constructor all other constructors use as reference
+        /// They are all just shortcuts to this constructor
+        /// \tparam ValueIterator Iterator to values (pair of point<number> and element)
+        /// \tparam IsMinimizationIterator Iterator to minimization directions (bool, or uint8_t)
+        /// \param value_begin Iterator to first pareto front candidate
+        /// \param value_end Iterator to last + 1 pareto front candidate
+        /// \param is_minimization_begin Iterator to first minimization direction
+        /// \param is_minimization_end Iterator to last + 1 minimization direction
+        template<class ValueIterator, class IsMinimizationIterator>
+        front(ValueIterator value_begin,
+              ValueIterator value_end,
+              IsMinimizationIterator is_minimization_begin,
+              IsMinimizationIterator is_minimization_end)
+                : data_(value_begin, value_end) {
+            long pareto_dimension = std::distance(is_minimization_begin, is_minimization_end);
+            if constexpr (number_of_compile_dimensions != 0) {
+                if (pareto_dimension != number_of_compile_dimensions) {
+                    throw std::invalid_argument(
+                            "The size specified at compile time does not match the number of minimization directions");
+                }
+            }
+            maybe_resize(is_minimization_, pareto_dimension);
+            std::copy(is_minimization_begin, is_minimization_end, is_minimization_.begin());
+            clear_dominated();
+        }
 
-        /// \brief Create an empty pareto set and determine whether it is minimization
+        /// \brief Create a pareto set from value list and is_minimization range
+        /// Same as default, with initializer list instead of iterators for values
+        template<class IsMinimizationIterator>
+        front(std::initializer_list<value_type> values,
+              IsMinimizationIterator is_minimization_begin,
+              IsMinimizationIterator is_minimization_end)
+                : front(values.begin(), values.end(), is_minimization_begin, is_minimization_end) {}
+
+        /// \brief Create a pareto set from value range and is_minimization list
+        /// Same as default, with initializer list instead of iterators for values
+        template<class ValueIterator>
+        front(ValueIterator value_begin,
+              ValueIterator value_end,
+              std::initializer_list<bool> is_minimization)
+                : front(value_begin, value_end, is_minimization.begin(), is_minimization.end()) {}
+
+        /// \brief Create a pareto set from a list of value pairs and determine whether it is minimization
+        template<class InputIterator>
+        front(InputIterator first, InputIterator last, bool is_minimization)
+                : front(first, last,
+                        std::vector<uint8_t>(std::max(number_of_compile_dimensions, size_t(1)), is_minimization)) {}
+
+        /// \brief Create a pareto set from a list of value pairs
+        /// Each pair has a point and a value
+        front(std::initializer_list<value_type> il)
+                : front(il.begin(), il.end(), {}) {}
+
+        /// \brief Create a pareto set from a list of value pairs and determine whether dimensions are minimization
+        front(std::initializer_list<value_type> il, bool is_minimization)
+                : front(il.begin(), il.end(), is_minimization) {}
+
+        /// \brief Create a pareto set from a list of value pairs and determine whether each dimension is minimization
+        front(std::initializer_list<value_type> il, const std::vector<uint8_t> &is_minimization)
+                : front(il.begin(), il.end(), is_minimization.begin(), is_minimization.end()) {}
+
+        /// \brief Create a pareto set from a list of value pairs and determine whether each dimension is minimization
+        front(std::initializer_list<value_type> il, std::initializer_list<bool> is_minimization)
+                : front(il.begin(), il.end(), is_minimization.begin(), is_minimization.end()) {}
+
+        /// \brief Create a pareto set from a list of value pairs
+        explicit front(const std::vector<value_type> &v)
+                : front(v.begin(), v.end(), {}) {}
+
+        /// \brief Create a pareto set from a list of value pairs and determine whether dimensions are minimization
+        front(const std::vector<value_type> &v, bool is_minimization)
+                : front(v.begin(), v.end(), is_minimization) {}
+
+        /// \brief Create a pareto set from a list of value pairs and determine whether each dimension is minimization
+        front(const std::vector<value_type> &v, const std::vector<uint8_t> &is_minimization)
+                : front(v.begin(), v.end(), is_minimization) {}
+
+        /// \brief Create a pareto set from a list of value pairs and determine whether each dimension is minimization
+        front(const std::vector<value_type> &v, std::initializer_list<bool> is_minimization)
+                : front(v.begin(), v.end(), init_list_to_vector(is_minimization)) {}
+
+        /// \brief Create a pareto set from a list of value pairs
+        template<class InputIterator>
+        front(InputIterator first, InputIterator last)
+                : front(first, last, true) {}
+
+        /// \brief Create a pareto set from a list of value pairs and determine whether each dimension is minimization
+        template<class InputIterator>
+        front(InputIterator first, InputIterator last, std::vector<uint8_t> is_minimization)
+                : front(first, last, is_minimization.begin(), is_minimization.end()) {}
+
+        /// \brief Create an empty pareto set and determine whether each dimension is minimization
+        explicit front(const std::vector<uint8_t> &is_minimization) :
+                front({}, is_minimization.begin(), is_minimization.end()) {}
+
+        /// \brief Create an empty pareto set and determine whether each dimension is minimization
+        /// Convert the initializer list and use the constructor above
+        front(std::initializer_list<bool> is_minimization)
+                : front({}, is_minimization.begin(), is_minimization.end()) {}
+
+        /// \brief Create an empty pareto set and determine whether each dimension is minimization
+        explicit front(const std::array<uint8_t, number_of_compile_dimensions> &is_minimization)
+                : front({}, is_minimization.begin(), is_minimization.end()) {}
+
+        /// \brief Create an empty pareto set and determine whether it is minimization (all objectives)
         /// Create an array indicating minimization/maximization for each dimension
-        /// or, if number_of_compile_dimensions == 0, create a vector of size 1 with direction
+        /// or, if number_of_compile_dimensions == 0, create a vector of size 1 with this direction
+        /// The minimization_ array gets expanded when we find out about the dimension
         explicit front(bool is_minimization)
-            : front(std::vector<uint8_t>(std::max(number_of_compile_dimensions,size_t(1)), is_minimization)) {}
+                : front(std::vector<uint8_t>(std::max(number_of_compile_dimensions, size_t(1)), is_minimization)) {}
 
-        /// \brief Create an empty pareto set and determine whether each dimension is minimization
-        explicit front(std::initializer_list<bool> is_minimization) {
-            if constexpr (number_of_compile_dimensions > 0) {
-                if (number_of_compile_dimensions != is_minimization_.size()) {
-                    throw std::invalid_argument("Number of minimization directions should match the dimension defined for the object");
-                }
-            }
-            maybe_resize(is_minimization_, is_minimization.size());
-            std::copy(is_minimization.begin(), is_minimization.end(), is_minimization_.begin());
-        }
-
-        /// \brief Create an empty pareto set and determine whether each dimension is minimization
-        explicit front(const std::vector<uint8_t>& is_minimization) {
-            if constexpr (number_of_compile_dimensions > 0) {
-                if (number_of_compile_dimensions != is_minimization_.size()) {
-                    throw std::invalid_argument("Number of minimization directions should match the dimension");
-                }
-            }
-            maybe_resize(is_minimization_, is_minimization.size());
-            std::copy(is_minimization.begin(), is_minimization.end(), is_minimization_.begin());
-        }
-
-        /// \brief Create an empty pareto set and determine whether each dimension is minimization
-        explicit front(const std::array<uint8_t, number_of_compile_dimensions>& is_minimization) {
-            if constexpr (number_of_compile_dimensions > 0) {
-                if (number_of_compile_dimensions != is_minimization_.size()) {
-                    throw std::invalid_argument("Number of minimization directions should match the dimension");
-                }
-            }
-            maybe_resize(is_minimization_, is_minimization.size());
-            std::copy(is_minimization.begin(), is_minimization.end(), is_minimization_.begin());
-        }
-
-        /// \brief Private constructor using an external allocator
-        /// Only archives should use this constructor to avoid one allocator
-        /// per front because our fast allocator is not stateless.
-        front(const internal_minimization_type& is_minimization, std::shared_ptr<node_allocator_type>& external_allocator)
-            : data_(external_allocator) {
-            if constexpr (number_of_compile_dimensions > 0) {
-                if (number_of_compile_dimensions != is_minimization_.size()) {
-                    throw std::invalid_argument("Number of minimization directions should match the dimension");
-                }
-            }
-            maybe_resize(is_minimization_, is_minimization.size());
-            std::copy(is_minimization.begin(), is_minimization.end(), is_minimization_.begin());
-        }
+        /// \brief Create an empty pareto set / minimization
+        /// Call constructor that takes direction to be minimization
+        front() : front(true) {}
 
         /// \brief Copy constructor
         front(const front &m) {
@@ -187,8 +269,8 @@ namespace pareto {
             is_minimization_ = m.is_minimization_;
         }
 
-        /// \brief Assignment
-        front & operator=(const front &rhs) {
+        /// \brief Copy assignment
+        front &operator=(const front &rhs) {
             data_ = rhs.data_;
             is_minimization_ = rhs.is_minimization_;
             return *this;
@@ -201,72 +283,35 @@ namespace pareto {
         }
 
         /// \brief Move assignment
-        front & operator=(front &&rhs) {
+        front &operator=(front &&rhs) noexcept {
             data_ = std::move(rhs.data_);
             is_minimization_ = std::move(rhs.is_minimization_);
             return *this;
         }
 
-        /// \brief Create a pareto set from a list of value pairs
-        /// Each pair has a point and a value
-        explicit front(std::initializer_list<value_type> il)
-            : front(il.begin(), il.end()) {}
-
-        /// \brief Create a pareto set from a list of value pairs and determine whether dimensions are minimization
-        front(std::initializer_list<value_type> il, bool is_minimization)
-            : front(il.begin(), il.end(), is_minimization) {}
-
-        /// \brief Create a pareto set from a list of value pairs and determine whether each dimension is minimization
-        front(std::initializer_list<value_type> il, std::vector<uint8_t> is_minimization)
-            : front(il.begin(), il.end(), is_minimization) {}
-
-        /// \brief Create a pareto set from a list of value pairs and determine whether each dimension is minimization
-        front(std::initializer_list<value_type> il, std::initializer_list<bool> is_minimization)
-            : front(il.begin(), il.end(), init_list_to_vector(is_minimization)) {}
-
-        /// \brief Create a pareto set from a list of value pairs
-        front(const std::vector<value_type>& v)
-            : front(v.begin(), v.end()) {}
-
-        /// \brief Create a pareto set from a list of value pairs and determine whether dimensions are minimization
-        front(const std::vector<value_type>& v, bool is_minimization)
-            : front(v.begin(), v.end(), is_minimization) {}
-
-        /// \brief Create a pareto set from a list of value pairs and determine whether each dimension is minimization
-        front(const std::vector<value_type>& v, std::vector<uint8_t> is_minimization)
-            : front(v.begin(), v.end(), is_minimization) {}
-
-        /// \brief Create a pareto set from a list of value pairs and determine whether each dimension is minimization
-        front(const std::vector<value_type>& v, std::initializer_list<bool> is_minimization)
-            : front(v.begin(), v.end(), init_list_to_vector(is_minimization)) {}
-
-        /// \brief Create a pareto set from a list of value pairs
-        template<class InputIterator>
-        front(InputIterator first, InputIterator last)
-            : front(first, last, true) {}
-
-        /// \brief Create a pareto set from a list of value pairs and determine whether it is minimization
-        template<class InputIterator>
-        front(InputIterator first, InputIterator last, bool is_minimization)
-            : front(first, last, std::vector<uint8_t>(std::max(number_of_compile_dimensions,size_t(1)),is_minimization)) {}
-
-        /// \brief Create a pareto set from a list of value pairs and determine whether each dimension is minimization
-        template<class InputIterator>
-        front(InputIterator first, InputIterator last, std::vector<uint8_t> is_minimization)
-            : data_(first, last) {
-            if constexpr (number_of_compile_dimensions != 0) {
-                if (is_minimization.size() != number_of_compile_dimensions) {
-                    throw std::invalid_argument("The size specified at compile time does not match the number of minimization directions");
+        /// \brief Private special constructor using an external allocator
+        /// Only archives should use this constructor to avoid one allocator
+        /// per front because our fast allocator is not stateless.
+        front(const internal_minimization_type &is_minimization,
+              std::shared_ptr<node_allocator_type> &external_allocator)
+                : data_(external_allocator) {
+            if constexpr (number_of_compile_dimensions > 0) {
+                if (number_of_compile_dimensions != is_minimization_.size()) {
+                    throw std::invalid_argument("Number of minimization directions should match the dimension");
                 }
             }
             maybe_resize(is_minimization_, is_minimization.size());
             std::copy(is_minimization.begin(), is_minimization.end(), is_minimization_.begin());
-            clear_dominated();
         }
 
-      public /* iterators */:
+    public /* iterators */:
+
         const_iterator begin() const noexcept {
             return data_.begin();
+        }
+
+        const_iterator begin(const predicate_list_type& ps) const noexcept {
+            return data_.begin(ps);
         }
 
         const_iterator end() const noexcept {
@@ -275,6 +320,10 @@ namespace pareto {
 
         iterator begin() noexcept {
             return data_.begin();
+        }
+
+        iterator begin(const predicate_list_type& ps) noexcept {
+            return data_.begin(ps);
         }
 
         iterator end() noexcept {
@@ -297,16 +346,16 @@ namespace pareto {
             return std::reverse_iterator(data_.begin());
         }
 
-      public /* capacity */:
-        bool empty() const noexcept {
+    public /* capacity */:
+        [[nodiscard]] bool empty() const noexcept {
             return data_.empty();
         }
 
-        size_type size() const noexcept {
+        [[nodiscard]] size_type size() const noexcept {
             return data_.size();
         }
 
-        size_type dimensions() const noexcept {
+        [[nodiscard]] size_type dimensions() const noexcept {
             if constexpr (number_of_compile_dimensions > 0) {
                 // compile time
                 return number_of_compile_dimensions;
@@ -337,15 +386,17 @@ namespace pareto {
             maybe_adjust_dimensions(m);
         }
 
-        size_type is_minimization() const noexcept {
-            return std::all_of(is_minimization_.begin(), is_minimization_.end(), [](auto i){return i == uint8_t(1);});
+        [[nodiscard]] size_type is_minimization() const noexcept {
+            return std::all_of(is_minimization_.begin(), is_minimization_.end(),
+                               [](auto i) { return i == uint8_t(1); });
         }
 
-        size_type is_maximization() const noexcept {
-            return std::all_of(is_minimization_.begin(), is_minimization_.end(), [](auto i){return i == uint8_t(0);});
+        [[nodiscard]] size_type is_maximization() const noexcept {
+            return std::all_of(is_minimization_.begin(), is_minimization_.end(),
+                               [](auto i) { return i == uint8_t(0); });
         }
 
-        size_type is_minimization(size_t dimension) const noexcept {
+        [[nodiscard]] size_type is_minimization(size_t dimension) const noexcept {
             if constexpr (number_of_compile_dimensions > 0) {
                 return is_minimization_[dimension] > 0;
             } else {
@@ -357,7 +408,7 @@ namespace pareto {
             }
         }
 
-        size_type is_maximization(size_t dimension) const noexcept {
+        [[nodiscard]] size_type is_maximization(size_t dimension) const noexcept {
             if constexpr (number_of_compile_dimensions > 0) {
                 return is_minimization_[dimension] == 0;
             } else {
@@ -369,8 +420,8 @@ namespace pareto {
             }
         }
 
-      public /* element access */:
-        mapped_type& operator[](const key_type& k) {
+    public /* element access */:
+        mapped_type &operator[](const key_type &k) {
             auto it = find(k);
             if (it != end()) {
                 // return reference to mapped type in the tree
@@ -378,7 +429,7 @@ namespace pareto {
             } else {
                 // include element in the tree with a default
                 // mapped type
-                auto [it2, ok] = insert(std::make_pair(k, mapped_type()));
+                auto[it2, ok] = insert(std::make_pair(k, mapped_type()));
                 if (ok) {
                     // return reference to mapped type in the tree
                     return it2->second;
@@ -394,7 +445,7 @@ namespace pareto {
             }
         }
 
-        mapped_type& operator[](key_type&& k) {
+        mapped_type &operator[](key_type &&k) {
             auto it = find(k);
             if (it != end()) {
                 // return reference to mapped type in the tree
@@ -402,7 +453,7 @@ namespace pareto {
             } else {
                 // include element in the tree with a default
                 // mapped type
-                auto [it2, ok] = insert(std::make_pair(std::move(k), mapped_type()));
+                auto[it2, ok] = insert(std::make_pair(std::move(k), mapped_type()));
                 if (ok) {
                     // return reference to mapped type in the tree
                     return it2->second;
@@ -427,7 +478,7 @@ namespace pareto {
             return operator[](p);
         }
 
-        mapped_type& at(const key_type& k){
+        mapped_type &at(const key_type &k) {
             auto it = find(k);
             if (it != end()) {
                 return it->second;
@@ -436,7 +487,7 @@ namespace pareto {
             }
         }
 
-        const mapped_type& at(const key_type& k) const {
+        const mapped_type &at(const key_type &k) const {
             auto it = find(k);
             if (it != end()) {
                 return it->second;
@@ -445,21 +496,25 @@ namespace pareto {
             }
         }
 
-      public /* relational operators */:
+    public /* relational operators */:
         bool operator==(const front &rhs) const {
             return is_minimization_ == rhs.is_minimization_ &&
-                   std::equal(data_.begin(), data_.end(), rhs.data_.begin(), rhs.data_.end(), [](const auto& a, const auto& b) {
-                     return a.first == b.first && mapped_type_custom_equality_operator(a.second,b.second);
-                   });
+                   std::equal(data_.begin(), data_.end(), rhs.data_.begin(), rhs.data_.end(),
+                              [](const auto &a, const auto &b) {
+                                  return a.first == b.first && mapped_type_custom_equality_operator(a.second, b.second);
+                              });
         }
 
         bool operator!=(const front &rhs) const {
-            return is_minimization_ != rhs.is_minimization_ || !std::equal(data_.begin(), data_.end(), rhs.data_.begin(), rhs.data_.end(), [](const auto& a, const auto& b) {
-              return a.first == b.first && mapped_type_custom_equality_operator(a.second,b.second);
-            });;
+            return is_minimization_ != rhs.is_minimization_ ||
+                   !std::equal(data_.begin(), data_.end(), rhs.data_.begin(), rhs.data_.end(),
+                               [](const auto &a, const auto &b) {
+                                   return a.first == b.first &&
+                                          mapped_type_custom_equality_operator(a.second, b.second);
+                               });
         }
 
-      public /* modifiers */:
+    public /* modifiers */:
         /// Emplace becomes insert becomes the rtree does not have
         /// an emplace function
         template<class... Args>
@@ -561,6 +616,21 @@ namespace pareto {
             return data_.erase(first, last);
         }
 
+        /// Remove range of iterators from the front
+        size_t erase(iterator first, iterator last) {
+            return data_.erase(first, last);
+        }
+
+        /// Remove range of iterators from the front
+        size_t erase(const_iterator first, iterator last) {
+            return data_.erase(first, const_iterator(last));
+        }
+
+        /// Remove range of iterators from the front
+        size_t erase(iterator first, const_iterator last) {
+            return data_.erase(const_iterator(first), last);
+        }
+
         /// Clear the front
         void clear() noexcept {
             data_.clear();
@@ -583,64 +653,65 @@ namespace pareto {
             m.is_minimization_.swap(is_minimization_);
         }
 
-      public /* pareto operations */:
+    public /* pareto operations */:
         /// Find points in a box
-        const_iterator find_intersection(const point_type& min_corner, const point_type& max_corner) const {
+        const_iterator find_intersection(const point_type &min_corner, const point_type &max_corner) const {
             return data_.begin_intersection(min_corner, max_corner);
         }
 
         /// Get points in a box
-        std::vector<value_type> get_intersection(const point_type& min_corner, const point_type& max_corner) const {
+        std::vector<value_type> get_intersection(const point_type &min_corner, const point_type &max_corner) const {
             std::vector<value_type> v;
             std::copy(find_intersection(min_corner, max_corner), end(), back_inserter(v));
             return v;
         }
 
         /// Find points within a box (intersection minus borders)
-        const_iterator find_within(const point_type& min_corner, const point_type& max_corner) const {
+        const_iterator find_within(const point_type &min_corner, const point_type &max_corner) const {
             return data_.begin_within(min_corner, max_corner);
         }
 
         /// Get points within a box
-        std::vector<value_type> get_within(const point_type& min_corner, const point_type& max_corner) const {
+        std::vector<value_type> get_within(const point_type &min_corner, const point_type &max_corner) const {
             std::vector<value_type> v;
             std::copy(find_within(min_corner, max_corner), end(), back_inserter(v));
             return v;
         }
 
         /// Find points disjointed of a box (intersection - borders)
-        const_iterator find_disjoint(const point_type& min_corner, const point_type& max_corner) const {
+        const_iterator find_disjoint(const point_type &min_corner, const point_type &max_corner) const {
             return data_.begin_disjoint(min_corner, max_corner);
         }
 
         /// Get points disjointed of a box
-        std::vector<value_type> get_disjoint(const point_type& min_corner, const point_type& max_corner) const {
+        std::vector<value_type> get_disjoint(const point_type &min_corner, const point_type &max_corner) const {
             std::vector<value_type> v;
             std::copy(find_disjoint(min_corner, max_corner), end(), back_inserter(v));
             return v;
         }
 
         /// Find nearest point
-        const_iterator find_nearest(const point_type& p) const {
+        const_iterator find_nearest(const point_type &p) const {
             return data_.begin_nearest(p);
         }
 
         /// Get nearest point
-        std::vector<value_type> get_nearest(const point_type& p) const {
+        std::vector<value_type> get_nearest(const point_type &p) const {
             std::vector<value_type> v;
             std::copy(find_nearest(p), end(), back_inserter(v));
             return v;
         }
 
         /// Find nearest point excluding itself
-        const_iterator find_nearest_exclusive(const point_type& p) const {
+        const_iterator find_nearest_exclusive(const point_type &p) const {
             auto itself = find_nearest(p);
             if (itself->first != p) {
                 return itself;
             }
             for (size_t i = 1; i <= size(); ++i) {
-                for (auto it = find_nearest(p,i); it != end(); ++it) {
-                    if (itself->first != it->first || !mapped_type_custom_equality_operator(itself->second,it->second)) {
+                for (auto it = find_nearest(p, i); it != end(); ++it) {
+                    if (itself->first != it->first ||
+                        !mapped_type_custom_equality_operator(itself->second, it->second)) {
                         return it;
                     }
                 }
@@ -649,14 +720,14 @@ namespace pareto {
         }
 
         /// Get nearest point excluding itself
-        std::vector<value_type> get_nearest_exclusive(const point_type& p) const {
+        std::vector<value_type> get_nearest_exclusive(const point_type &p) const {
             std::vector<value_type> v;
             std::copy(find_nearest(p), end(), back_inserter(v));
             return v;
         }
 
         /// Find k nearest points
-        const_iterator find_nearest(const point_type& p, size_t k) const {
+        const_iterator find_nearest(const point_type &p, size_t k) const {
             return data_.begin_nearest(p, k);
         }
 
@@ -665,19 +736,19 @@ namespace pareto {
         }
 
         /// Get k nearest points
-        std::vector<value_type> get_nearest(const point_type& p, size_t k) const {
+        std::vector<value_type> get_nearest(const point_type &p, size_t k) const {
             std::vector<value_type> v;
             std::copy(find_nearest(p, k), end(), back_inserter(v));
             return v;
         }
 
         /// Find k nearest points
-        const_iterator find_nearest(const box_type& b, size_t k) const {
+        const_iterator find_nearest(const box_type &b, size_t k) const {
             return data_.begin_nearest(b, k);
         }
 
         /// Get k nearest points
-        std::vector<value_type> get_nearest(const box_type& b, size_t k) const {
+        std::vector<value_type> get_nearest(const box_type &b, size_t k) const {
             std::vector<value_type> v;
             std::copy(find_nearest(b, k), end(), back_inserter(v));
             return v;
@@ -689,7 +760,7 @@ namespace pareto {
         /// \param reference_point Reference for the hyper-volume
         /// \param sample_size Number of samples for the simulation
         /// \return Hypervolume of the pareto front
-        number_type hypervolume(const point_type& reference_point, size_t sample_size) const {
+        number_type hypervolume(const point_type &reference_point, size_t sample_size) const {
             double hv_upper_limit = 1;
             auto m = ideal();
             for (size_t i = 0; i < m.dimensions(); ++i) {
@@ -712,7 +783,7 @@ namespace pareto {
                 }
             }
 
-            return hv_upper_limit * hit / (hit + miss);
+            return hv_upper_limit * hit / static_cast<double>(hit + miss);
         }
 
         /// \brief Get exact hypervolume
@@ -723,7 +794,7 @@ namespace pareto {
             // reshape points
             std::vector<double> data;
             data.reserve(size() * dimensions());
-            for (const auto& [k,v]: *this) {
+            for (const auto&[k, v]: *this) {
                 point<double, point_type::compile_dimensions, typename point_type::coordinate_system_t> inv = k;
                 for (size_t i = 0; i < dimensions(); ++i) {
                     if (!is_minimization(i)) {
@@ -759,76 +830,80 @@ namespace pareto {
 
         /// Coverage indicator
         /// \see http://www.optimization-online.org/DB_FILE/2018/10/6887.pdf
-        double coverage(const front & rhs) const {
+        double coverage(const front &rhs) const {
             size_t hits = 0;
-            for (const auto& [k,v]: rhs) {
+            for (const auto&[k, v]: rhs) {
                 hits += dominates(k);
             }
-            return static_cast<double>(hits)/rhs.size();
+            return static_cast<double>(hits) / rhs.size();
         }
 
         /// Ratio of coverage indicators
-        double coverage_ratio(const front & rhs) const {
+        double coverage_ratio(const front &rhs) const {
             return coverage(rhs) / rhs.coverage(*this);
         }
 
         /// Generational distance
-        double gd(const front & reference) const {
+        double gd(const front &reference) const {
             double distances = 0.;
-            for (const auto& [k,v]: *this) {
+            for (const auto&[k, v]: *this) {
                 distances += distance(k, reference.find_nearest(k)->first);
             }
-            return distances/size();
+            return distances / size();
         }
 
         /// Standard deviation from the generational distance
         /// It measures the deformation of the Pareto set
         /// approximation according to a Pareto optimal solution set.
-        double std_gd(const front & reference) const {
+        double std_gd(const front &reference) const {
             double _gd = gd(reference);
             double std_dev = 0.;
-            for (const auto& [k,v]: *this) {
+            for (const auto&[k, v]: *this) {
                 double dist = distance(k, reference.find_nearest(k)->first);
                 std_dev += pow(dist - _gd, 2.);
             }
-            return sqrt(std_dev)/size();
+            return sqrt(std_dev) / size();
         }
 
         /// Inverted generational distance
-        double igd(const front & reference) const {
+        double igd(const front &reference) const {
             return reference.gd(*this);
         }
 
         /// Standard deviation from the inverted generational distance
-        double std_igd(const front & reference) const {
+        double std_igd(const front &reference) const {
             return reference.std_gd(*this);
         }
 
-        double hausdorff(const front & reference) const {
+        double hausdorff(const front &reference) const {
             return std::max(gd(reference), igd(reference));
         }
 
-        double igd_plus(const front & reference_front) const {
+        double igd_plus(const front &reference_front) const {
             double distances = 0.;
             // for each element in the reference front
-            for (const auto& item: reference_front) {
-                auto min_it = std::min_element(begin(), end(), [&](const auto& a, const auto &b) {
-                  return a.first.distance_to_dominated_box(item.first, is_minimization_) < b.first.distance_to_dominated_box(item.first, is_minimization_); });
+            for (const auto &item: reference_front) {
+                auto min_it = std::min_element(begin(), end(), [&](const auto &a, const auto &b) {
+                    return a.first.distance_to_dominated_box(item.first, is_minimization_) <
+                           b.first.distance_to_dominated_box(item.first, is_minimization_);
+                });
                 distances += min_it->first.distance_to_dominated_box(item.first, is_minimization_);
             }
-            return distances/reference_front.size();
+            return distances / reference_front.size();
         }
 
-        double std_igd_plus(const front & reference_front) const {
+        double std_igd_plus(const front &reference_front) const {
             double _igd_plus = igd_plus(reference_front);
             double std_dev = 0.;
-            for (const auto& item: reference_front) {
-                auto min_it = std::min_element(begin(), end(), [&](const auto& a, const auto &b) {
-                  return a.first.distance_to_dominated_box(item.first, is_minimization_) < b.first.distance_to_dominated_box(item.first, is_minimization_); });
+            for (const auto &item: reference_front) {
+                auto min_it = std::min_element(begin(), end(), [&](const auto &a, const auto &b) {
+                    return a.first.distance_to_dominated_box(item.first, is_minimization_) <
+                           b.first.distance_to_dominated_box(item.first, is_minimization_);
+                });
                 auto distance = min_it->first.distance_to_dominated_box(item.first, is_minimization_);
                 std_dev += pow(distance - _igd_plus, 2.);
             }
-            return sqrt(std_dev)/size();
+            return sqrt(std_dev) / size();
         }
 
         /// Uniformity metric
@@ -837,45 +912,45 @@ namespace pareto {
         /// to understand. However, it does not really provide pertinent
         /// information on the repartition of the points along the Pareto
         /// front approximation.
-        double uniformity() {
+        [[nodiscard]] double uniformity() const {
             if (size() < 2) {
                 return std::numeric_limits<double>::infinity();
             }
             auto ita = begin();
             auto itb = find_nearest_exclusive(ita->first);
-            double min_distance = distance(ita->first,itb->first);
+            double min_distance = distance(ita->first, itb->first);
             for (; ita != end(); ++ita) {
                 itb = find_nearest_exclusive(ita->first);
-                min_distance = std::min(min_distance, distance(ita->first,itb->first));
+                min_distance = std::min(min_distance, distance(ita->first, itb->first));
             }
             return min_distance;
         }
 
-        double average_distance() {
+        [[nodiscard]] double average_distance() const {
             double sum = 0.0;
             for (auto ita = begin(); ita != end(); ++ita) {
                 auto itb = ita;
                 itb++;
                 for (; itb != end(); ++itb) {
-                    sum += distance(ita->first,itb->first);
+                    sum += distance(ita->first, itb->first);
                 }
             }
-            return sum / (((size()-1) * (size())) / 2);
+            return sum / (((size() - 1) * (size())) / 2);
         }
 
-        double average_nearest_distance(size_t k = 5) {
+        [[nodiscard]] double average_nearest_distance(size_t k = 5) const {
             double sum = 0.0;
             for (auto ita = begin(); ita != end(); ++ita) {
                 double nearest_avg = 0.0;
-                for (auto itb = find_nearest(ita->first, k+1); itb != end(); ++itb) {
-                    nearest_avg += distance(ita->first,itb->first);
+                for (auto itb = find_nearest(ita->first, k + 1); itb != end(); ++itb) {
+                    nearest_avg += distance(ita->first, itb->first);
                 }
                 sum += nearest_avg / k;
             }
             return sum / size();
         }
 
-        double crowding_distance(const_iterator element, point_type worst_point, point_type ideal_point) {
+        double crowding_distance(const_iterator element, point_type worst_point, point_type ideal_point) const {
             double sum = 0.0;
             // for each dimension
             for (size_t i = 0; i < dimensions(); ++i) {
@@ -894,11 +969,11 @@ namespace pareto {
             return sum;
         }
 
-        double crowding_distance(const_iterator element) {
+        double crowding_distance(const_iterator element) const {
             return crowding_distance(element, worst(), ideal());
         }
 
-        double crowding_distance(const point_type& point) {
+        double crowding_distance(const point_type &point) const {
             auto element = find(point);
             if (element != end()) {
                 return crowding_distance(element, worst(), ideal());
@@ -908,7 +983,7 @@ namespace pareto {
             }
         }
 
-        double average_crowding_distance() {
+        [[nodiscard]] double average_crowding_distance() const {
             double sum = 0.0;
             const point_type worst_point = worst();
             const point_type ideal_point = ideal();
@@ -944,11 +1019,11 @@ namespace pareto {
             return c_ab;
         }
 
-        double normalized_direct_conflict(const size_t a, const size_t b) const {
+        [[nodiscard]] double normalized_direct_conflict(const size_t a, const size_t b) const {
             // max value in each term is max_a-min_a or max_b-min_b
             number_type range_a = is_minimization(a) ? worst(a) - ideal(a) : ideal(a) - worst(a);
             number_type range_b = is_minimization(b) ? worst(b) - ideal(b) : ideal(b) - worst(b);
-            return static_cast<double>(direct_conflict(a,b))/(std::max(range_a,range_b)*size());
+            return static_cast<double>(direct_conflict(a, b)) / (std::max(range_a, range_b) * size());
         }
 
         /// Maxmin conflict between objectives
@@ -961,7 +1036,7 @@ namespace pareto {
         ///  many-objective optimization." Information Sciences 298 (2015): 288-314.
         /// Page 299
         /// Table 2
-        double maxmin_conflict(const size_t a, const size_t b) const {
+        [[nodiscard]] double maxmin_conflict(const size_t a, const size_t b) const {
             number_type worst_a = worst(a);
             number_type worst_b = worst(b);
             number_type ideal_a = ideal(a);
@@ -970,15 +1045,17 @@ namespace pareto {
             number_type range_b = is_minimization(b) ? worst_b - ideal_b : ideal_b - worst_b;
             double c_ab = 0;
             for (const auto &[x_i, value]: *this) {
-                const number_type x_line_ia = static_cast<double>(is_minimization(a) ? x_i[a] - ideal_a : ideal_a - x_i[a])/range_a;
-                const number_type x_line_ib = static_cast<double>(is_minimization(b) ? x_i[b] - ideal_b : ideal_b - x_i[b])/range_b;
-                c_ab += std::max(x_line_ia,x_line_ib) - std::min(x_line_ia,x_line_ib);
+                const number_type x_line_ia =
+                        static_cast<double>(is_minimization(a) ? x_i[a] - ideal_a : ideal_a - x_i[a]) / range_a;
+                const number_type x_line_ib =
+                        static_cast<double>(is_minimization(b) ? x_i[b] - ideal_b : ideal_b - x_i[b]) / range_b;
+                c_ab += std::max(x_line_ia, x_line_ib) - std::min(x_line_ia, x_line_ib);
             }
             return c_ab;
         }
 
-        double normalized_maxmin_conflict(const size_t a, const size_t b) const {
-            return maxmin_conflict(a,b)/size();
+        [[nodiscard]] double normalized_maxmin_conflict(const size_t a, const size_t b) const {
+            return maxmin_conflict(a, b) / size();
         }
 
         /// Non-parametric conflict between objectives
@@ -994,13 +1071,13 @@ namespace pareto {
         ///  many-objective optimization." Information Sciences 298 (2015): 288-314.
         /// Page 299
         /// Table 2
-        double conflict(const size_t a, const size_t b) const {
+        [[nodiscard]] double conflict(const size_t a, const size_t b) const {
             // get sorted values in objectives a and b
             std::vector<number_type> x_a;
             std::vector<number_type> x_b;
             x_a.reserve(size());
             x_b.reserve(size());
-            for (const auto& [key,value]: *this) {
+            for (const auto&[key, value]: *this) {
                 x_a.emplace_back(key[a]);
                 x_b.emplace_back(key[b]);
             }
@@ -1026,36 +1103,38 @@ namespace pareto {
             for (const auto &[x_i, value]: *this) {
                 const size_t x_line_ia = rankings_a[x_i[a]];
                 const size_t x_line_ib = rankings_b[x_i[b]];
-                c_ab += std::max(x_line_ia,x_line_ib) - std::min(x_line_ia,x_line_ib);
+                c_ab += std::max(x_line_ia, x_line_ib) - std::min(x_line_ia, x_line_ib);
             }
             return static_cast<double>(c_ab);
         }
 
-        double normalized_conflict(const size_t a, const size_t b) const {
+        [[nodiscard]] double normalized_conflict(const size_t a, const size_t b) const {
             double denominator = 0.;
-            double n = static_cast<double>(size());
+            auto n = static_cast<double>(size());
             for (size_t i = 1; i <= size(); ++i) {
-                denominator += abs(2*i-n-1);
+                denominator += abs(2. * i - n - 1);
             }
-            return static_cast<double>(conflict(a,b))/denominator;
+            return static_cast<double>(conflict(a, b)) / denominator;
         }
 
         /// \brief Check if this front weakly dominates a point
         /// A front a weakly dominates a solution p if it has at least
         /// one solution that dominates p
         /// \see http://www.cs.nott.ac.uk/~pszjds/research/files/dls_emo2009_1.pdf
-        bool dominates(const point_type& p) const {
-            const_iterator it = data_.begin_intersection(ideal(), p, [&p,this](const value_type& x) {
-              return x.first.dominates(p, is_minimization_);});
+        bool dominates(const point_type &p) const {
+            const_iterator it = data_.begin_intersection(ideal(), p, [&p, this](const value_type &x) {
+                return x.first.dominates(p, is_minimization_);
+            });
             return it != end();
         }
 
         /// \brief Check if this front strongly dominates a point
         /// A front a strongly dominates a solution b if a has a solution
         /// that is strictly better than b in all objectives.
-        bool strongly_dominates(const point_type& p) const {
-            const_iterator it = data_.begin_intersection(ideal(), p, [&p,this](const value_type& x) {
-              return x.first.strongly_dominates(p, is_minimization_);});
+        bool strongly_dominates(const point_type &p) const {
+            const_iterator it = data_.begin_intersection(ideal(), p, [&p, this](const value_type &x) {
+                return x.first.strongly_dominates(p, is_minimization_);
+            });
             return it != end();
         }
 
@@ -1064,21 +1143,22 @@ namespace pareto {
         /// than b in at least one objective and is as good as b in
         /// all other objectives.
         /// \see http://www.cs.nott.ac.uk/~pszjds/research/files/dls_emo2009_1.pdf
-        bool non_dominates(const point_type& p) const {
+        bool non_dominates(const point_type &p) const {
             // Ensure pareto does not dominate p
             // Ensure p does not dominate anyone in the pareto
             return !dominates(p) && !is_partially_dominated_by(p);
         }
 
-        bool is_partially_dominated_by(const point_type& p) const {
+        bool is_partially_dominated_by(const point_type &p) const {
             // get points in the intersection between worst and p that p dominates
-            const_iterator it = data_.begin_intersection(worst(), p, [&p,this](const value_type& x) {
-              return p.dominates(x.first, is_minimization_);});
+            const_iterator it = data_.begin_intersection(worst(), p, [&p, this](const value_type &x) {
+                return p.dominates(x.first, is_minimization_);
+            });
             // if there's someone p dominates, then it's partially dominated by p
             return it != end();
         }
 
-        bool is_completely_dominated_by(const point_type& p) const {
+        bool is_completely_dominated_by(const point_type &p) const {
             // Get points outside the intersection between worst and p that p dominates.
             // These are the points p is certainly not going to dominate.
             const_iterator it = data_.begin_disjoint(worst(), p);
@@ -1091,8 +1171,9 @@ namespace pareto {
             // check inside the intersection, because we are not sure
             // p dominates all points inside this intersection
             // get points in the intersection between worst and p that p dominates
-            it = data_.begin_intersection(worst(), p, [&p,this](const value_type& x) {
-              return !p.dominates(x.first, is_minimization_);});
+            it = data_.begin_intersection(worst(), p, [&p, this](const value_type &x) {
+                return !p.dominates(x.first, is_minimization_);
+            });
             // if there's someone p dominates, then it's completely dominated by p
             return it == end();
         }
@@ -1103,12 +1184,12 @@ namespace pareto {
         /// non-dominate P2
         /// To avoid both operations, it's easy to check if P1
         /// fails to dominate any point in P2
-        bool dominates(const front & P2) const {
+        bool dominates(const front &P2) const {
             if (empty()) {
                 return false;
             }
             bool dominates_any = false;
-            for (auto& [k,v]: P2) {
+            for (auto&[k, v]: P2) {
                 if (!dominates(k)) {
                     if (find(k) != end()) {
                         return false;
@@ -1121,11 +1202,11 @@ namespace pareto {
         }
 
         /// Check if this front strongly dominates another front
-        bool strongly_dominates(const front & p) const {
+        bool strongly_dominates(const front &p) const {
             if (empty()) {
                 return false;
             }
-            for (auto& [k,v]: p) {
+            for (auto&[k, v]: p) {
                 if (!strongly_dominates(k)) {
                     return false;
                 }
@@ -1134,11 +1215,11 @@ namespace pareto {
         }
 
         /// Check if this front non-dominates another front
-        bool non_dominates(const front & p) const {
+        bool non_dominates(const front &p) const {
             if (empty()) {
                 return true;
             }
-            for (auto& [k,v]: p) {
+            for (auto&[k, v]: p) {
                 if (!non_dominates(k)) {
                     return false;
                 }
@@ -1147,11 +1228,11 @@ namespace pareto {
         }
 
         /// Check if this front is is_partially_dominated_by another front
-        bool is_partially_dominated_by(const front & p) const {
+        bool is_partially_dominated_by(const front &p) const {
             if (empty()) {
                 return true;
             }
-            for (auto& [k,v]: p) {
+            for (auto&[k, v]: p) {
                 if (is_partially_dominated_by(k)) {
                     return true;
                 }
@@ -1160,11 +1241,11 @@ namespace pareto {
         }
 
         /// Check if this front is is_partially_dominated_by another front
-        bool is_completely_dominated_by(const front & p) const {
+        bool is_completely_dominated_by(const front &p) const {
             if (empty()) {
                 return true;
             }
-            for (auto& [k,v]: *this) {
+            for (auto&[k, v]: *this) {
                 if (p.is_partially_dominated_by(k)) {
                     return false;
                 }
@@ -1224,7 +1305,7 @@ namespace pareto {
             return data_.find(k);
         }
 
-        iterator find(const key_type& k) {
+        iterator find(const key_type &k) {
             return data_.find(k);
         }
 
@@ -1439,14 +1520,14 @@ namespace pareto {
         }
 #endif
 
-      private /* functions */:
+    private /* functions */:
         /// \brief Clear solutions are dominated by p
         /// Pareto-optimal front is the set F consisting of
         /// all non-dominated solutions x in the whole
         /// search space. No solution can dominate another
         /// solution. Note that this means two solutions
         /// might have the same values though.
-        size_t clear_dominated(const point_type& p) {
+        size_t clear_dominated(const point_type &p) {
             // The modification of the rtree may invalidate the iterators
             // https://www.boost.org/doc/libs/1_60_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/boost__geometry__index__rtree/begin__.html
             // Remove doesn't take iterators pointing to values
@@ -1456,11 +1537,11 @@ namespace pareto {
             // we want to remove.
             if (!empty()) {
                 // Query
-                const_iterator it = data_.begin_intersection(p, worst(), [&p, this](const value_type& x) {
-                  return p.dominates(x.first, is_minimization_);
+                const_iterator it = data_.begin_intersection(p, worst(), [&p, this](const value_type &x) {
+                    return p.dominates(x.first, is_minimization_);
                 });
                 // erase these elements
-                return erase(it, end());
+                return erase(it, const_iterator(end()));
             }
             return 0;
         }
@@ -1487,7 +1568,7 @@ namespace pareto {
                 }
                 // Iterate removing points they dominate
                 size_t sum_removed = 0;
-                for (const auto& [k,v]: all) {
+                for (const auto&[k, v]: all) {
                     // if k hasn't been removed yet
                     if (find(k) != end()) {
                         sum_removed += clear_dominated(k);
@@ -1499,7 +1580,7 @@ namespace pareto {
         }
 
 
-        double distance(const point_type& p1, const point_type& p2) const {
+        double distance(const point_type &p1, const point_type &p2) const {
 #ifdef BUILD_BOOST_TREE
             if constexpr (number_of_compile_dimensions > 0) {
                 return boost::geometry::distance(p1, p2);
@@ -1515,7 +1596,7 @@ namespace pareto {
 #endif
         }
 
-        double distance(const point_type& p, const box_type& b) const {
+        double distance(const point_type &p, const box_type &b) const {
 #ifdef BUILD_BOOST_TREE
             if constexpr (number_of_compile_dimensions > 0) {
                 boost::geometry::model::box<point_type> boost_box(b.first(), b.second());
@@ -1534,13 +1615,13 @@ namespace pareto {
         }
 
         static std::mt19937 &generator() {
-            static std::mt19937 g(
-                static_cast<unsigned int>(static_cast<uint64_t>(std::random_device()()) | std::chrono::high_resolution_clock::now().time_since_epoch().count()));
+            static std::mt19937 g(static_cast<unsigned int>(static_cast<unsigned int>(std::random_device()()) |
+                                                            static_cast<unsigned int>(std::chrono::high_resolution_clock::now().time_since_epoch().count())));
             return g;
         }
 
 
-        void normalize_corners(point_type& min_corner, point_type& max_corner) const {
+        void normalize_corners(point_type &min_corner, point_type &max_corner) const {
             for (size_t i = 0; i < min_corner.dimensions(); ++i) {
                 if (min_corner[i] > max_corner[i]) {
                     std::swap(min_corner[i], max_corner[i]);
@@ -1570,7 +1651,7 @@ namespace pareto {
             }
         }
 
-        inline void maybe_adjust_dimensions(const point_type& position) {
+        inline void maybe_adjust_dimensions(const point_type &position) {
             if constexpr (number_of_compile_dimensions == 0) {
                 if (empty() && is_minimization_.size() == 1) {
                     maybe_resize(is_minimization_, position.dimensions());
@@ -1579,7 +1660,7 @@ namespace pareto {
             }
         }
 
-      private:
+    private:
         /// \brief r-tree representing the pareto points
         internal_type data_;
 

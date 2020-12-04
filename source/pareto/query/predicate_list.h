@@ -75,6 +75,7 @@ namespace pareto {
         /// \brief Copy constructor from another predicate_list predicate
         predicate_list(const predicate_list &rhs) : predicates_(rhs.predicates_) {}
 
+        /// \brief Copy attribution operator
         predicate_list &operator=(const predicate_list &rhs) {
             predicates_ = rhs.predicates_;
             return *this;
@@ -83,6 +84,7 @@ namespace pareto {
         /// \brief Move constructor from another predicate_list predicate
         predicate_list(predicate_list &&rhs) noexcept: predicates_(std::move(rhs.predicates_)) {}
 
+        /// \brief Move attribution operator
         predicate_list &operator=(predicate_list &&rhs) noexcept {
             predicates_ = std::move(rhs.predicates_);
             return *this;
@@ -112,34 +114,42 @@ namespace pareto {
                 : predicates_({predicate_variant_type(predicate)}) {}
 
     public /* vector functions */:
+        /// \brief Get iterator to first predicate
         typename vector_type::iterator begin() {
             return predicates_.begin();
         }
 
+        /// \brief Get iterator to last + 1 predicate
         typename vector_type::iterator end() {
             return predicates_.end();
         }
 
+        /// \brief Get iterator to first predicate
         typename vector_type::const_iterator begin() const {
             return predicates_.begin();
         }
 
+        /// \brief Get iterator to last + 1 predicate
         typename vector_type::const_iterator end() const {
             return predicates_.end();
         }
 
+        /// \brief Get number of predicates
         typename vector_type::size_type size() const {
             return predicates_.size();
         }
 
+        /// \brief Get const reference to i-th predicate
         typename vector_type::const_reference operator[](size_t idx) const {
             return predicates_[idx];
         }
 
+        /// \brief Get reference to i-th predicate
         typename vector_type::reference operator[](size_t idx) {
             return predicates_[idx];
         }
 
+        /// \brief Clear all predicates from list
         void clear() {
             return predicates_.clear();
         }
@@ -367,22 +377,19 @@ namespace pareto {
         /// Sorting puts the predicates in its most efficient order
         /// \param total_volume Total volume of the data structure we are manipulating
         void sort(number_type total_volume) {
-            // Handle the most trivial cases
-            // there is nothing to sort if there are less than 2 elements
-            if (predicates_.size() < 2) {
+            const bool nothing_to_sort = predicates_.size() < 2;
+            if (nothing_to_sort) {
                 return;
             }
 
-            // if it's a query box and a predicate, just swap or not
-            if (predicates_.size() == 2) {
+            const bool only_two_predicates = predicates_.size() == 2;
+            if (only_two_predicates) {
                 if (predicates_[1].is_more_restrictive(predicates_[0], total_volume)) {
                     std::swap(predicates_[0], predicates_[1]);
                 }
                 return;
             }
 
-            // For the general case
-            // Sort predicates by how restrictive they are
             std::sort(predicates_.begin(), predicates_.end(), [&total_volume](const auto &a, const auto &b) {
                 return a.is_more_restrictive(b, total_volume);
             });

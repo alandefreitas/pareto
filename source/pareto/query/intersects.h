@@ -18,8 +18,10 @@ namespace pareto {
         using distance_type = typename point_type::distance_type;
 
     public /* constructors */:
+        /// \brief Construct predicate from query box
         explicit intersects(const query_box_type &data) : predicate_querybox_(data) {}
 
+        /// \brief Construct predicate from query box corners
         intersects(const point_type &min_corner, const point_type &max_corner) : predicate_querybox_(query_box_type(min_corner,max_corner)) {}
 
     public:

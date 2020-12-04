@@ -11,7 +11,7 @@
 
 namespace pareto {
 
-    template <typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename TAG>
+    template<typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename TAG>
     class front;
 
     struct vector_tree_tag;
@@ -19,7 +19,7 @@ namespace pareto {
     /// \brief This is a vector emulating a tree
     /// For all operations, we iterate through the vector looking for elements
     /// that match the predicates.
-    template <typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename ALLOCATOR = std::allocator<std::pair<::pareto::point<NUMBER_TYPE, NUMBER_OF_DIMENSIONS>, ELEMENT_TYPE>>>
+    template<typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename ALLOCATOR = std::allocator<std::pair<::pareto::point<NUMBER_TYPE, NUMBER_OF_DIMENSIONS>, ELEMENT_TYPE>>>
     class vector_tree {
     public:
         friend front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, vector_tree_tag>;
@@ -31,6 +31,7 @@ namespace pareto {
         using mapped_type = ELEMENT_TYPE;
         using value_type = std::pair<key_type, mapped_type>;
         using box_type = query_box<number_type, number_of_compile_dimensions>;
+        using predicate_list_type = predicate_list<number_type, number_of_compile_dimensions, mapped_type>;
 
         using vector_type = std::vector<value_type, ALLOCATOR>;
 
@@ -55,6 +56,7 @@ namespace pareto {
         // interface with the case that matters the most.
         // https://stackoverflow.com/questions/7758580/writing-your-own-stl-container/7759622#7759622
         class const_iterator;
+
         class iterator {
         public:
             friend const_iterator;
@@ -70,16 +72,17 @@ namespace pareto {
 
             iterator() : query_it_(raw_vector_iterator()) {}
 
-            iterator(vector_type &source, std::function<bool(const value_type&)> fn)
+            iterator(vector_type &source, std::function<bool(const value_type &)> fn)
                     : query_it_(source.begin()), query_it_end_(source.end()), query_function_(fn) {
                 maybe_advance_predicate();
             }
 
             explicit iterator(vector_type &source) : query_it_(source.begin()), query_it_end_(source.end()) {}
 
-            iterator(const raw_vector_iterator &raw_begin_it, const raw_vector_iterator &raw_end_it) : query_it_(raw_begin_it), query_it_end_(raw_end_it) {}
+            iterator(const raw_vector_iterator &raw_begin_it, const raw_vector_iterator &raw_end_it) : query_it_(
+                    raw_begin_it), query_it_end_(raw_end_it) {}
 
-            iterator(const iterator& rhs)
+            iterator(const iterator &rhs)
                     : query_it_(rhs.query_it_), query_it_end_(rhs.query_it_end_), query_function_(rhs.query_function_) {
                 maybe_advance_predicate();
             }
@@ -93,10 +96,12 @@ namespace pareto {
                 return *this;
             }
 
+            /// \brief Equality operator
             bool operator==(const iterator &rhs) const {
                 return (query_it_ == rhs.query_it_);
             }
 
+            /// \brief Inequality operator
             bool operator!=(const iterator &rhs) const {
                 return (query_it_ != rhs.query_it_);
             }
@@ -107,7 +112,7 @@ namespace pareto {
                 return *this;
             }
 
-            iterator operator++(int i) {
+            iterator operator++(int i) { // NOLINT(cert-dcl21-cpp): This is the expected return type for iterators
                 auto tmp = *this;
                 query_it_ = query_it_.operator++(i);
                 maybe_advance_predicate();
@@ -120,7 +125,7 @@ namespace pareto {
                 return *this;
             }
 
-            iterator operator--(int i) {
+            iterator operator--(int i) { // NOLINT(cert-dcl21-cpp): This is the expected return type for iterators
                 auto tmp = *this;
                 query_it_ = query_it_.operator--(i);
                 maybe_rewind_predicate();
@@ -135,21 +140,21 @@ namespace pareto {
             /// The user cannot change the key because it would mess
             /// the data structure. But the user CAN change the key.
             reference operator*() const {
-                const std::pair<key_type, mapped_type>& p = query_it_.operator*();
-                std::pair<const key_type, mapped_type>* p2 = (std::pair<const key_type, mapped_type>*) &p;
-                std::pair<const key_type, mapped_type>& p3 = *p2;
+                const std::pair<key_type, mapped_type> &p = query_it_.operator*();
+                auto *p2 = (std::pair<const key_type, mapped_type> *) &p;
+                std::pair<const key_type, mapped_type> &p3 = *p2;
                 return p3;
             }
 
             pointer operator->() const {
-                const std::pair<key_type, mapped_type>& p = query_it_.operator*();
-                std::pair<const key_type, mapped_type>* p2 = (std::pair<const key_type, mapped_type>*) &p;
+                const std::pair<key_type, mapped_type> &p = query_it_.operator*();
+                auto *p2 = (std::pair<const key_type, mapped_type> *) &p;
                 return p2;
             }
 
             reference operator[](size_t i) const {
-                const std::pair<key_type, mapped_type>& p = query_it_.operator[](i);
-                std::pair<const key_type, mapped_type>* p2 = (std::pair<const key_type, mapped_type>*) &p;
+                const std::pair<key_type, mapped_type> &p = query_it_.operator[](i);
+                auto *p2 = (std::pair<const key_type, mapped_type> *) &p;
                 return *p2;
             }
 
@@ -173,7 +178,7 @@ namespace pareto {
         private:
             raw_vector_iterator query_it_;
             raw_vector_iterator query_it_end_;
-            std::function<bool(const value_type&)> query_function_;
+            std::function<bool(const value_type &)> query_function_;
 
         };
 
@@ -192,22 +197,23 @@ namespace pareto {
 
             const_iterator() : query_it_(raw_vector_iterator()) {}
 
-            const_iterator(const vector_type &source, std::function<bool(const value_type&)> fn)
+            const_iterator(const vector_type &source, std::function<bool(const value_type &)> fn)
                     : query_it_(source.begin()), query_it_end_(source.end()), query_function_(fn) {
                 maybe_advance_predicate();
             }
 
             const_iterator(const const_iterator &rhs)
-                : query_it_(rhs.query_it_), query_it_end_(rhs.query_it_end_), query_function_(rhs.query_function_) {
+                    : query_it_(rhs.query_it_), query_it_end_(rhs.query_it_end_), query_function_(rhs.query_function_) {
                 maybe_advance_predicate();
             }
 
-            const_iterator(const iterator &rhs)
-                : query_it_(rhs.query_it_), query_it_end_(rhs.query_it_end_), query_function_(rhs.query_function_) {
+            explicit const_iterator(const iterator &rhs)
+                    : query_it_(rhs.query_it_), query_it_end_(rhs.query_it_end_), query_function_(rhs.query_function_) {
                 maybe_advance_predicate();
             }
 
-            const_iterator(const raw_vector_iterator &raw_begin_it, const raw_vector_iterator &raw_end_it) : query_it_(raw_begin_it), query_it_end_(raw_end_it) {}
+            const_iterator(const raw_vector_iterator &raw_begin_it, const raw_vector_iterator &raw_end_it) : query_it_(
+                    raw_begin_it), query_it_end_(raw_end_it) {}
 
             ~const_iterator() = default;
 
@@ -218,12 +224,24 @@ namespace pareto {
                 return *this;
             }
 
+            /// \brief Equality operator
             bool operator==(const const_iterator &rhs) const {
                 return (query_it_ == rhs.query_it_);
             }
 
+            /// \brief Inequality operator
             bool operator!=(const const_iterator &rhs) const {
-                return(query_it_ != rhs.query_it_);
+                return (query_it_ != rhs.query_it_);
+            }
+
+            /// \brief Equality operator
+            bool operator==(const iterator &rhs) const {
+                return (query_it_ == rhs.query_it_);
+            }
+
+            /// \brief Inequality operator
+            bool operator!=(const iterator &rhs) const {
+                return (query_it_ != rhs.query_it_);
             }
 
             const_iterator &operator++() {
@@ -232,7 +250,7 @@ namespace pareto {
                 return *this;
             }
 
-            const_iterator operator++(int i) {
+            const_iterator operator++(int i) { // NOLINT(cert-dcl21-cpp): This is the expected return type for iterators
                 auto tmp = *this;
                 query_it_ = query_it_.operator++(i);
                 maybe_advance_predicate();
@@ -245,7 +263,7 @@ namespace pareto {
                 return *this;
             }
 
-            const_iterator operator--(int i) {
+            const_iterator operator--(int i) { // NOLINT(cert-dcl21-cpp): This is the expected return type for iterators
                 auto tmp = *this;
                 query_it_ = query_it_.operator--(i);
                 maybe_rewind_predicate();
@@ -284,7 +302,7 @@ namespace pareto {
         private:
             raw_vector_iterator query_it_;
             raw_vector_iterator query_it_end_;
-            std::function<bool(const value_type&)> query_function_;
+            std::function<bool(const value_type &)> query_function_;
         };
 
     public /* constructors */:
@@ -295,63 +313,85 @@ namespace pareto {
         /// Vector trees can't have memory pools so we do nothing here
         /// Vectors use contiguous memory so memory pools would be even less
         /// efficient.
-        vector_tree(std::shared_ptr<node_allocator_type>& external_allocator [[maybe_unused]])
+        explicit vector_tree(std::shared_ptr<node_allocator_type> &external_allocator [[maybe_unused]])
                 : vector_tree() {}
 
-
+        /// \brief Constructor from list of elements
+        /// The only thing we need to do is copy the elements
+        /// The front object is responsible for finding out which
+        /// elements are in the Pareto front
         template<class InputIterator>
         vector_tree(InputIterator first, InputIterator last)
-         : data_(first,last) {}
+                : data_(first, last) {}
 
 
-    public /* iterators */:
+    public /* iterators */:        /// \brief Get iterator to first element
         const_iterator begin() const noexcept {
             return const_iterator(data_.begin(), data_.end());
         }
 
+        /// \brief Get iterator to first element that passes the list of predicates
+        const_iterator begin(const predicate_list_type &ps) const noexcept {
+            return const_iterator(data_, [ps](const value_type &v) {
+                return ps.pass_predicate(v);
+            });
+        }        /// \brief Get iterator to last + 1 element
         const_iterator end() const noexcept {
             return const_iterator(data_.end(), data_.end());
-        }
-
+        }        /// \brief Get iterator to first element
         iterator begin() noexcept {
             return iterator(data_.begin(), data_.end());
         }
 
+        /// \brief Get iterator to first element that passes the list of predicates
+        iterator begin(const predicate_list_type &ps) noexcept {
+            return iterator(data_, [ps](const value_type &v) {
+                return ps.pass_predicate(v);
+            });
+        }        /// \brief Get iterator to last + 1 element
         iterator end() noexcept {
             return iterator(data_.end(), data_.end());
         }
 
+        /// \brief Equality operator
         bool operator==(const vector_tree &rhs) const {
-            return std::equal(data_.begin(), data_.end(), rhs.data_.begin(), rhs.data_.end(), [](const auto& a, const auto& b) {
-                return a.first == b.first && mapped_type_custom_equality_operator(a.second,b.second);
-            });
+            return std::equal(data_.begin(), data_.end(), rhs.data_.begin(), rhs.data_.end(),
+                              [](const auto &a, const auto &b) {
+                                  return a.first == b.first && mapped_type_custom_equality_operator(a.second, b.second);
+                              });
         }
 
+        /// \brief Inequality operator
         bool operator!=(const vector_tree &rhs) const {
-            return !std::equal(data_.begin(), data_.end(), rhs.data_.begin(), rhs.data_.end(), [](const auto& a, const auto& b) {
-                return a.first == b.first && mapped_type_custom_equality_operator(a.second,b.second);
-            });;
+            return !std::equal(data_.begin(), data_.end(), rhs.data_.begin(), rhs.data_.end(),
+                               [](const auto &a, const auto &b) {
+                                   return a.first == b.first &&
+                                          mapped_type_custom_equality_operator(a.second, b.second);
+                               });
         }
 
+        /// \brief Find point
         const_iterator find(const point_type &p) const {
             auto vec_begin = std::find_if(data_.begin(), data_.end(),
                                           [&p](const value_type &v) { return v.first == p; });
             return const_iterator(vec_begin, data_.end());
         }
 
+        /// \brief Find point
         iterator find(const point_type &p) {
             auto vec_begin = std::find_if(data_.begin(), data_.end(),
                                           [&p](const value_type &v) { return v.first == p; });
             return iterator(vec_begin, data_.end());
         }
 
-        const_iterator
+        [[maybe_unused]] const_iterator
         begin_predicates(const predicate_list<number_type, number_of_compile_dimensions, mapped_type> &l) const {
             return const_iterator(data_, [l](const value_type &p) {
                 return l.pass_predicate(p);
             });
         }
 
+        /// \brief Find intersection between points and query box
         const_iterator begin_intersection(const point_type &min_corner, const point_type &max_corner) const {
             point_type min_corner_ = min_corner;
             point_type max_corner_ = max_corner;
@@ -362,66 +402,74 @@ namespace pareto {
             });
         }
 
-        template <class PREDICATE_TYPE>
-        const_iterator begin_intersection(const point_type& min_corner, const point_type& max_corner, PREDICATE_TYPE fn) const {
+        template<class PREDICATE_TYPE>
+        const_iterator
+        begin_intersection(const point_type &min_corner, const point_type &max_corner, PREDICATE_TYPE fn) const {
             point_type min_corner_ = min_corner;
             point_type max_corner_ = max_corner;
             normalize_corners(min_corner_, max_corner_);
             box_type query_box(min_corner_, max_corner_);
-            return const_iterator(data_, [query_box, fn, this](const value_type& p) {
+            return const_iterator(data_, [query_box, fn, this](const value_type &p) {
                 return intersects(p.first, query_box) && fn(p);
             });
         }
 
-        const_iterator begin_within(const point_type& min_corner, const point_type& max_corner) const {
+        /// \brief Find points within a query box
+        const_iterator begin_within(const point_type &min_corner, const point_type &max_corner) const {
             point_type min_corner_ = min_corner;
             point_type max_corner_ = max_corner;
             normalize_corners(min_corner_, max_corner_);
             box_type query_box(min_corner_, max_corner_);
-            return const_iterator(data_, [query_box, this](const value_type& p) {
+            return const_iterator(data_, [query_box, this](const value_type &p) {
                 return is_within(p.first, query_box);
             });
         }
 
-        template <class PREDICATE_TYPE>
-        const_iterator begin_within(const point_type& min_corner, const point_type& max_corner, PREDICATE_TYPE fn) const {
+        /// \brief Find points within a query box
+        template<class PREDICATE_TYPE>
+        const_iterator
+        begin_within(const point_type &min_corner, const point_type &max_corner, PREDICATE_TYPE fn) const {
             point_type min_corner_ = min_corner;
             point_type max_corner_ = max_corner;
             normalize_corners(min_corner_, max_corner_);
             box_type query_box(min_corner_, max_corner_);
-            return const_iterator(data_, [query_box, this, fn](const value_type& p) {
+            return const_iterator(data_, [query_box, this, fn](const value_type &p) {
                 return is_within(p.first, query_box) && fn(p);
             });
         }
 
-        const_iterator begin_disjoint(const point_type& min_corner, const point_type& max_corner) const {
+        /// \brief Find points outside a query box
+        const_iterator begin_disjoint(const point_type &min_corner, const point_type &max_corner) const {
             point_type min_corner_ = min_corner;
             point_type max_corner_ = max_corner;
             normalize_corners(min_corner_, max_corner_);
             box_type query_box(min_corner_, max_corner_);
-            return const_iterator(data_, [query_box, this](const value_type& p) {
+            return const_iterator(data_, [query_box, this](const value_type &p) {
                 return is_disjoint(p.first, query_box);
             });
         }
 
-        template <class PREDICATE_TYPE>
-        const_iterator begin_disjoint(const point_type& min_corner, const point_type& max_corner, PREDICATE_TYPE fn) const {
+        /// \brief Find points outside a query box
+        template<class PREDICATE_TYPE>
+        const_iterator
+        begin_disjoint(const point_type &min_corner, const point_type &max_corner, PREDICATE_TYPE fn) const {
             point_type min_corner_ = min_corner;
             point_type max_corner_ = max_corner;
             normalize_corners(min_corner_, max_corner_);
             box_type query_box(min_corner_, max_corner_);
-            return const_iterator(data_, [query_box, this, fn](const value_type& p) {
+            return const_iterator(data_, [query_box, this, fn](const value_type &p) {
                 return is_disjoint(p.first, query_box) && fn(p);
             });
         }
 
-        const_iterator begin_nearest(const point_type& p) const {
-            auto it = std::min_element(data_.begin(), data_.end(), [p](const value_type& v1, const value_type& v2) {
+        /// \brief Find points closest to a reference point
+        const_iterator begin_nearest(const point_type &p) const {
+            auto it = std::min_element(data_.begin(), data_.end(), [p](const value_type &v1, const value_type &v2) {
                 return p.distance(v1.first) < p.distance(v2.first);
             });
             if (it != data_.end()) {
                 auto nearest = it->first;
-                return const_iterator(data_, [nearest](const value_type& p) {
+                return const_iterator(data_, [nearest](const value_type &p) {
                     return p.first == nearest;
                 });
             }
@@ -432,88 +480,96 @@ namespace pareto {
         /// This is VERY ineffient with vectors.
         /// This could be improved BUT...
         ///     users shouldn't be using vectors for this.
-        const_iterator begin_nearest(const point_type& p, size_t k) const {
+        const_iterator begin_nearest(const point_type &p, size_t k) const {
             if (k == 1) {
                 return begin_nearest(p);
             }
             auto data_copy = data_;
             k = std::min(k, size());
-            std::partial_sort(data_copy.begin(), data_copy.begin() + k, data_copy.end(), [p](value_type v1, value_type v2) {
-                return p.distance(v1.first) < p.distance(v2.first);
-            });
+            std::partial_sort(data_copy.begin(), data_copy.begin() + k, data_copy.end(),
+                              [p](value_type v1, value_type v2) {
+                                  return p.distance(v1.first) < p.distance(v2.first);
+                              });
             std::vector<point_type> nearest_set;
             nearest_set.reserve(k);
             for (auto it = data_copy.begin(); it != data_copy.end() && it != data_copy.begin() + k; ++it) {
                 nearest_set.emplace_back(it->first);
             }
-            return const_iterator(data_, [nearest_set](const value_type& p) {
+            return const_iterator(data_, [nearest_set](const value_type &p) {
                 return std::find(nearest_set.begin(), nearest_set.end(), p.first) != nearest_set.end();
             });
         }
 
-        template <class PREDICATE_TYPE>
-        const_iterator begin_nearest(const point_type& p, size_t k, PREDICATE_TYPE fn) const {
+        template<class PREDICATE_TYPE>
+        const_iterator begin_nearest(const point_type &p, size_t k, PREDICATE_TYPE fn) const {
             if (k == 1) {
                 return begin_nearest(p);
             }
             auto data_copy = data_;
             k = std::min(k, size());
-            std::partial_sort(data_copy.begin(), data_copy.begin() + k, data_copy.end(), [p](value_type v1, value_type v2) {
-                return p.distance(v1.first) < p.distance(v2.first);
-            });
+            std::partial_sort(data_copy.begin(), data_copy.begin() + k, data_copy.end(),
+                              [p](value_type v1, value_type v2) {
+                                  return p.distance(v1.first) < p.distance(v2.first);
+                              });
             std::vector<point_type> nearest_set;
             nearest_set.reserve(k);
             for (auto it = data_copy.begin(); it != data_copy.end() && it != data_copy.begin() + k; ++it) {
                 nearest_set.emplace_back(it->first);
             }
-            return const_iterator(data_, [nearest_set, fn](const value_type& p) {
+            return const_iterator(data_, [nearest_set, fn](const value_type &p) {
                 return std::find(nearest_set.begin(), nearest_set.end(), p.first) != nearest_set.end() && fn(p);
             });
         }
 
-        const_iterator begin_nearest(const box_type& p, size_t k) const {
+        /// \brief Find points closest to a reference point
+        const_iterator begin_nearest(const box_type &p, size_t k) const {
             auto data_copy = data_;
             k = std::min(k, size());
-            std::partial_sort(data_copy.begin(), data_copy.begin() + k, data_copy.end(), [p](value_type v1, value_type v2) {
-                return p.distance(v1.first) < p.distance(v2.first);
-            });
+            std::partial_sort(data_copy.begin(), data_copy.begin() + k, data_copy.end(),
+                              [p](value_type v1, value_type v2) {
+                                  return p.distance(v1.first) < p.distance(v2.first);
+                              });
             std::vector<point_type> nearest_set;
             nearest_set.reserve(k);
             for (auto it = data_copy.begin(); it != data_copy.end() && it != data_copy.begin() + k; ++it) {
                 nearest_set.emplace_back(it->first);
             }
-            return const_iterator(data_, [nearest_set](const value_type& p) {
+            return const_iterator(data_, [nearest_set](const value_type &p) {
                 return std::find(nearest_set.begin(), nearest_set.end(), p.first) != nearest_set.end();
             });
         }
 
-        template <class PREDICATE_TYPE>
-        const_iterator begin_nearest(const box_type& p, size_t k, PREDICATE_TYPE fn) const {
+        template<class PREDICATE_TYPE>
+        const_iterator begin_nearest(const box_type &p, size_t k, PREDICATE_TYPE fn) const {
             auto data_copy = data_;
             k = std::min(k, size());
-            std::partial_sort(data_copy.begin(), data_copy.begin() + k, data_copy.end(), [p](value_type v1, value_type v2) {
-                return distance(v1.first, p) < distance(v2.first, p);
-            });
+            std::partial_sort(data_copy.begin(), data_copy.begin() + k, data_copy.end(),
+                              [p](value_type v1, value_type v2) {
+                                  return distance(v1.first, p) < distance(v2.first, p);
+                              });
             std::vector<point_type> nearest_set;
             nearest_set.reserve(k);
             for (auto it = data_copy.begin(); it != data_copy.end() && it != data_copy.begin() + k; ++it) {
                 nearest_set.emplace_back(it->first);
             }
-            return const_iterator(data_, [nearest_set, fn](const value_type& p) {
+            return const_iterator(data_, [nearest_set, fn](const value_type &p) {
                 return std::find(nearest_set.begin(), nearest_set.end(), p.first) != nearest_set.end() && fn(p);
             });
         }
 
     public /* non-modifying functions */:
-        bool empty() const noexcept {
+        /// \brief True if container is empty
+        [[nodiscard]] bool empty() const noexcept {
             return data_.empty();
         }
 
-        size_t size() const noexcept {
+        /// \brief Get container size
+        [[nodiscard]] size_t size() const noexcept {
             return data_.size();
         }
 
-        size_t dimensions() const noexcept {
+        /// \brief Get container dimensions
+        [[nodiscard]] size_t dimensions() const noexcept {
             if constexpr (NUMBER_OF_DIMENSIONS != 0) {
                 return NUMBER_OF_DIMENSIONS;
             } else {
@@ -521,8 +577,9 @@ namespace pareto {
             }
         }
 
+        /// \brief Get maximum value in a given dimension
         number_type max_value(size_t dimension) const {
-            auto it = std::max_element(begin(), end(), [&dimension](const value_type& a, const value_type& b) {
+            auto it = std::max_element(begin(), end(), [&dimension](const value_type &a, const value_type &b) {
                 return a.first[dimension] < b.first[dimension];
             });
             if (it != end()) {
@@ -531,20 +588,23 @@ namespace pareto {
             return std::numeric_limits<number_type>::min();
         }
 
+        /// \brief Get iterator to element with maximum value in a given dimension
         iterator max_element(size_t dimension) {
-            return std::max_element(begin(), end(), [&dimension](const value_type& a, const value_type& b) {
+            return std::max_element(begin(), end(), [&dimension](const value_type &a, const value_type &b) {
                 return a.first[dimension] < b.first[dimension];
             });
         }
 
+        /// \brief Get iterator to element with maximum value in a given dimension
         const_iterator max_element(size_t dimension) const {
-            return std::max_element(begin(), end(), [&dimension](const value_type& a, const value_type& b) {
+            return std::max_element(begin(), end(), [&dimension](const value_type &a, const value_type &b) {
                 return a.first[dimension] < b.first[dimension];
             });
         }
 
+        /// \brief Get minimum value in a given dimension
         number_type min_value(size_t dimension) const {
-            auto it = std::min_element(begin(), end(), [&dimension](const value_type& a, const value_type& b) {
+            auto it = std::min_element(begin(), end(), [&dimension](const value_type &a, const value_type &b) {
                 return a.first[dimension] < b.first[dimension];
             });
             if (it != end()) {
@@ -553,14 +613,16 @@ namespace pareto {
             return std::numeric_limits<number_type>::min();
         }
 
+        /// \brief Get iterator to element with minimum value in a given dimension
         iterator min_element(size_t dimension) {
-            return std::min_element(begin(), end(), [&dimension](const value_type& a, const value_type& b) {
+            return std::min_element(begin(), end(), [&dimension](const value_type &a, const value_type &b) {
                 return a.first[dimension] < b.first[dimension];
             });
         }
 
+        /// \brief Get iterator to element with minimum value in a given dimension
         const_iterator min_element(size_t dimension) const {
-            return std::min_element(begin(), end(), [&dimension](const value_type& a, const value_type& b) {
+            return std::min_element(begin(), end(), [&dimension](const value_type &a, const value_type &b) {
                 return a.first[dimension] < b.first[dimension];
             });
         }
@@ -590,17 +652,27 @@ namespace pareto {
             }
         }
 
+        /// Erase element
+        size_t erase(iterator position) {
+            return erase(const_iterator(position));
+        }
+
         /// Remove range of iterators from the front
         size_t erase(const_iterator first, const_iterator last) {
             // get copy of all elements in the query
             std::vector<value_type> v(first, last);
             // remove using these copies as reference
-            for (const value_type& x: v) {
-                data_.erase(std::find_if(data_.begin(), data_.end(), [&x](const auto& a) {
-                    return a.first == x.first && mapped_type_custom_equality_operator(a.second,x.second);
+            for (const value_type &x: v) {
+                data_.erase(std::find_if(data_.begin(), data_.end(), [&x](const auto &a) {
+                    return a.first == x.first && mapped_type_custom_equality_operator(a.second, x.second);
                 }));
             }
             return v.size();
+        }
+
+        /// Remove range of iterators from the front
+        size_t erase(iterator first, iterator last) {
+            return erase(const_iterator(first), const_iterator(last));
         }
 
         /// Clear the front
@@ -614,7 +686,7 @@ namespace pareto {
         }
 
     private /* functions */:
-        bool intersects(const point_type& p, const box_type& b) const {
+        bool intersects(const point_type &p, const box_type &b) const {
             for (size_t i = 0; i < p.dimensions(); ++i) {
                 if (p[i] > b.second()[i] || p[i] < b.first()[i]) {
                     return false;
@@ -623,7 +695,7 @@ namespace pareto {
             return true;
         }
 
-        bool is_within(const point_type& p, const box_type& b) const {
+        bool is_within(const point_type &p, const box_type &b) const {
             for (size_t i = 0; i < p.dimensions(); ++i) {
                 if (p[i] >= b.second()[i] || p[i] <= b.first()[i]) {
                     return false;
@@ -632,7 +704,7 @@ namespace pareto {
             return true;
         }
 
-        bool is_disjoint(const point_type& p, const box_type& b) const {
+        bool is_disjoint(const point_type &p, const box_type &b) const {
             for (size_t i = 0; i < p.dimensions(); ++i) {
                 if (p[i] <= b.second()[i] || p[i] >= b.first()[i]) {
                     return false;

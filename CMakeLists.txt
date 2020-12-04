@@ -33,7 +33,7 @@ option(BUILD_PACKAGE "Build an installation package" ${MASTER_PROJECT})
 
 # How to build
 option(BUILD_LONG_TESTS "Build the Data Structure Benchmark (It takes very long)" ON)
-option(BUILD_BOOST_TREE "Include R-Tree using Boost.Geometry (Boost dependency). This was initially used for our benchmarks and it's soon to be deprecated. Performance is very poor." OFF)
+option(BUILD_BOOST_TREE "Include R-Tree using Boost.Geometry (Boost dependency). This was initially used for our benchmarks and it's soon to be deprecated. Performance is very poor. Not being maintained. Lots of dependencies on deprecated boost features. Lots of warnings." OFF)
 
 set_debug_booleans()
 set(DEFAULT_MAX_NUM_DIMENSIONS_PYTHON 3)

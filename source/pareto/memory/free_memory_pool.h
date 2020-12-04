@@ -47,12 +47,13 @@ namespace pareto {
         // typedef std::true_type  propagate_on_container_move_assignment;
         // typedef std::true_type  propagate_on_container_swap;
 
+        /// \brief Convert to similar allocator for another data type
         template <typename U>
         struct rebind {
             typedef free_memory_pool<U, allow_contiguous_allocation> other;
         };
 
-        /// Construct with all pointers to nullptr
+        /// \brief Construct with all pointers to nullptr
         free_memory_pool() noexcept : free_slots_{} {
             current_block_ = nullptr;
             current_slot_ = nullptr;
@@ -60,12 +61,12 @@ namespace pareto {
             n_blocks_ = 0;
         }
 
-        /// Construct and set everything to null
+        /// \brief Construct and set everything to null
         free_memory_pool(const free_memory_pool& memoryPool [[maybe_unused]]) noexcept : free_memory_pool() {
             // the copy constructor doesn't really copy because it wouldn't make much sense
         }
 
-        /// Move constructor: copy all pointers
+        /// \brief Move constructor: copy all pointers
         free_memory_pool(free_memory_pool&& memoryPool) noexcept {
             current_block_ = memoryPool.current_block_;
             memoryPool.current_block_ = nullptr;
@@ -75,12 +76,13 @@ namespace pareto {
             n_blocks_ = memoryPool.n_blocks_;
         }
 
+        /// \brief Copy constructor
         template <class U> explicit free_memory_pool(const free_memory_pool<U>& memoryPool [[maybe_unused]]) noexcept : free_memory_pool() {
             // the copy constructor doesn't really copy because it wouldn't make much sense
             // This simply converts the types
         }
 
-        /// Delete all blocks
+        /// \brief Delete all blocks
         ~free_memory_pool() noexcept {
             // pointer to current block
             slot_pointer_type curr = current_block_;
@@ -97,9 +99,10 @@ namespace pareto {
             }
         }
 
-        /// Copy pointers
+        /// \brief Copy pointers
         free_memory_pool& operator=(const free_memory_pool& memoryPool) = delete;
 
+        /// \brief Move pointers
         free_memory_pool& operator=(free_memory_pool&& memoryPool) noexcept {
             if (this != &memoryPool)
             {
@@ -112,17 +115,17 @@ namespace pareto {
             return *this;
         }
 
-        /// Return a pointer to the element to which the reference x refers
+        /// \brief Return a pointer to the element to which the reference x refers
         pointer address(reference x) const noexcept {
             return &x;
         }
 
-        /// Return a const pointer to the element to which the reference x refers
+        /// \brief Return a const pointer to the element to which the reference x refers
         const_pointer address(const_reference x) const noexcept {
             return &x;
         }
 
-        /// Allocate n objects
+        /// \brief Allocate n objects
         /// Can only allocate one object at a time.
         /// n and hint are ignored because memory pools cannot
         /// efficiently guarantee a sequence of elements
@@ -200,7 +203,7 @@ namespace pareto {
             }
         }
 
-        /// Deallocate p
+        /// \brief Deallocate p
         /// Position p becomes the first free slot pointing
         /// to the previous first free slot
         void deallocate(pointer p, size_type n = 1) {
@@ -228,25 +231,25 @@ namespace pareto {
             }
         }
 
-        /// Max number of elements in this pool
-        size_type max_size() const noexcept {
+        /// \brief Max number of elements in this pool
+        [[nodiscard]] size_type max_size() const noexcept {
             size_type max_blocks = -1 / INITIAL_BLOCK_SIZE;
             return (INITIAL_BLOCK_SIZE - sizeof(binary_data_pointer_type)) / sizeof(slot_type_) * max_blocks;
         }
 
-        /// Construct new element of type U at position p
+        /// \brief Construct new element of type U at position p
         template <class U, class... Args> void construct(U* p, Args&&... args) {
             // construct new element of type U at address p
             new (p) U (std::forward<Args>(args)...);
         }
 
-        /// Destroy element of type U at position p
+        /// \brief Destroy element of type U at position p
         template <class U> void destroy(U* p) {
             // Call U's destructor but leave the garbage there
             p->~U();
         }
 
-        /// Allocate space for a new element T, construct it, and return a pointer
+        /// \brief Allocate space for a new element T, construct it, and return a pointer
         template <class... Args> pointer new_element(Args&&... args) {
             // allocate room for an element
             pointer result = allocate();
@@ -256,7 +259,7 @@ namespace pareto {
             return result;
         }
 
-        /// Delete element of type T at position p
+        /// \brief Delete element of type T at position p
         void delete_element(pointer p) {
             // if p is valid
             if (p != nullptr) {
@@ -275,10 +278,11 @@ namespace pareto {
         };
 
         typedef char* binary_data_pointer_type;
+        typedef char const * const_binary_data_pointer_type;
         typedef slot_type slot_type_;
         typedef slot_type* slot_pointer_type;
 
-        /// Sets of free slots
+        /// \brief Sets of free slots
         /// The interesting thing here is that we use the interleaved fast memory
         /// pool to keep track of these free positions
         using free_slots_set_type = std::set<slot_pointer_type>;
@@ -288,7 +292,7 @@ namespace pareto {
 
         using set_iterator = typename free_slots_type::value_type::iterator;
 
-        // advance to a valid iterator (as if free slots were a range)
+        /// \brief Advance to a valid iterator (as if free slots were a range)
         std::pair<set_iterator, size_t> advance_to_valid (set_iterator it, size_t iterator_block) {
             while (it == free_slots_[iterator_block].end()) {
                 ++iterator_block;
@@ -301,13 +305,13 @@ namespace pareto {
             return std::make_pair(it, iterator_block);
         }
 
-        // get first iterator
+        /// \brief Get first iterator to a free slot
         std::pair<set_iterator, size_t> first_free_slot () {
             set_iterator it = free_slots_[0].begin();
             return advance_to_valid(it, 0);
         }
 
-        // is last iterator
+        /// \brief Check if this is the last iterator to a free slot
         bool is_end_iterator (set_iterator it, size_t iterator_block) {
             if (iterator_block >= free_slots_.size()) {
                 return true;
@@ -318,15 +322,16 @@ namespace pareto {
             return false;
         }
 
-        // get next iterator
+        /// \brief Get next iterator to free slot
         std::pair<set_iterator, size_t> next_set_iterator (set_iterator it, size_t iterator_block) {
             ++it;
             return advance_to_valid(it, iterator_block);
         };
 
+        /// \brief Allocate a single slot
         pointer allocate_one() {
-            // if there are free slots
-            if (!free_slots_.empty()) {
+            const bool there_are_free_slots = !free_slots_.empty();
+            if (there_are_free_slots) {
                 auto [begin_it, begin_it_block] = first_free_slot();
                 if (!is_end_iterator(begin_it, begin_it_block)) {
                     auto p = *begin_it;
@@ -336,12 +341,10 @@ namespace pareto {
                     return reinterpret_cast<pointer>(p);
                 }
             }
-            // if there are no free slots
-            // check if we need to allocate another block
-            if (current_slot_ > last_slot_) {
-                // allocate another block of elements
-                allocate_block();
-            } else if (current_slot_ == nullptr && last_slot_ == nullptr) {
+
+            const bool no_free_slots = current_slot_ > last_slot_;
+            const bool no_slots_at_all = current_slot_ == nullptr && last_slot_ == nullptr;
+            if (no_free_slots || no_slots_at_all) {
                 allocate_block();
             }
 
@@ -351,34 +354,34 @@ namespace pareto {
             return reinterpret_cast<pointer>(current_slot_++);
         }
 
-        /// Pointer to where the current block begins
+        /// \brief Pointer to where the current block begins
         /// When we run out of space, we allocate a new block
         /// This slot pointer next member points to the
         /// previous block
         slot_pointer_type current_block_;
 
-        /// Slot where we should allocate the next element
+        /// \brief Slot where we should allocate the next element
         /// If the user doesn't deallocate anything, free_slots_
         /// will be nullptr, and we start allocating at current_slot_
         /// This starts as the first slot of current block
         slot_pointer_type current_slot_;
 
-        /// Last slot of current block
+        /// \brief Last slot of current block
         /// When the current slot gets there, we allocate a new block
         slot_pointer_type last_slot_;
 
-        /// Number of blocks in this allocator
+        /// \brief Number of blocks in this allocator
         size_t n_blocks_ = 0;
 
-        /// Pad pointer to respect the alignment required by T
-        size_type pad_pointer(binary_data_pointer_type p, size_type align) const noexcept {
+        /// \brief Pad pointer to respect the alignment required by T
+        size_type pad_pointer(const_binary_data_pointer_type p, size_type align) const noexcept {
             // get p as uint
-            uintptr_t result = reinterpret_cast<uintptr_t>(p);
+            auto result = reinterpret_cast<uintptr_t>(p);
             // return aligned size
             return ((align - result) % align);
         }
 
-        /// Allocate space for the new block and store a pointer to the previous one
+        /// \brief Allocate space for the new block and store a pointer to the previous one
         void allocate_block() {
             // size of this new block grows exponentially with number of blocks
             const size_t block_size = INITIAL_BLOCK_SIZE << n_blocks_;
@@ -391,7 +394,7 @@ namespace pareto {
             free_slots_.emplace_back();
 
             // create a new block of char* with block size
-            binary_data_pointer_type new_block = reinterpret_cast<binary_data_pointer_type>
+            auto new_block = reinterpret_cast<binary_data_pointer_type>
             (operator new(block_size));
 
             // this first slot of a block is a special slot that points to the previous block
@@ -408,7 +411,7 @@ namespace pareto {
             // the block body is everything after the first pointer to previous block
 
             // Body starts after one slot size
-            binary_data_pointer_type body = new_block + sizeof(slot_pointer_type);
+            binary_data_pointer_type body = new_block + sizeof(slot_pointer_type); // NOLINT(bugprone-sizeof-expression)
 
             // Get size in bytes we need to align the body to a slot_type
             // - The second slot might need to start a little after sizeof(slot_pointer_type) bytes
@@ -424,7 +427,7 @@ namespace pareto {
             (new_block + block_size - sizeof(slot_type_));
         }
 
-        /// Initial block size needs to have room for at least 2 slots
+        /// \brief Initial block size needs to have room for at least 2 slots
         static_assert(INITIAL_BLOCK_SIZE >= 2 * sizeof(slot_type_), "INITIAL_BLOCK_SIZE too small.");
     };
 }

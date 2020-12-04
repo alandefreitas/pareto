@@ -59,7 +59,8 @@ namespace pareto {
         // typedef std::false_type propagate_on_container_copy_assignment;
         // typedef std::true_type propagate_on_container_move_assignment;
         // typedef std::true_type propagate_on_container_swap;
-        typedef char *binary_data_pointer_type;
+        typedef char * binary_data_pointer_type;
+        typedef char const * const_binary_data_pointer_type;
 
         /// \class Slot for keeping memory pool objects
         /// A slot is a union might store an element or a pointer to the
@@ -562,7 +563,7 @@ namespace pareto {
         }
 
         /// \brief Pad pointer to respect the alignment required by T
-        size_type pad_pointer(binary_data_pointer_type p, size_type align) const noexcept {
+        size_type pad_pointer(const_binary_data_pointer_type p, size_type align) const noexcept {
             // Get p as uint
             auto p_as_int = reinterpret_cast<uintptr_t>(p);
             // Return aligned size
@@ -596,7 +597,7 @@ namespace pareto {
             // the block body is everything after the first pointer to previous block
 
             // Body starts after one slot size
-            binary_data_pointer_type body = new_block + sizeof(slot_pointer_type);
+            binary_data_pointer_type body = new_block + sizeof(slot_pointer_type); // NOLINT(bugprone-sizeof-expression)
 
             // Get size in bytes we need to align the body to a slot_type
             // - The second slot might need to start a little after sizeof(slot_pointer_type) bytes
