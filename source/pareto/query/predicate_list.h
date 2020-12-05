@@ -361,7 +361,7 @@ namespace pareto {
         /// It passes the list if it passes all predicates there
         bool pass_predicate(const value_type &rhs) const {
             return std::all_of(predicates_.begin(), predicates_.end(), [&rhs](const auto &p) {
-                return p.might_pass_predicate(rhs);
+                return p.pass_predicate(rhs);
             });
         }
 
@@ -425,7 +425,7 @@ namespace pareto {
             if (a.is_intersects()) {
                 if (b.is_intersects()) {
                     return compress(a.as_intersects(), b.as_intersects());
-                } else if (b.is_disjoint()) {
+                } else if (b.is_within()) {
                     return compress(a.as_intersects(), b.as_within());
                 } else if (b.is_disjoint()) {
                     return compress(a.as_intersects(), b.as_disjoint());
@@ -433,7 +433,7 @@ namespace pareto {
             } else if (a.is_within()) {
                 if (b.is_intersects()) {
                     return compress(a.as_within(), b.as_intersects());
-                } else if (b.is_disjoint()) {
+                } else if (b.is_within()) {
                     return compress(a.as_within(), b.as_within());
                 } else if (b.is_disjoint()) {
                     return compress(a.as_within(), b.as_disjoint());
@@ -441,7 +441,7 @@ namespace pareto {
             } else if (a.is_disjoint()) {
                 if (b.is_intersects()) {
                     return compress(a.as_disjoint(), b.as_intersects());
-                } else if (b.is_disjoint()) {
+                } else if (b.is_within()) {
                     return compress(a.as_disjoint(), b.as_within());
                 } else if (b.is_disjoint()) {
                     return compress(a.as_disjoint(), b.as_disjoint());
@@ -510,8 +510,9 @@ namespace pareto {
             if (!aq.overlap(bq)) {
                 return a;
             } else if (bq.contains(aq)) {
-                bool max_number = std::numeric_limits<number_type>::max();
-                return disjoint_type(point_type(bq.dimensions(), -max_number), point_type(bq.dimensions(), max_number));
+                auto impossible_box = bq;
+                impossible_box.stretch_to_infinity();
+                return disjoint_type(impossible_box);
             }
             return std::nullopt;
         }
@@ -548,7 +549,7 @@ namespace pareto {
             if (!aq.overlap(bq)) {
                 return a;
             } else if (bq.contains(aq)) {
-                bool max_number = std::numeric_limits<number_type>::max();
+                auto max_number = std::numeric_limits<number_type>::max();
                 return disjoint_type(point_type(bq.dimensions(), -max_number), point_type(bq.dimensions(), max_number));
             }
             return std::nullopt;
