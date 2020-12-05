@@ -1,15 +1,7 @@
 #define CATCH_CONFIG_MAIN
-
-#include "instantiation/test_instantiations.h"
 #include <catch2/catch.hpp>
-
-unsigned randi();
-bool rand_flip();
-double randn();
-double randu();
-using uint8_t_vector_iterator = std::vector<uint8_t>::iterator;
-bool next_combination(uint8_t_vector_iterator first,
-                      uint8_t_vector_iterator last, uint8_t max_value = 0x01);
+#include "instantiation/test_instantiations.h"
+#include "../test_helpers.h"
 
 template <size_t COMPILE_DIMENSION,
     typename TAG = pareto::default_tag<COMPILE_DIMENSION>>
@@ -107,26 +99,27 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
           p1[i] = 2.5 + 1. * i;
           p2[i] = 1.5 + test_dimension - 1. * i;
       }
-      // 1.31336, 0.887686, -1.35926
+
       pf.insert(std::make_pair(p1, 2));
       pf.insert(std::make_pair(p2, 3));
-      // size_t s = pf.size();
+
       pf.emplace(random_value());
       std::vector v = {random_value(), random_value(), random_value()};
       pf.insert(v.begin(), v.end());
       auto r = pf.insert(random_value());
       value_type v2 = random_value();
-      r = pf.insert(std::move(v2));
-      r = pf.insert(std::make_pair(random_point(), randi()));
-      unsigned m = randi();
-      r = pf.insert(std::make_pair(random_point(), std::move(m)));
-      std::vector v3 = {random_value(), random_value(), random_value()};
-      pf.insert(v3.begin(), v3.end());
-      pf.insert({random_value(), random_value(), random_value()});
-      for (size_t i = 0; i < 1000 / test_dimension; ++i) {
-          pf.insert(random_value());
-      }
-      return pf;
+        r = pf.insert(std::move(v2));
+        r = pf.insert(std::make_pair(random_point(), randi()));
+        unsigned m = randi();
+        r = pf.insert(std::make_pair(random_point(), m));
+        std::vector v3 = {random_value(), random_value(), random_value()};
+        pf.insert(v3.begin(), v3.end());
+        pf.insert({random_value(), random_value(), random_value()});
+        for (size_t i = 0; i < 1000 / test_dimension; ++i) {
+            pf.insert(random_value());
+        }
+        REQUIRE(pf.check_invariants());
+        return pf;
     };
 
     SECTION("Container functions and iterators " + section_name) {
@@ -150,7 +143,7 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         REQUIRE(!pf.contains(random_point()));
         pf.clear();
         REQUIRE(pf.empty());
-        REQUIRE(pf.size() == 0);
+        REQUIRE(pf.size() == 0); // NOLINT(readability-container-size-empty)
         REQUIRE(pf.dimensions() == test_dimension);
     }
 
@@ -172,7 +165,7 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         pf2.insert(random_value());
         // erase by iterator
         pf2.erase(pf2.begin(), pf2.end());
-        REQUIRE(pf2.size() == 0);
+        REQUIRE(pf2.size() == 0); // NOLINT(readability-container-size-empty)
         REQUIRE(pf2.empty());
         pf2 = pf;
         REQUIRE_FALSE(pf2.empty());
@@ -287,13 +280,15 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
             REQUIRE(pf.igd_plus(pf_c) >= 0.);
             REQUIRE(pf.std_igd_plus(pf_c) >= 0.);
 
-            // Distribution and spread
-            REQUIRE(pf.uniformity() > 0);
-            REQUIRE(pf.average_distance() > 0);
-            REQUIRE(pf.average_nearest_distance(1) > 0);
-            REQUIRE(pf.average_nearest_distance(2) > 0);
-            REQUIRE(pf.average_nearest_distance(5) > 0);
-            REQUIRE(pf.average_crowding_distance() > 0);
+            if (pf.dimensions() > 1) {
+                // Distribution and spread
+                REQUIRE(pf.uniformity() > 0);
+                REQUIRE(pf.average_distance() > 0);
+                REQUIRE(pf.average_nearest_distance(1) > 0);
+                REQUIRE(pf.average_nearest_distance(2) > 0);
+                REQUIRE(pf.average_nearest_distance(5) > 0);
+                REQUIRE(pf.average_crowding_distance() > 0);
+            }
         }
     }
 
@@ -371,370 +366,71 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
     }
 }
 
+template<size_t M>
+void test_all_tags(const std::vector<uint8_t> &is_mini) {
+    using namespace pareto;
+    test_front<M, vector_tree_tag>(M, is_mini);
+    test_front<0, vector_tree_tag>(M, is_mini);
+    test_front<M, quad_tree_tag>(M, is_mini);
+    test_front<0, quad_tree_tag>(M, is_mini);
+    test_front<M, kd_tree_tag>(M, is_mini);
+    test_front<0, kd_tree_tag>(M, is_mini);
+    test_front<M, boost_tree_tag>(M, is_mini);
+    test_front<M, r_tree_tag>(M, is_mini);
+    test_front<0, r_tree_tag>(M, is_mini);
+    test_front<M, r_star_tree_tag>(M, is_mini);
+    test_front<0, r_star_tree_tag>(M, is_mini);
+}
+
+
 #ifdef BUILD_LONG_TESTS
+
 TEST_CASE("Front - 1 dimension") {
     using namespace pareto;
-    std::vector<uint8_t> is_mini = {0};
-    test_front<1, vector_tree_tag>(1, is_mini);
-    test_front<0, vector_tree_tag>(1, is_mini);
-    test_front<1, quad_tree_tag>(1, is_mini);
-    test_front<0, quad_tree_tag>(1, is_mini);
-    test_front<1, kd_tree_tag>(1, is_mini);
-    test_front<0, kd_tree_tag>(1, is_mini);
-    test_front<1, boost_tree_tag>(1, is_mini);
-    test_front<1, r_tree_tag>(1, is_mini);
-    test_front<0, r_tree_tag>(1, is_mini);
-    test_front<1, r_star_tree_tag>(1, is_mini);
-    test_front<0, r_star_tree_tag>(1, is_mini);
+    test_all_tags<1>({0});
 }
+
 #endif
 
 TEST_CASE("Front - 2 dimensions") {
     using namespace pareto;
-    std::vector<uint8_t> is_mini = {0, 0};
-    test_front<2, vector_tree_tag>(2, is_mini);
-    test_front<0, vector_tree_tag>(2, is_mini);
-    test_front<2, quad_tree_tag>(2, is_mini);
-    test_front<0, quad_tree_tag>(2, is_mini);
-    test_front<2, kd_tree_tag>(2, is_mini);
-    test_front<0, kd_tree_tag>(2, is_mini);
-    test_front<2, boost_tree_tag>(2, is_mini);
-    test_front<2, r_tree_tag>(2, is_mini);
-    test_front<0, r_tree_tag>(2, is_mini);
-    test_front<0, r_tree_tag>(2, is_mini);
-    test_front<2, r_star_tree_tag>(2, is_mini);
-    test_front<0, r_star_tree_tag>(2, is_mini);
-
-    is_mini = {0, 1};
-    test_front<2, vector_tree_tag>(2, is_mini);
-    test_front<0, vector_tree_tag>(2, is_mini);
-    test_front<2, quad_tree_tag>(2, is_mini);
-    test_front<0, quad_tree_tag>(2, is_mini);
-    test_front<2, kd_tree_tag>(2, is_mini);
-    test_front<0, kd_tree_tag>(2, is_mini);
-    test_front<2, boost_tree_tag>(2, is_mini);
-    test_front<2, r_tree_tag>(2, is_mini);
-    test_front<0, r_tree_tag>(2, is_mini);
-    test_front<0, r_tree_tag>(2, is_mini);
-    test_front<2, r_star_tree_tag>(2, is_mini);
-    test_front<0, r_star_tree_tag>(2, is_mini);
-
-    is_mini = {1, 0};
-    test_front<2, vector_tree_tag>(2, is_mini);
-    test_front<0, vector_tree_tag>(2, is_mini);
-    test_front<2, quad_tree_tag>(2, is_mini);
-    test_front<0, quad_tree_tag>(2, is_mini);
-    test_front<2, kd_tree_tag>(2, is_mini);
-    test_front<0, kd_tree_tag>(2, is_mini);
-    test_front<2, boost_tree_tag>(2, is_mini);
-    test_front<2, r_tree_tag>(2, is_mini);
-    test_front<0, r_tree_tag>(2, is_mini);
-    test_front<0, r_tree_tag>(2, is_mini);
-    test_front<2, r_star_tree_tag>(2, is_mini);
-    test_front<0, r_star_tree_tag>(2, is_mini);
-
-    is_mini = {1, 1};
-    test_front<2, vector_tree_tag>(2, is_mini);
-    test_front<0, vector_tree_tag>(2, is_mini);
-    test_front<2, quad_tree_tag>(2, is_mini);
-    test_front<0, quad_tree_tag>(2, is_mini);
-    test_front<2, kd_tree_tag>(2, is_mini);
-    test_front<0, kd_tree_tag>(2, is_mini);
-    test_front<2, boost_tree_tag>(2, is_mini);
-    test_front<2, r_tree_tag>(2, is_mini);
-    test_front<0, r_tree_tag>(2, is_mini);
-    test_front<0, r_tree_tag>(2, is_mini);
-    test_front<2, r_star_tree_tag>(2, is_mini);
-    test_front<0, r_star_tree_tag>(2, is_mini);
+    test_all_tags<2>({0, 0});
+    test_all_tags<2>({0, 1});
+    test_all_tags<2>({1, 0});
+    test_all_tags<2>({1, 1});
 }
 
 #ifdef BUILD_LONG_TESTS
 TEST_CASE("Front - 3 dimensions") {
     using namespace pareto;
-    std::vector<uint8_t> is_mini = {0, 0, 0};
-    test_front<3, vector_tree_tag>(3, is_mini);
-    test_front<0, vector_tree_tag>(3, is_mini);
-    test_front<3, quad_tree_tag>(3, is_mini);
-    test_front<0, quad_tree_tag>(3, is_mini);
-    test_front<3, kd_tree_tag>(3, is_mini);
-    test_front<0, kd_tree_tag>(3, is_mini);
-    test_front<3, boost_tree_tag>(3, is_mini);
-    test_front<3, r_tree_tag>(3, is_mini);
-    test_front<0, r_tree_tag>(3, is_mini);
-    test_front<3, r_star_tree_tag>(3, is_mini);
-    test_front<0, r_star_tree_tag>(3, is_mini);
-
-    is_mini = {0, 1, 0};
-    test_front<3, vector_tree_tag>(3, is_mini);
-    test_front<0, vector_tree_tag>(3, is_mini);
-    test_front<3, quad_tree_tag>(3, is_mini);
-    test_front<0, quad_tree_tag>(3, is_mini);
-    test_front<3, kd_tree_tag>(3, is_mini);
-    test_front<0, kd_tree_tag>(3, is_mini);
-    test_front<3, boost_tree_tag>(3, is_mini);
-    test_front<3, r_tree_tag>(3, is_mini);
-    test_front<0, r_tree_tag>(3, is_mini);
-    test_front<3, r_star_tree_tag>(3, is_mini);
-    test_front<0, r_star_tree_tag>(3, is_mini);
-
-    is_mini = {1, 0, 0};
-    test_front<3, vector_tree_tag>(3, is_mini);
-    test_front<0, vector_tree_tag>(3, is_mini);
-    test_front<3, quad_tree_tag>(3, is_mini);
-    test_front<0, quad_tree_tag>(3, is_mini);
-    test_front<3, kd_tree_tag>(3, is_mini);
-    test_front<0, kd_tree_tag>(3, is_mini);
-    test_front<3, boost_tree_tag>(3, is_mini);
-    test_front<3, r_tree_tag>(3, is_mini);
-    test_front<0, r_tree_tag>(3, is_mini);
-    test_front<3, r_star_tree_tag>(3, is_mini);
-    test_front<0, r_star_tree_tag>(3, is_mini);
-
+    test_all_tags<3>({0, 0, 0});
+    test_all_tags<3>({0, 1, 0});
+    test_all_tags<3>({1, 0, 0});
 }
 
 TEST_CASE("Front - 5 dimensions") {
     using namespace pareto;
-    std::vector<uint8_t> is_mini = {0, 0, 0, 0, 0};
-    test_front<5, vector_tree_tag>(5, is_mini);
-    test_front<0, vector_tree_tag>(5, is_mini);
-    test_front<5, quad_tree_tag>(5, is_mini);
-    test_front<0, quad_tree_tag>(5, is_mini);
-    test_front<5, kd_tree_tag>(5, is_mini);
-    test_front<0, kd_tree_tag>(5, is_mini);
-    test_front<5, boost_tree_tag>(5, is_mini);
-    test_front<5, r_tree_tag>(5, is_mini);
-    test_front<0, r_tree_tag>(5, is_mini);
-    test_front<5, r_star_tree_tag>(5, is_mini);
-    test_front<0, r_star_tree_tag>(5, is_mini);
-
-    is_mini = {0, 0, 1, 0, 0};
-    test_front<5, vector_tree_tag>(5, is_mini);
-    test_front<0, vector_tree_tag>(5, is_mini);
-    test_front<5, quad_tree_tag>(5, is_mini);
-    test_front<0, quad_tree_tag>(5, is_mini);
-    test_front<5, kd_tree_tag>(5, is_mini);
-    test_front<0, kd_tree_tag>(5, is_mini);
-    test_front<5, boost_tree_tag>(5, is_mini);
-    test_front<5, r_tree_tag>(5, is_mini);
-    test_front<0, r_tree_tag>(5, is_mini);
-    test_front<5, r_star_tree_tag>(5, is_mini);
-    test_front<0, r_star_tree_tag>(5, is_mini);
-
-    is_mini = {1, 0, 0, 1, 0};
-    test_front<5, vector_tree_tag>(5, is_mini);
-    test_front<0, vector_tree_tag>(5, is_mini);
-    test_front<5, quad_tree_tag>(5, is_mini);
-    test_front<0, quad_tree_tag>(5, is_mini);
-    test_front<5, kd_tree_tag>(5, is_mini);
-    test_front<0, kd_tree_tag>(5, is_mini);
-    test_front<5, boost_tree_tag>(5, is_mini);
-    test_front<5, r_tree_tag>(5, is_mini);
-    test_front<0, r_tree_tag>(5, is_mini);
-    test_front<5, r_star_tree_tag>(5, is_mini);
-    test_front<0, r_star_tree_tag>(5, is_mini);
-
-    is_mini = {0, 0, 0, 1, 0};
-    test_front<5, vector_tree_tag>(5, is_mini);
-    test_front<0, vector_tree_tag>(5, is_mini);
-    test_front<5, quad_tree_tag>(5, is_mini);
-    test_front<0, quad_tree_tag>(5, is_mini);
-    test_front<5, kd_tree_tag>(5, is_mini);
-    test_front<0, kd_tree_tag>(5, is_mini);
-    test_front<5, boost_tree_tag>(5, is_mini);
-    test_front<5, r_tree_tag>(5, is_mini);
-    test_front<0, r_tree_tag>(5, is_mini);
-    test_front<5, r_star_tree_tag>(5, is_mini);
-    test_front<0, r_star_tree_tag>(5, is_mini);
-
+    test_all_tags<5>({0, 0, 0, 0, 0});
+    test_all_tags<5>({0, 0, 1, 0, 0});
+    test_all_tags<5>({1, 0, 0, 1, 0});
+    test_all_tags<5>({0, 0, 0, 1, 0});
 }
 
 TEST_CASE("Front - 9 dimensions") {
     using namespace pareto;
-    std::vector<uint8_t> is_mini = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-    test_front<9, vector_tree_tag>(9, is_mini);
-    test_front<0, vector_tree_tag>(9, is_mini);
-    test_front<9, quad_tree_tag>(9, is_mini);
-    test_front<0, quad_tree_tag>(9, is_mini);
-    test_front<9, kd_tree_tag>(9, is_mini);
-    test_front<0, kd_tree_tag>(9, is_mini);
-    test_front<9, boost_tree_tag>(9, is_mini);
-    test_front<9, r_tree_tag>(9, is_mini);
-    test_front<0, r_tree_tag>(9, is_mini);
-    test_front<9, r_star_tree_tag>(9, is_mini);
-    test_front<0, r_star_tree_tag>(9, is_mini);
-
-    is_mini = {0, 0, 0, 0, 0, 0, 0, 0, 1};
-    test_front<9, vector_tree_tag>(9, is_mini);
-    test_front<0, vector_tree_tag>(9, is_mini);
-    test_front<9, quad_tree_tag>(9, is_mini);
-    test_front<0, quad_tree_tag>(9, is_mini);
-    test_front<9, kd_tree_tag>(9, is_mini);
-    test_front<0, kd_tree_tag>(9, is_mini);
-    test_front<9, boost_tree_tag>(9, is_mini);
-    test_front<9, r_tree_tag>(9, is_mini);
-    test_front<0, r_tree_tag>(9, is_mini);
-    test_front<9, r_star_tree_tag>(9, is_mini);
-    test_front<0, r_star_tree_tag>(9, is_mini);
-
-    is_mini = {0, 0, 0, 1, 0, 0, 0, 0, 0};
-    test_front<9, vector_tree_tag>(9, is_mini);
-    test_front<0, vector_tree_tag>(9, is_mini);
-    test_front<9, quad_tree_tag>(9, is_mini);
-    test_front<0, quad_tree_tag>(9, is_mini);
-    test_front<9, kd_tree_tag>(9, is_mini);
-    test_front<0, kd_tree_tag>(9, is_mini);
-    test_front<9, boost_tree_tag>(9, is_mini);
-    test_front<9, r_tree_tag>(9, is_mini);
-    test_front<0, r_tree_tag>(9, is_mini);
-    test_front<9, r_star_tree_tag>(9, is_mini);
-    test_front<0, r_star_tree_tag>(9, is_mini);
-
-    is_mini = {0, 0, 0, 0, 1, 1, 0, 0, 1};
-    test_front<9, vector_tree_tag>(9, is_mini);
-    test_front<0, vector_tree_tag>(9, is_mini);
-    test_front<9, quad_tree_tag>(9, is_mini);
-    test_front<0, quad_tree_tag>(9, is_mini);
-    test_front<9, kd_tree_tag>(9, is_mini);
-    test_front<0, kd_tree_tag>(9, is_mini);
-    test_front<9, boost_tree_tag>(9, is_mini);
-    test_front<9, r_tree_tag>(9, is_mini);
-    test_front<0, r_tree_tag>(9, is_mini);
-    test_front<9, r_star_tree_tag>(9, is_mini);
-    test_front<0, r_star_tree_tag>(9, is_mini);
-
-    is_mini = {0, 0, 0, 0, 0, 1, 0, 0, 1};
-    test_front<9, vector_tree_tag>(9, is_mini);
-    test_front<0, vector_tree_tag>(9, is_mini);
-    test_front<9, quad_tree_tag>(9, is_mini);
-    test_front<0, quad_tree_tag>(9, is_mini);
-    test_front<9, kd_tree_tag>(9, is_mini);
-    test_front<0, kd_tree_tag>(9, is_mini);
-    test_front<9, boost_tree_tag>(9, is_mini);
-    test_front<9, r_tree_tag>(9, is_mini);
-    test_front<0, r_tree_tag>(9, is_mini);
-    test_front<9, r_star_tree_tag>(9, is_mini);
-    test_front<0, r_star_tree_tag>(9, is_mini);
-
+    test_all_tags<9>({0, 0, 0, 0, 0, 0, 0, 0, 0});
+    test_all_tags<9>({0, 0, 0, 0, 0, 0, 0, 0, 1});
+    test_all_tags<9>({0, 0, 0, 1, 0, 0, 0, 0, 0});
+    test_all_tags<9>({0, 0, 0, 0, 1, 1, 0, 0, 1});
+    test_all_tags<9>({0, 0, 0, 0, 0, 1, 0, 0, 1});
 }
 
 TEST_CASE("Front - 13 dimensions") {
     using namespace pareto;
-    std::vector<uint8_t> is_mini = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    test_front<13, vector_tree_tag>(13, is_mini);
-    test_front<0, vector_tree_tag>(13, is_mini);
-    test_front<13, quad_tree_tag>(13, is_mini);
-    test_front<0, quad_tree_tag>(13, is_mini);
-    test_front<13, kd_tree_tag>(13, is_mini);
-    test_front<0, kd_tree_tag>(13, is_mini);
-    test_front<13, boost_tree_tag>(13, is_mini);
-    test_front<13, r_tree_tag>(13, is_mini);
-    test_front<0, r_tree_tag>(13, is_mini);
-    test_front<13, r_star_tree_tag>(13, is_mini);
-    test_front<0, r_star_tree_tag>(13, is_mini);
-
-    is_mini = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
-    test_front<13, vector_tree_tag>(13, is_mini);
-    test_front<0, vector_tree_tag>(13, is_mini);
-    test_front<13, quad_tree_tag>(13, is_mini);
-    test_front<0, quad_tree_tag>(13, is_mini);
-    test_front<13, kd_tree_tag>(13, is_mini);
-    test_front<0, kd_tree_tag>(13, is_mini);
-    test_front<13, boost_tree_tag>(13, is_mini);
-    test_front<13, r_tree_tag>(13, is_mini);
-    test_front<0, r_tree_tag>(13, is_mini);
-    test_front<13, r_star_tree_tag>(13, is_mini);
-    test_front<0, r_star_tree_tag>(13, is_mini);
-
-    is_mini = {0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1};
-    test_front<13, vector_tree_tag>(13, is_mini);
-    test_front<0, vector_tree_tag>(13, is_mini);
-    test_front<13, quad_tree_tag>(13, is_mini);
-    test_front<0, quad_tree_tag>(13, is_mini);
-    test_front<13, kd_tree_tag>(13, is_mini);
-    test_front<0, kd_tree_tag>(13, is_mini);
-    test_front<13, boost_tree_tag>(13, is_mini);
-    test_front<13, r_tree_tag>(13, is_mini);
-    test_front<0, r_tree_tag>(13, is_mini);
-    test_front<13, r_star_tree_tag>(13, is_mini);
-    test_front<0, r_star_tree_tag>(13, is_mini);
-
-    is_mini = {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0};
-    test_front<13, vector_tree_tag>(13, is_mini);
-    test_front<0, vector_tree_tag>(13, is_mini);
-    test_front<13, quad_tree_tag>(13, is_mini);
-    test_front<0, quad_tree_tag>(13, is_mini);
-    test_front<13, kd_tree_tag>(13, is_mini);
-    test_front<0, kd_tree_tag>(13, is_mini);
-    test_front<13, boost_tree_tag>(13, is_mini);
-    test_front<13, r_tree_tag>(13, is_mini);
-    test_front<0, r_tree_tag>(13, is_mini);
-    test_front<13, r_star_tree_tag>(13, is_mini);
-    test_front<0, r_star_tree_tag>(13, is_mini);
-
-    is_mini = {0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1};
-    test_front<13, vector_tree_tag>(13, is_mini);
-    test_front<0, vector_tree_tag>(13, is_mini);
-    test_front<13, quad_tree_tag>(13, is_mini);
-    test_front<0, quad_tree_tag>(13, is_mini);
-    test_front<13, kd_tree_tag>(13, is_mini);
-    test_front<0, kd_tree_tag>(13, is_mini);
-    test_front<13, boost_tree_tag>(13, is_mini);
-    test_front<13, r_tree_tag>(13, is_mini);
-    test_front<0, r_tree_tag>(13, is_mini);
-    test_front<13, r_star_tree_tag>(13, is_mini);
-    test_front<0, r_star_tree_tag>(13, is_mini);
-
+    test_all_tags<13>({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0});
+    test_all_tags<13>({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1});
+    test_all_tags<13>({0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1});
+    test_all_tags<13>({0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0});
+    test_all_tags<13>({0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1});
 }
 #endif
-
-uint64_t seed() {
-    //    static uint64_t seed = static_cast<uint64_t>(std::random_device()()) |
-    //                           std::chrono::high_resolution_clock::now().time_since_epoch().count();
-    static uint64_t seed = 323122652497823;
-    std::cout << "Test seed: " << seed << std::endl;
-    return seed;
-}
-
-std::mt19937 &generator() {
-    static std::mt19937 g(static_cast<unsigned int>(seed()));
-    return g;
-}
-
-bool rand_flip() {
-    static std::uniform_int_distribution<unsigned> ud(0, 1);
-    return ud(generator());
-}
-
-unsigned randi() {
-    static std::uniform_int_distribution<unsigned> ud(0, 40);
-    return ud(generator());
-    ;
-}
-
-double randu() {
-    static std::uniform_real_distribution<double> ud(0., 1.);
-    return ud(generator());
-}
-
-double randn() {
-    static std::normal_distribution nd;
-    return nd(generator());
-}
-
-bool next_combination(uint8_t_vector_iterator first,
-                      uint8_t_vector_iterator last, uint8_t max_value) {
-    using value_type = uint8_t;
-    if (first == last)
-        return false;
-    auto i = last;
-    do {
-        --i;
-        if (*i == max_value) {
-            *i = std::numeric_limits<value_type>::min();
-        } else {
-            ++(*i);
-            return true;
-        }
-    } while (i != first);
-    return false;
-}
