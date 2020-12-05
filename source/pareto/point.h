@@ -89,14 +89,12 @@ namespace pareto {
         }
 
         /// \brief Copy constructor
-        point(const point &x) {
-            values_ = x.values_;
-        }
+        point(const point &rhs)
+                : values_(rhs.values_) {}
 
         /// \brief Move constructor
-        point(point &&x) noexcept {
-            values_ = std::move(x.values_);
-        }
+        point(point &&rhs) noexcept
+                : values_(std::move(rhs.values_)) {}
 
         /// \brief Constructor to set values from any other container
         template<class Rng>
