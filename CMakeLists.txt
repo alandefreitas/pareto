@@ -3,7 +3,7 @@
 #######################################################
 # Project information
 cmake_minimum_required(VERSION 3.14)
-project(pareto VERSION 1.1.1)
+project(pareto VERSION 1.1.2)
 set(CMAKE_CXX_STANDARD 17)
 set(PARETO_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -33,7 +33,7 @@ option(BUILD_PACKAGE "Build an installation package" ${MASTER_PROJECT})
 
 # How to build
 option(BUILD_LONG_TESTS "Build the Data Structure Benchmark (It takes very long)" ON)
-option(BUILD_BOOST_TREE "Include R-Tree using Boost.Geometry (Boost dependency). This was initially used for our benchmarks and it's soon to be deprecated. Performance is very poor. Not being maintained. Lots of dependencies on deprecated boost features. Lots of warnings." OFF)
+option(BUILD_BOOST_TREE "Include R-Tree using Boost.Geometry (Boost dependency). Deprecated: see pareto/tree/boost_tree.h" OFF)
 
 set_debug_booleans()
 set(DEFAULT_MAX_NUM_DIMENSIONS_PYTHON 3)
@@ -45,7 +45,6 @@ endif()
 message("MAX_NUM_DIMENSIONS_PYTHON=${MAX_NUM_DIMENSIONS_PYTHON}")
 
 option(BUILD_BINDING_FOR_ALL_STRUCTURES "Make all data structures available in the Python bindings" ON)
-option(BUILD_FRONTS_WITH_TRASE "Trase includes functions to plot pareto fronts. These were only used for the documentation." OFF)
 option(BUILD_WITH_PEDANTIC_WARNINGS "Use pedantic warnings. This is useful for developers because many of these warnings will be in continuous integration anyway." ${DEBUG_MODE})
 option(BUILD_WITH_UTF8 "Accept utf-8 in MSVC by default." ON)
 if (BUILD_WITH_UTF8 AND MSVC)
