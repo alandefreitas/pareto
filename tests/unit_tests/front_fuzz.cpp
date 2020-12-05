@@ -1,6 +1,8 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
+#ifdef BUILD_UNIT_TEST_EXTERN_INSTANTIATION
 #include "instantiation/test_instantiations.h"
+#endif
 #include "../test_helpers.h"
 
 template <size_t COMPILE_DIMENSION,

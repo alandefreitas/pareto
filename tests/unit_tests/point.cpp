@@ -2,7 +2,13 @@
 
 #include <catch2/catch.hpp>
 
+#ifdef BUILD_UNIT_TEST_EXTERN_INSTANTIATION
 #include "instantiation/test_instantiations.h"
+#endif
+
+#include <pareto/front.h>
+#include <pareto/point.h>
+
 
 /// The point object has a better distance function
 /// This one is for comparisons only

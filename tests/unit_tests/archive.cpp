@@ -1,10 +1,16 @@
 #define CATCH_CONFIG_MAIN
+
 #include <catch2/catch.hpp>
 #include <pareto/archive.h>
 #include <pareto/front.h>
+
+#ifdef BUILD_UNIT_TEST_EXTERN_INSTANTIATION
+#include "instantiation/test_instantiations.h"
+#endif
+
 #include "../test_helpers.h"
 
-template <size_t COMPILE_DIMENSION, typename TAG = pareto::default_tag<COMPILE_DIMENSION>>
+template<size_t COMPILE_DIMENSION, typename TAG = pareto::default_tag<COMPILE_DIMENSION>>
 void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
                   const std::vector<uint8_t> &is_mini = {0x00}) {
     size_t test_dimension = COMPILE_DIMENSION != 0 ? COMPILE_DIMENSION : RUNTIME_DIMENSION;
@@ -161,6 +167,7 @@ void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         // erase by point / key
         size_t s = ar2.size();
         ar2.erase(ar2.begin()->first);
+        REQUIRE(ar2.check_invariants());
         REQUIRE(ar2.size() == s - 1);
         ar2.insert(random_value());
         s = ar2.size();
@@ -368,26 +375,27 @@ void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
 template<size_t M>
 void test_all_tags(const std::vector<uint8_t> &is_mini) {
     using namespace pareto;
+    constexpr bool only_main_tags = false;
     test_archive<M, vector_tree_tag>(M, is_mini);
     test_archive<0, vector_tree_tag>(M, is_mini);
-    test_archive<M, quad_tree_tag>(M, is_mini);
-    test_archive<0, quad_tree_tag>(M, is_mini);
     test_archive<M, kd_tree_tag>(M, is_mini);
     test_archive<0, kd_tree_tag>(M, is_mini);
-    test_archive<M, boost_tree_tag>(M, is_mini);
-    test_archive<M, r_tree_tag>(M, is_mini);
-    test_archive<0, r_tree_tag>(M, is_mini);
-    test_archive<M, r_star_tree_tag>(M, is_mini);
-    test_archive<0, r_star_tree_tag>(M, is_mini);
+    if constexpr (!only_main_tags) {
+        test_archive<M, quad_tree_tag>(M, is_mini);
+        test_archive<0, quad_tree_tag>(M, is_mini);
+        test_archive<M, boost_tree_tag>(M, is_mini);
+        test_archive<M, r_tree_tag>(M, is_mini);
+        test_archive<0, r_tree_tag>(M, is_mini);
+        test_archive<M, r_star_tree_tag>(M, is_mini);
+        test_archive<0, r_star_tree_tag>(M, is_mini);
+    }
 }
 
 #ifdef BUILD_LONG_TESTS
-
 TEST_CASE("Archive - 1 dimension") {
     using namespace pareto;
     test_all_tags<1>({0});
 }
-
 #endif
 
 TEST_CASE("Archive - 2 dimensions") {
@@ -398,7 +406,6 @@ TEST_CASE("Archive - 2 dimensions") {
     test_all_tags<2>({1, 1});
 }
 
-#ifdef BUILD_LONG_TESTS
 TEST_CASE("Archive - 3 dimensions") {
     using namespace pareto;
     test_all_tags<3>({0, 0, 0});
@@ -407,13 +414,13 @@ TEST_CASE("Archive - 3 dimensions") {
 
 }
 
+#ifdef BUILD_LONG_TESTS
 TEST_CASE("Archive - 5 dimensions") {
     using namespace pareto;
     test_all_tags<5>({0, 0, 0, 0, 0});
     test_all_tags<5>({0, 0, 1, 0, 0});
     test_all_tags<5>({1, 0, 0, 1, 0});
     test_all_tags<5>({0, 0, 0, 1, 0});
-
 }
 
 TEST_CASE("Archive - 9 dimensions") {
@@ -423,7 +430,6 @@ TEST_CASE("Archive - 9 dimensions") {
     test_all_tags<9>({0, 0, 0, 1, 0, 0, 0, 0, 0});
     test_all_tags<9>({0, 0, 0, 0, 1, 1, 0, 0, 1});
     test_all_tags<9>({0, 0, 0, 0, 0, 1, 0, 0, 1});
-
 }
 
 TEST_CASE("Archive - 13 dimensions") {
