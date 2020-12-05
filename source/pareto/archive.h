@@ -680,6 +680,17 @@ namespace pareto {
             insert(first, last);
         }
 
+        /// \brief Find first front that does not dominate p
+        size_t front_search(const point_type &p) {
+            // This lambda returns {0,0,0,0,0,1,1,1,1,1,1} on the fronts
+            // 0 if it does dominate p
+            // 1 if it does not dominate p
+            auto dominate_fn = [&p](const pareto_front_type &a, const bool &b) {
+                return a.dominates(p) && b;
+            };
+            return std::lower_bound(data_.begin(), data_.end(), true, dominate_fn) - data_.begin();
+        }
+
         /// \brief Insert element pair
         /// Insertion removes any point dominated by the point
         /// before inserting the element in the rtree
@@ -688,74 +699,76 @@ namespace pareto {
         /// \return True if insertion happened successfully
         std::pair<iterator, bool> insert(const value_type &v) {
             maybe_adjust_dimensions(v);
-            return try_insert(0, v);
+            return try_insert(front_search(v.first), v);
         }
 
-        void normalize_corners(point_type &min_corner, point_type &max_corner) const {
-            for (size_t i = 0; i < min_corner.dimensions(); ++i) {
-                if (min_corner[i] > max_corner[i]) {
-                    std::swap(min_corner[i], max_corner[i]);
-                }
-            }
-        }
-
+        /// \brief Try to insert the value v in one of the fronts from P^{lower bound} to P^{|A|}
+        /// \param front_lower_bound_idx Index of the first front that might received v
+        /// \param v Value to insert
+        /// \return Iterator to the new value
         std::pair<iterator, bool> try_insert(size_t front_idx, const value_type &v) {
-            // Find first front that does not dominate v.first
-            auto it = std::lower_bound(data_.begin() + front_idx, data_.end(), true,
-                                       [&v](const auto &a, const bool &b) {
-                                           return !a.dominates(v.first) < b;
-                                       });
-            // if the front it does not dominate the solution
-            if (it != data_.end()) {
-                size_t i = it - data_.begin();
-                // get all points this solution dominates in front i
-                auto dominated_it = data_[i].data_.begin_intersection(v.first, data_[i].worst(),
-                                                                      [&v, this](const value_type &x) {
-                                                                          return v.first.dominates(x.first,
-                                                                                                   is_minimization_);
-                                                                      });
+            const bool front_is_valid = front_idx < data_.size();
+            if (front_is_valid) {
+                // Get all points this solution dominates in front i
+                auto v_dominates_x = [&v, this](const value_type &x) {
+                    return v.first.dominates(x.first, is_minimization_);
+                };
+                auto dominated_it = data_[front_idx].data_.begin_intersection(v.first, data_[front_idx].worst(),
+                                                                              v_dominates_x);
+
+                // Copy dominated solutions to vector
                 // This does not work on some compilers
                 // std::vector<value_type> dominated_solutions(dominated_it, data_[i].data_.end());
                 std::vector<value_type> dominated_solutions;
-                auto begin_it = data_[i].data_.end();
-                auto end_it = data_[i].data_.end();
+                auto begin_it = dominated_it;
+                auto end_it = data_[front_idx].data_.end();
                 while (begin_it != end_it) {
                     dominated_solutions.emplace_back(*begin_it);
                     ++begin_it;
                 }
-                // remove all of them from the current front
-                data_[i].erase(dominated_it, typename pareto_front_type::const_iterator(data_[i].data_.end()));
-                // recursively insert all of them to higher fronts i+1, i+2, ...
+
+                // Remove dominated solutions from the current front
+                data_[front_idx].erase(dominated_it,
+                                       typename pareto_front_type::const_iterator(data_[front_idx].data_.end()));
+
+                // Recursively insert dominated solutions into next front
                 for (const auto &v2: dominated_solutions) {
-                    try_insert(i + 1, v2);
+                    try_insert(front_idx + 1, v2);
                 }
-                // insert v in this front
-                auto [pfit, ok] = data_[i].insert(v);
+
+                // Insert v in this front
+                auto[pfit, ok] = data_[front_idx].insert(v);
+
+                // Create archive iterator to this new solution
                 std::vector<std::pair<size_t, pareto_front_iterator>> begins;
-                begins.emplace_back(i, pfit);
+                begins.emplace_back(front_idx, pfit);
                 iterator it2 = iterator(begins, this);
-                // if inserting v made the archive exceed its max size
+
+                // If inserting v made the archive exceed its max size
                 if (size() > max_size()) {
                     resize(max_size());
-                    // iterator might be invalidated
-                    // item might even have been removed
-                    // look for item again
+
+                    // Fix iterator if invalidated
+                    // Iterator might be invalidated
+                    // New item might even have been removed
+                    // Look for item again to fix it
                     auto it3 = find(v.first);
                     return std::make_pair(it3, it3 != end());
                 }
                 return std::make_pair(it2, true);
-            }
-            // if all fronts dominate v
-            // if there's room for more elements in the archive
-            if (size() < max_size()) {
-                // create a new last front and put it there
-                data_.emplace_back(pareto_front_type(is_minimization_, alloc_));
-                auto[pfit, ok] = data_.back().insert(v);
-                if (ok) {
-                    std::vector<std::pair<size_t, pareto_front_iterator>> begins;
-                    begins.emplace_back(data_.size() - 1, pfit);
-                    iterator it2 = iterator(begins, this, pfit, 0);
-                    return std::make_pair(it2, true);
+            } else {
+                // If all fronts dominate v or there are no fronts yet
+                bool there_is_space_in_the_archive = size() < max_size();
+                if (there_is_space_in_the_archive) {
+                    // create a new last front and put it there
+                    data_.emplace_back(pareto_front_type(is_minimization_, alloc_));
+                    auto[pfit, ok] = data_.back().insert(v);
+                    if (ok) {
+                        std::vector<std::pair<size_t, pareto_front_iterator>> begins;
+                        begins.emplace_back(data_.size() - 1, pfit);
+                        iterator it2 = iterator(begins, this, pfit, 0);
+                        return std::make_pair(it2, true);
+                    }
                 }
             }
             return {end(), false};
@@ -1330,31 +1343,31 @@ namespace pareto {
         /// to understand. However, it does not really provide pertinent
         /// information on the repartition of the points along the Pareto
         /// front approximation.
-        double uniformity() {
+        [[nodiscard]] double uniformity() const {
             return data_[0].uniformity();
         }
 
-        double average_distance() {
+        [[nodiscard]] double average_distance() const {
             return data_[0].average_distance();
         }
 
-        double average_nearest_distance(size_t k = 5) {
+        [[nodiscard]] double average_nearest_distance(size_t k = 5) const {
             return data_[0].average_nearest_distance(k);
         }
 
-        double average_crowding_distance() {
+        [[nodiscard]] double average_crowding_distance() const {
             return data_[0].average_crowding_distance();
         }
 
-        double crowding_distance(const_iterator element, point_type worst_point, point_type ideal_point) {
+        double crowding_distance(const_iterator element, point_type worst_point, point_type ideal_point) const {
             return data_[element.current_front_].crowding_distance(element.current_iter_, worst_point, ideal_point);
         }
 
-        double crowding_distance(const_iterator element) {
+        double crowding_distance(const_iterator element) const {
             return data_[element.current_front_].crowding_distance(element.current_iter_, worst(), ideal());
         }
 
-        double crowding_distance(const point_type& point) {
+        double crowding_distance(const point_type &point) const {
             auto element = find(point);
             if (element != end()) {
                 return crowding_distance(element, worst(), ideal());
@@ -1685,6 +1698,21 @@ namespace pareto {
             return find(k) != end();
         }
 
+        /// \brief Check if front passes the variants that define a front
+        [[nodiscard]] bool check_invariants() const {
+            for (size_t i = 0; i < data_.size(); ++i) {
+                if (!data_[i].check_invariants()) {
+                    return false;
+                }
+                if (i < data_.size() - 1) {
+                    if (!data_[i + 1].is_completely_dominated_by(data_[i])) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
         friend std::ostream &operator<<(std::ostream &os, const archive &ar) {
             os << "Archive front (" << ar.size() << " elements - {";
             for (size_t i = 0; i < ar.is_minimization_.size() - 1; ++i) {
@@ -1694,96 +1722,7 @@ namespace pareto {
             return os;
         }
 
-#ifdef BUILD_FRONTS_WITH_TRASE
-        std::string svg(std::optional<point_type> extra_point = std::nullopt,
-                        std::optional<const_iterator> it = std::nullopt) const {
-            std::shared_ptr<trase::Figure> fig = trase::figure();
-            point_type min_point = ideal();
-            point_type worst_point = worst();
-            point_type max_point = worst_point;
-            normalize_corners(min_point, max_point);
-            for (size_t i = 0; i < data_.size(); ++i) {
-                float point_color = static_cast<float>(i)/1.4/data_.size();
-                if (it) {
-                    auto pareto_it = std::find_if(it->begins_.begin(), it->begins_.end(), [&i](const auto& begin) {
-                        return begin.first == i;
-                    });
-                    if (pareto_it != it->begins_.end()) {
-                        if (i == 0) {
-                            data_[i].setup_trase_figure(fig, min_point, max_point, worst_point, true, true, true, point_color, extra_point, pareto_it->second);
-                        } else {
-                            data_[i].setup_trase_figure(fig, min_point, max_point, worst_point, false, false, false, point_color, std::nullopt, pareto_it->second);
-                        }
-                        continue;
-                    }
-                }
-                if (i == 0) {
-                    data_[i].setup_trase_figure(fig, min_point, max_point, worst_point, true, true, true, point_color, extra_point);
-                } else {
-                    data_[i].setup_trase_figure(fig, min_point, max_point, worst_point, false, false, false, point_color);
-                }
-            }
-            std::stringstream ss;
-            trase::BackendSVG backend(ss);
-            fig->draw(backend);
-            return ss.str();
-        }
-#endif
-
     private /* functions */:
-//        /// \brief Clear solutions are dominated by p
-//        /// Pareto-optimal front is the set F consisting of
-//        /// all non-dominated solutions x in the whole
-//        /// search space. No solution can dominate another
-//        /// solution. Note that this means two solutions
-//        /// might have the same values though.
-//        size_t clear_dominated(point_type p) {
-//            // The modification of the rtree may invalidate the iterators
-//            // https://www.boost.org/doc/libs/1_60_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/boost__geometry__index__rtree/begin__.html
-//            // Remove doesn't take iterators pointing to values
-//            // Remove removes values equal to these passed as a range
-//            // https://www.boost.org/doc/libs/1_73_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/group__rtree__functions/remove_rtree_________iterator__iterator_.html
-//            // We have to make only one query and get a copy of all ITEMS (not iterators)
-//            // we want to remove.
-//            if (!empty()) {
-//                // Query
-//                const_iterator it = data_.begin_intersection(p, worst(), [&p, this](const value_type &x) {
-//                    return p.dominates(x.first, is_minimization_);
-//                });
-//                // erase these elements
-//                return erase(it, end());
-//            }
-//            return 0;
-//        }
-//
-//        /// \brief Clear all solutions dominated by some point
-//        size_t clear_dominated() {
-//            // The modification of the rtree may invalidate the iterators
-//            // https://www.boost.org/doc/libs/1_60_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/boost__geometry__index__rtree/begin__.html
-//            // Remove doesn't take iterators pointing to values
-//            // Remove removes values equal to these passed as a range
-//            // https://www.boost.org/doc/libs/1_73_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/group__rtree__functions/remove_rtree_________iterator__iterator_.html
-//            // We have to make only one query and get a copy of all ITEMS (not iterators)
-//            // we want to remove.
-//            if (size() > 1) {
-//                // Query everyone
-//                // Put them all in a separate list
-//                // because iterators will be invalidated
-//                auto it = find_intersection(ideal(), worst());
-//                std::vector<value_type> all(it, end());
-//                // Iterate removing points they dominate
-//                size_t sum_removed = 0;
-//                for (const auto&[k, v]: all) {
-//                    // if k hasn't been removed yet
-//                    if (find(k) != end()) {
-//                        sum_removed += clear_dominated(k);
-//                    }
-//                }
-//                return sum_removed;
-//            }
-//            return 0;
-//        }
-
         void maybe_resize(std::array<uint8_t, number_of_compile_dimensions> &v [[maybe_unused]], size_t n [[maybe_unused]]) {}
 
         void maybe_resize(std::vector<uint8_t> &v, size_t n) {
