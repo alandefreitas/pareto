@@ -1,21 +1,6 @@
 #######################################################
 ### Dependencies                                    ###
 #######################################################
-# - Trase library
-# This is a package for svg plots
-# We only use this for the documentation
-# Future work: replace trase with matplotplusplus
-if (BUILD_FRONTS_WITH_TRASE)
-    CPMAddPackage(
-            NAME trase
-            GITHUB_REPOSITORY trase-cpp/trase
-            GIT_TAG 607404cf4b36e0d7fcbe10ee2a2078de7c01d194
-            VERSION 0.0.1
-            OPTIONS
-            "trase_BUILD_OPENGL OFF"
-    )
-endif()
-
 # Hypervolume computation in C
 # http://lopez-ibanez.eu/hypervolume
 # This is bundled because it's not on a git repository.
@@ -24,11 +9,13 @@ add_library(hv pareto/hv-2.0rc2/hv.h pareto/hv-2.0rc2/hv.c)
 target_compile_definitions(hv PRIVATE VARIANT=4)
 set_target_properties(hv PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
+# - Geometry package
+# This is a boost library we only use for the benchmarks
+# This tree type is now deprecated and will be removed from
+# later versions
 if (BUILD_BOOST_TREE)
-    # - Geometry package
-    # This is a boost library we only use for the benchmarks
     find_package(Boost REQUIRED)
-endif()
+endif ()
 
 find_package(Threads)
 
@@ -56,17 +43,8 @@ endif()
 if (BUILD_BOOST_TREE)
     target_include_directories(pareto INTERFACE ${Boost_INCLUDE_DIR})
     target_compile_definitions(pareto INTERFACE BUILD_BOOST_TREE)
-    target_compile_options(pareto INTERFACE -Wno-\#pragma-messages -Wno-unused-parameter)
+    target_compile_options(pareto INTERFACE -Wno-\#pragma-messages -Wno-unused-parameter -Wno-deprecated-declarations)
 endif()
-
-if (BUILD_FRONTS_WITH_TRASE)
-    target_link_libraries(pareto INTERFACE trase)
-    # Retroactively make trase -fPIC
-    set_target_properties(trase PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
-    target_compile_definitions(pareto INTERFACE BUILD_FRONTS_WITH_TRASE)
-endif()
-
-
 
 #######################################################
 ### Installer                                       ###
