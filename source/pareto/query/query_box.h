@@ -46,25 +46,25 @@ namespace pareto {
         /// \brief Construct box from two points
         /// This is the constructor you are most likely to use
         query_box(const point_type &first, const point_type &second)
-                : first_(first), second_(second) {}
+                : first_(first), second_(second) {
+            normalize_corners(first_,second_);
+        }
 
         /// \brief Construct hyperbox
         /// Use this version only if dimension is set at compile-time
         query_box() {
-            reset();
+            stretch_to_infinity();
         };
 
         /// \brief Construct with n dimensions
         /// Only if dimensions are not set at compile time)
         explicit query_box(size_t n)
                 : first_(n), second_(n) {
-            reset();
+            stretch_to_infinity();
         }
 
         /// \brief Construct box for a single point
-        explicit query_box(const point_type &single_point_box) : query_box(single_point_box, single_point_box) {
-            normalize_corners(first_,second_);
-        }
+        explicit query_box(const point_type &single_point_box) : query_box(single_point_box, single_point_box) {}
 
         /// \brief Construct box from a center and a half width
         query_box(const point_type &center, number_type half_width)
@@ -86,7 +86,7 @@ namespace pareto {
         /// \brief Returns a new bounding box that has the maximum boundaries
         static query_box maximum_bound_box(size_t n) {
             query_box bound(n);
-            bound.reset();
+            bound.stretch_to_infinity();
             return bound;
         }
 
@@ -441,7 +441,7 @@ namespace pareto {
         /// New hyperboxes start with invalid values larger and smaller than any other values
         /// This makes it possible to stretch the hyperbox later because the new value will always
         /// be smaller than min and larger than max
-        void reset() {
+        void stretch_to_infinity() {
             for (std::size_t axis = 0; axis < dimensions(); axis++) {
                 first_[axis] = std::numeric_limits<number_type>::max();
                 second_[axis] = -std::numeric_limits<number_type>::max();
