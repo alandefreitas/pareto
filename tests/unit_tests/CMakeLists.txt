@@ -35,28 +35,28 @@ add_library(tests_point_and_query_box_instantiation
         instantiation/test_instantiations.h
         instantiation/double_point_instantiations.cpp
         instantiation/double_query_box_instantiations.cpp
-)
+        )
 target_link_libraries(tests_point_and_query_box_instantiation PUBLIC pareto)
 target_exception_options(tests_point_and_query_box_instantiation)
 target_bigobj_options(tests_point_and_query_box_instantiation)
 
 # Create test with the tests_point_and_query_box_instantiation
-add_executable(unit_test_point point.cpp)
-target_link_libraries(unit_test_point PUBLIC tests_point_and_query_box_instantiation Catch2)
-target_longtests_definitions(unit_test_point)
-target_exception_options(unit_test_point)
-target_bigobj_options(unit_test_point)
-catch_discover_tests(unit_test_point)
+add_executable(ut_point point.cpp)
+target_link_libraries(ut_point PUBLIC tests_point_and_query_box_instantiation Catch2)
+target_longtests_definitions(ut_point)
+target_exception_options(ut_point)
+target_bigobj_options(ut_point)
+catch_discover_tests(ut_point)
 
 #######################################################
 ### Test memory allocators                          ###
 #######################################################
-add_executable(unit_test_memory memory.cpp)
-target_link_libraries(unit_test_memory PUBLIC pareto Catch2)
-target_longtests_definitions(unit_test_memory)
-target_exception_options(unit_test_memory)
-target_bigobj_options(unit_test_memory)
-catch_discover_tests(unit_test_memory)
+add_executable(ut_memory memory.cpp)
+target_link_libraries(ut_memory PUBLIC pareto Catch2)
+target_longtests_definitions(ut_memory)
+target_exception_options(ut_memory)
+target_bigobj_options(ut_memory)
+catch_discover_tests(ut_memory)
 
 #######################################################
 ### Test tree data structures                       ###
@@ -69,19 +69,19 @@ add_library(tests_tree_instantiation
         instantiation/double_unsigned_r_star_tree_instantiations.cpp
         instantiation/double_unsigned_r_tree_instantiations.cpp
         instantiation/double_unsigned_vector_tree_instantiations.cpp
-    )
+        )
 target_link_libraries(tests_tree_instantiation PUBLIC tests_point_and_query_box_instantiation)
 target_exception_options(tests_tree_instantiation)
 target_bigobj_options(tests_tree_instantiation)
 
 # Create test with the tests_tree_instantiation
-add_executable(unit_test_trees trees.cpp)
-target_link_libraries(unit_test_trees PUBLIC tests_tree_instantiation Catch2)
-target_exception_options(unit_test_trees)
-target_bigobj_options(unit_test_trees)
-target_longtests_definitions(unit_test_trees)
-target_msvc_compile_options(unit_test_trees /wd4305)
-catch_discover_tests(unit_test_trees)
+add_executable(ut_trees trees.cpp)
+target_link_libraries(ut_trees PUBLIC tests_tree_instantiation Catch2)
+target_exception_options(ut_trees)
+target_bigobj_options(ut_trees)
+target_longtests_definitions(ut_trees)
+target_msvc_compile_options(ut_trees /wd4305)
+catch_discover_tests(ut_trees)
 
 #######################################################
 ### Test Pareto fronts (fuzz)                       ###
@@ -95,30 +95,30 @@ add_library(tests_front_instantiation
         instantiation/double_unsigned_front_r_instantiations.cpp
         instantiation/double_unsigned_front_r_star_instantiations.cpp
         instantiation/double_unsigned_front_vector_instantiations.cpp
-    )
+        )
 target_link_libraries(tests_front_instantiation PUBLIC tests_tree_instantiation)
 target_exception_options(tests_front_instantiation)
 target_bigobj_options(tests_front_instantiation)
 
 # Create test with the tests_front_instantiation
-add_executable(unit_test_front_fuzz front_fuzz.cpp)
-target_link_libraries(unit_test_front_fuzz PUBLIC tests_front_instantiation Catch2)
-target_longtests_definitions(unit_test_front_fuzz)
-target_exception_options(unit_test_front_fuzz)
-target_bigobj_options(unit_test_front_fuzz)
-target_pedantic_options(unit_test_front_fuzz)
-catch_discover_tests(unit_test_front_fuzz)
+add_executable(ut_front_fuzz front_fuzz.cpp)
+target_link_libraries(ut_front_fuzz PUBLIC tests_front_instantiation Catch2)
+target_longtests_definitions(ut_front_fuzz)
+target_exception_options(ut_front_fuzz)
+target_bigobj_options(ut_front_fuzz)
+target_pedantic_options(ut_front_fuzz)
+catch_discover_tests(ut_front_fuzz)
 
 #######################################################
 ### Test Pareto fronts (interface)                  ###
 #######################################################
-add_executable(unit_test_front_interface front_interface.cpp)
-target_link_libraries(unit_test_front_interface PUBLIC pareto Catch2)
-target_longtests_definitions(unit_test_front_interface)
-target_exception_options(unit_test_front_interface)
-target_bigobj_options(unit_test_front_interface)
-target_pedantic_options(unit_test_front_interface)
-catch_discover_tests(unit_test_front_interface)
+add_executable(ut_front_interface front_interface.cpp)
+target_link_libraries(ut_front_interface PUBLIC pareto Catch2)
+target_longtests_definitions(ut_front_interface)
+target_exception_options(ut_front_interface)
+target_bigobj_options(ut_front_interface)
+target_pedantic_options(ut_front_interface)
+catch_discover_tests(ut_front_interface)
 
 #######################################################
 ### Test Pareto archives                            ###
@@ -132,15 +132,17 @@ add_library(tests_archive_instantiation
         instantiation/double_unsigned_archive_r_instantiations.cpp
         instantiation/double_unsigned_archive_r_star_instantiations.cpp
         instantiation/double_unsigned_archive_vector_instantiations.cpp
-    )
+        )
 target_link_libraries(tests_archive_instantiation PUBLIC tests_front_instantiation)
 target_exception_options(tests_archive_instantiation)
 target_bigobj_options(tests_archive_instantiation)
 
 # Create test with the tests_archive_instantiation
-add_executable(unit_test_pareto_archive archive.cpp)
-target_link_libraries(unit_test_pareto_archive PUBLIC tests_archive_instantiation Catch2)
-target_longtests_definitions(unit_test_pareto_archive)
-target_exception_options(unit_test_pareto_archive)
-target_bigobj_options(unit_test_pareto_archive)
-catch_discover_tests(unit_test_pareto_archive)
+add_executable(ut_archive_fuzz archive.cpp)
+target_link_libraries(ut_archive_fuzz PUBLIC tests_archive_instantiation Catch2)
+target_longtests_definitions(ut_archive_fuzz)
+target_exception_options(ut_archive_fuzz)
+target_bigobj_options(ut_archive_fuzz)
+catch_discover_tests(ut_archive_fuzz)
+
+
