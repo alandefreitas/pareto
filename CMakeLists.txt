@@ -34,6 +34,7 @@ option(BUILD_PACKAGE "Build an installation package" ${MASTER_PROJECT})
 # How to build
 option(BUILD_LONG_TESTS "Build the Data Structure Benchmark (It takes very long)" ON)
 option(BUILD_BOOST_TREE "Include R-Tree using Boost.Geometry (Boost dependency). Deprecated: see pareto/tree/boost_tree.h" OFF)
+option(BUILD_UNIT_TEST_EXTERN_INSTANTIATION "Instantiate templates in another binary for unit tests" ${NOT_DEBUG_MODE})
 
 set_debug_booleans()
 set(DEFAULT_MAX_NUM_DIMENSIONS_PYTHON 3)
@@ -49,7 +50,7 @@ option(BUILD_WITH_PEDANTIC_WARNINGS "Use pedantic warnings. This is useful for d
 option(BUILD_WITH_UTF8 "Accept utf-8 in MSVC by default." ON)
 if (BUILD_WITH_UTF8 AND MSVC)
     set(CMAKE_CXX_FLAGS "/utf-8")
-endif()
+endif ()
 
 # Hack to check for min in Windows.h
 # http://www.suodenjoki.dk/us/archive/2010/min-max.htm
@@ -57,7 +58,15 @@ include(CheckSymbolExists)
 check_symbol_exists(min "Windows.h" HAVE_WINDOWS_MINMAX)
 if (HAVE_WINDOWS_MINMAX)
     add_compile_definitions(NOMINMAX)
-endif()
+endif ()
+
+#######################################################
+### Global external libraries                       ###
+#######################################################
+# We might need matplot++ for examples or tests
+if (BUILD_EXAMPLES OR BUILD_TESTS)
+    find_package(Matplot++ QUIET)
+endif ()
 
 #######################################################
 ### Libraries                                       ###
