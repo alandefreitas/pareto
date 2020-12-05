@@ -1193,7 +1193,7 @@ void binding_for_N_dimensional(py::module &m, bool define_point_class = false) {
     ar.def("uniformity", &pareto_archive_type::uniformity);
     ar.def("average_distance", &pareto_archive_type::average_distance);
     ar.def("average_nearest_distance", &pareto_archive_type::average_nearest_distance);
-    ar.def("crowding_distance",  py::overload_cast<const point_type&>(&pareto_archive_type::crowding_distance));
+    ar.def("crowding_distance", py::overload_cast<const point_type&>(&pareto_archive_type::crowding_distance, py::const_));
     ar.def("average_crowding_distance", &pareto_archive_type::average_crowding_distance);
 
     ar.def("direct_conflict", &pareto_archive_type::direct_conflict);

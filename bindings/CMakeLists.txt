@@ -149,7 +149,7 @@ pybind11_add_module(pyfront
         # library that calls binding_n_dimensional
         pyfront.cpp
         )
-target_link_libraries(pyfront PRIVATE pareto pybind11)
+target_link_libraries(pyfront PRIVATE pareto)
 
 # Change visibility
 # https://www.rapidtables.com/code/linux/gcc/gcc-o.html
