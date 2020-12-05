@@ -9,10 +9,6 @@
 #include <mutex>
 #include <optional>
 
-#ifdef BUILD_FRONTS_WITH_TRASE
-#include <trase.hpp>
-#endif
-
 #include <pareto/hv-2.0rc2/hv.h>
 
 #include <pareto/common/common.h>
@@ -74,7 +70,6 @@ namespace pareto {
     template<typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename TAG>
     class archive;
 
-
     /// \class Pareto Front
     /// The fronts have their dimension set at compile time
     /// If we set the dimension to 0, then it's defined at runtime
@@ -82,7 +77,7 @@ namespace pareto {
     /// When dimensions are set a runtime, we find out about the dimension
     /// when we insert the first element in the front. At this point,
     /// the front dimension is set and we cannot change it.
-    template<typename NUMBER_TYPE = double, size_t NUMBER_OF_DIMENSIONS = 2, typename ELEMENT_TYPE = unsigned, typename TAG = default_tag<NUMBER_OF_DIMENSIONS>>
+    template<typename NUMBER_TYPE = double, size_t NUMBER_OF_DIMENSIONS = 0, typename ELEMENT_TYPE = unsigned, typename TAG = default_tag<NUMBER_OF_DIMENSIONS>>
     class front {
     public:
         friend archive<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, TAG>;
@@ -104,32 +99,45 @@ namespace pareto {
         using size_type = size_t;
         using predicate_list_type = predicate_list<number_type, number_of_compile_dimensions, mapped_type>;
 
-        using internal_type =
-        std::conditional_t<
-                std::is_same_v<TAG, vector_tree_tag>,
-                vector_tree<number_type, number_of_compile_dimensions, mapped_type>,
-                std::conditional_t<
-                        std::is_same_v<TAG, quad_tree_tag>,
-                        quad_tree<number_type, number_of_compile_dimensions, mapped_type>,
-                        std::conditional_t<
-                                std::is_same_v<TAG, kd_tree_tag>,
-                                kd_tree<number_type, number_of_compile_dimensions, mapped_type>,
-                                std::conditional_t<
-                                        std::is_same_v<TAG, boost_tree_tag>,
-                                        std::conditional_t<number_of_compile_dimensions == 0,
-                                                r_tree<number_type, number_of_compile_dimensions, mapped_type>,
-                                                default_type_for_boost_tree_tag<number_type, number_of_compile_dimensions, mapped_type>
-                                        >,
-                                        std::conditional_t<
-                                                std::is_same_v<TAG, r_tree_tag>,
-                                                r_tree<number_type, number_of_compile_dimensions, mapped_type>,
-                                                // r*-tree is the only option left
-                                                r_star_tree<number_type, number_of_compile_dimensions, mapped_type>
-                                        >
-                                >
-                        >
-                >
-        >;
+        template<typename T>
+        struct tag_struct_to_tree_type {
+            using type = kd_tree<number_type, number_of_compile_dimensions, mapped_type>;
+        };
+
+        template<>
+        struct tag_struct_to_tree_type<vector_tree_tag> {
+            using type = vector_tree<number_type, number_of_compile_dimensions, mapped_type>;
+        };
+
+        template<>
+        struct tag_struct_to_tree_type<quad_tree_tag> {
+            using type = quad_tree<number_type, number_of_compile_dimensions, mapped_type>;
+        };
+
+        template<>
+        struct tag_struct_to_tree_type<kd_tree_tag> {
+            using type = kd_tree<number_type, number_of_compile_dimensions, mapped_type>;
+        };
+
+        template<>
+        struct tag_struct_to_tree_type<boost_tree_tag> {
+            using type = std::conditional_t<number_of_compile_dimensions == 0,
+                    r_tree<number_type, number_of_compile_dimensions, mapped_type>,
+                    default_type_for_boost_tree_tag<number_type, number_of_compile_dimensions, mapped_type>
+            >;
+        };
+
+        template<>
+        struct tag_struct_to_tree_type<r_tree_tag> {
+            using type = r_tree<number_type, number_of_compile_dimensions, mapped_type>;
+        };
+
+        template<>
+        struct tag_struct_to_tree_type<r_star_tree_tag> {
+            using type = r_star_tree<number_type, number_of_compile_dimensions, mapped_type>;
+        };
+
+        using internal_type = typename tag_struct_to_tree_type<TAG>::type;
 
         /// Is the internal type using the fast allocator
         constexpr static bool is_using_default_fast_allocator() {
@@ -161,17 +169,32 @@ namespace pareto {
               ValueIterator value_end,
               IsMinimizationIterator is_minimization_begin,
               IsMinimizationIterator is_minimization_end)
-                : data_(value_begin, value_end) {
-            long pareto_dimension = std::distance(is_minimization_begin, is_minimization_end);
+                : data_{} {
+            long minimization_directions = std::distance(is_minimization_begin, is_minimization_end);
+            long pareto_dimension =
+                    minimization_directions == 0 ? number_of_compile_dimensions : minimization_directions;
+
             if constexpr (number_of_compile_dimensions != 0) {
                 if (pareto_dimension != number_of_compile_dimensions) {
                     throw std::invalid_argument(
                             "The size specified at compile time does not match the number of minimization directions");
                 }
             }
-            maybe_resize(is_minimization_, pareto_dimension);
-            std::copy(is_minimization_begin, is_minimization_end, is_minimization_.begin());
-            clear_dominated();
+
+            if (pareto_dimension == 0) {
+                if constexpr (number_of_compile_dimensions == 0) {
+                    maybe_resize(is_minimization_, 1);
+                }
+                std::fill(is_minimization_.begin(), is_minimization_.begin(), true);
+            } else {
+                maybe_resize(is_minimization_, pareto_dimension);
+                std::copy(is_minimization_begin, is_minimization_end, is_minimization_.begin());
+            }
+
+            while (value_begin != value_end) {
+                insert(*value_begin);
+                ++value_begin;
+            }
         }
 
         /// \brief Create a pareto set from value list and is_minimization range
@@ -306,55 +329,68 @@ namespace pareto {
 
     public /* iterators */:
 
+        /// \brief Get iterator to first element
         const_iterator begin() const noexcept {
             return data_.begin();
         }
 
+        /// \brief Get iterator to first element that passes a list of predicates
         const_iterator begin(const predicate_list_type& ps) const noexcept {
             return data_.begin(ps);
         }
 
+        /// \brief Get iterator to last + 1 element
         const_iterator end() const noexcept {
             return data_.end();
         }
 
+        /// \brief Get iterator to first element
         iterator begin() noexcept {
             return data_.begin();
         }
 
+        /// \brief Get iterator to first element that passes a list of predicates
         iterator begin(const predicate_list_type& ps) noexcept {
             return data_.begin(ps);
         }
 
+        /// \brief Get iterator to last + 1 element
         iterator end() noexcept {
             return data_.end();
         }
 
+        /// \brief Get iterator to first element in reverse
         std::reverse_iterator<const_iterator> rbegin() const noexcept {
             return std::reverse_iterator(data_.end());
         }
 
+        /// \brief Get iterator to last + 1 element in reverse
         std::reverse_iterator<const_iterator> rend() const noexcept {
             return std::reverse_iterator(data_.begin());
         }
 
+        /// \brief Get iterator to first element in reverse
         std::reverse_iterator<iterator> rbegin() noexcept {
             return std::reverse_iterator(data_.end());
         }
 
+        /// \brief Get iterator to last + 1 element in reverse
         std::reverse_iterator<iterator> rend() noexcept {
             return std::reverse_iterator(data_.begin());
         }
 
     public /* capacity */:
+        /// \brief Check if front is empty
         [[nodiscard]] bool empty() const noexcept {
             return data_.empty();
         }
 
+        /// \brief Get number of elements in the front
         [[nodiscard]] size_type size() const noexcept {
             return data_.size();
         }
 
+        /// \brief Get number of dimensions of elements in the front
         [[nodiscard]] size_type dimensions() const noexcept {
             if constexpr (number_of_compile_dimensions > 0) {
                 // compile time
@@ -386,16 +422,19 @@ namespace pareto {
             maybe_adjust_dimensions(m);
         }
 
+        /// \brief True if all dimensions are minimization
         [[nodiscard]] size_type is_minimization() const noexcept {
             return std::all_of(is_minimization_.begin(), is_minimization_.end(),
                                [](auto i) { return i == uint8_t(1); });
         }
 
+        /// \brief True if all dimensions are maximization
         [[nodiscard]] size_type is_maximization() const noexcept {
             return std::all_of(is_minimization_.begin(), is_minimization_.end(),
                                [](auto i) { return i == uint8_t(0); });
         }
 
+        /// \brief True if i-th dimension is minimization
         [[nodiscard]] size_type is_minimization(size_t dimension) const noexcept {
             if constexpr (number_of_compile_dimensions > 0) {
                 return is_minimization_[dimension] > 0;
@@ -408,6 +447,7 @@ namespace pareto {
             }
         }
 
+        /// \brief True if i-th dimension is maximization
         [[nodiscard]] size_type is_maximization(size_t dimension) const noexcept {
             if constexpr (number_of_compile_dimensions > 0) {
                 return is_minimization_[dimension] == 0;
@@ -421,6 +461,7 @@ namespace pareto {
         }
 
     public /* element access */:
+        /// \brief Get reference to element at a given position, and create one if it does not exits
         mapped_type &operator[](const key_type &k) {
             auto it = find(k);
             if (it != end()) {
@@ -445,6 +486,7 @@ namespace pareto {
             }
         }
 
+        /// \brief Get reference to element at a given position, and create one if it does not exits
         mapped_type &operator[](key_type &&k) {
             auto it = find(k);
             if (it != end()) {
@@ -470,6 +512,7 @@ namespace pareto {
         }
 
         template<typename... Targs>
+        /// \brief Get reference to element at a given position, and create one if it does not exits
         mapped_type &operator()(const number_type &x1, const Targs &... xs) {
             constexpr size_t m = sizeof...(Targs) + 1;
             assert(number_of_compile_dimensions == 0 || number_of_compile_dimensions == m);
@@ -478,6 +521,7 @@ namespace pareto {
             return operator[](p);
         }
 
+        /// \brief Get reference to element at a given position, and throw error if it does not exist
         mapped_type &at(const key_type &k) {
             auto it = find(k);
             if (it != end()) {
@@ -487,6 +531,7 @@ namespace pareto {
             }
         }
 
+        /// \brief Get reference to element at a given position, and throw error if it does not exist
         const mapped_type &at(const key_type &k) const {
             auto it = find(k);
             if (it != end()) {
@@ -497,6 +542,7 @@ namespace pareto {
         }
 
     public /* relational operators */:
+        /// \brief Equality operator
         bool operator==(const front &rhs) const {
             return is_minimization_ == rhs.is_minimization_ &&
                    std::equal(data_.begin(), data_.end(), rhs.data_.begin(), rhs.data_.end(),
@@ -505,6 +551,7 @@ namespace pareto {
                               });
         }
 
+        /// \brief Inequality operator
         bool operator!=(const front &rhs) const {
             return is_minimization_ != rhs.is_minimization_ ||
                    !std::equal(data_.begin(), data_.end(), rhs.data_.begin(), rhs.data_.end(),
@@ -515,7 +562,8 @@ namespace pareto {
         }
 
     public /* modifiers */:
-        /// Emplace becomes insert becomes the rtree does not have
+        /// \brief Create element and emplace it in the front
+        /// Emplace becomes insert because the rtree does not have
         /// an emplace function
         template<class... Args>
         std::pair<iterator, bool> emplace(Args &&... args) {
@@ -586,21 +634,21 @@ namespace pareto {
             return s;
         }
 
-        /// Erase element pointed by iterator from the front
+        /// \brief Erase element pointed by iterator from the front
         /// \warning The modification of the rtree may invalidate the iterators.
         size_t erase(const_iterator position) {
             auto it = find(position->first);
             return data_.erase(it);
         }
 
-        /// Erase element pointed by iterator from the front
+        /// \brief Erase element pointed by iterator from the front
         /// \warning The modification of the rtree may invalidate the iterators.
         size_t erase(iterator position) {
             auto it = find(position->first);
             return data_.erase(it);
         }
 
-        /// Erase element from the front
+        /// \brief Erase element from the front
         /// \param v Point
         size_type erase(const key_type &point) {
             auto it = find(point);
@@ -611,98 +659,116 @@ namespace pareto {
             }
         }
 
-        /// Remove range of iterators from the front
+        /// \brief Remove range of iterators from the front
         size_t erase(const_iterator first, const_iterator last) {
             return data_.erase(first, last);
         }
 
-        /// Remove range of iterators from the front
+        /// \brief Remove range of iterators from the front
         size_t erase(iterator first, iterator last) {
             return data_.erase(first, last);
         }
 
-        /// Remove range of iterators from the front
+        /// \brief Remove range of iterators from the front
         size_t erase(const_iterator first, iterator last) {
             return data_.erase(first, const_iterator(last));
         }
 
-        /// Remove range of iterators from the front
+        /// \brief Remove range of iterators from the front
         size_t erase(iterator first, const_iterator last) {
             return data_.erase(const_iterator(first), last);
         }
 
-        /// Clear the front
+        /// \brief Clear the front
         void clear() noexcept {
             data_.clear();
         }
 
-        /// Merge two fronts
+        /// \brief Merge two fronts
         void merge(self_type &source) {
             insert(source.begin(), source.end());
         }
 
-        /// Merge and move fronts
+        /// \brief Merge and move fronts
         void merge(self_type &&source) {
             insert(source.begin(), source.end());
             source.clear();
         }
 
-        /// Swap the content of two fronts
+        /// \brief Swap the content of two fronts
         void swap(self_type &m) {
             m.data_.swap(data_);
             m.is_minimization_.swap(is_minimization_);
         }
 
     public /* pareto operations */:
-        /// Find points in a box
+        /// \brief Find points in a box
         const_iterator find_intersection(const point_type &min_corner, const point_type &max_corner) const {
             return data_.begin_intersection(min_corner, max_corner);
         }
 
-        /// Get points in a box
+        /// \brief Get points in a box
         std::vector<value_type> get_intersection(const point_type &min_corner, const point_type &max_corner) const {
             std::vector<value_type> v;
             std::copy(find_intersection(min_corner, max_corner), end(), back_inserter(v));
             return v;
         }
 
-        /// Find points within a box (intersection minus borders)
+        /// \brief Find points dominated by p
+        /// If p is in the front, it dominates no other point
+        /// Otherwise, it dominates the whole intersection between p and nadir
+        const_iterator find_dominated(const point_type &p) const {
+            const bool p_is_in_the_front = find(p) != end();
+            if (p_is_in_the_front) {
+                return end();
+            }
+
+            point_type worst_point = worst();
+            const bool p_dominates_worst = p.dominates(worst_point, is_minimization_);
+            if (!p_dominates_worst) {
+                return end();
+            }
+
+            return find_intersection(worst_point, p);
+        }
+
+        /// \brief Find points within a box (intersection minus borders)
         const_iterator find_within(const point_type &min_corner, const point_type &max_corner) const {
             return data_.begin_within(min_corner, max_corner);
         }
 
-        /// Get points within a box
+        /// \brief Get points within a box
         std::vector<value_type> get_within(const point_type &min_corner, const point_type &max_corner) const {
             std::vector<value_type> v;
             std::copy(find_within(min_corner, max_corner), end(), back_inserter(v));
             return v;
         }
 
-        /// Find points disjointed of a box (intersection - borders)
+        /// \brief Find points disjointed of a box (intersection - borders)
         const_iterator find_disjoint(const point_type &min_corner, const point_type &max_corner) const {
             return data_.begin_disjoint(min_corner, max_corner);
         }
 
-        /// Get points disjointed of a box
+        /// \brief Get points disjointed of a box
         std::vector<value_type> get_disjoint(const point_type &min_corner, const point_type &max_corner) const {
             std::vector<value_type> v;
             std::copy(find_disjoint(min_corner, max_corner), end(), back_inserter(v));
             return v;
         }
 
-        /// Find nearest point
+        /// \brief Find nearest point
         const_iterator find_nearest(const point_type &p) const {
             return data_.begin_nearest(p);
         }
 
-        /// Get nearest point
+        /// \brief Get nearest point
         std::vector<value_type> get_nearest(const point_type &p) const {
             std::vector<value_type> v;
             std::copy(find_nearest(p), end(), back_inserter(v));
             return v;
         }
 
-        /// Find nearest point excluding itself
+        /// \brief Find nearest point excluding itself
         const_iterator find_nearest_exclusive(const point_type &p) const {
             auto itself = find_nearest(p);
             if (itself->first != p) {
@@ -719,35 +785,36 @@ namespace pareto {
             return end();
         }
 
-        /// Get nearest point excluding itself
+        /// \brief Get nearest point excluding itself
         std::vector<value_type> get_nearest_exclusive(const point_type &p) const {
             std::vector<value_type> v;
             std::copy(find_nearest(p), end(), back_inserter(v));
             return v;
         }
 
-        /// Find k nearest points
+        /// \brief Find k nearest points
         const_iterator find_nearest(const point_type &p, size_t k) const {
             return data_.begin_nearest(p, k);
         }
 
+        /// \brief Find k nearest points
         const_iterator find_nearest(std::initializer_list<number_type> p, size_t k) const {
             return data_.begin_nearest(point_type(p), k);
         }
 
-        /// Get k nearest points
+        /// \brief Get k nearest points
         std::vector<value_type> get_nearest(const point_type &p, size_t k) const {
             std::vector<value_type> v;
             std::copy(find_nearest(p, k), end(), back_inserter(v));
             return v;
         }
 
-        /// Find k nearest points
+        /// \brief Find k nearest points
         const_iterator find_nearest(const box_type &b, size_t k) const {
             return data_.begin_nearest(b, k);
         }
 
-        /// Get k nearest points
+        /// \brief Get k nearest points
         std::vector<value_type> get_nearest(const box_type &b, size_t k) const {
             std::vector<value_type> v;
             std::copy(find_nearest(b, k), end(), back_inserter(v));
@@ -828,7 +895,7 @@ namespace pareto {
             return hypervolume(nadir());
         }
 
-        /// Coverage indicator
+        /// \brief Coverage indicator
         /// \see http://www.optimization-online.org/DB_FILE/2018/10/6887.pdf
         double coverage(const front &rhs) const {
             size_t hits = 0;
@@ -838,12 +905,12 @@ namespace pareto {
             return static_cast<double>(hits) / rhs.size();
         }
 
-        /// Ratio of coverage indicators
+        /// \brief Ratio of coverage indicators
         double coverage_ratio(const front &rhs) const {
             return coverage(rhs) / rhs.coverage(*this);
         }
 
-        /// Generational distance
+        /// \brief Generational distance
         double gd(const front &reference) const {
             double distances = 0.;
             for (const auto&[k, v]: *this) {
@@ -852,7 +919,7 @@ namespace pareto {
             return distances / size();
         }
 
-        /// Standard deviation from the generational distance
+        /// \brief Standard deviation from the generational distance
         /// It measures the deformation of the Pareto set
         /// approximation according to a Pareto optimal solution set.
         double std_gd(const front &reference) const {
@@ -865,40 +932,43 @@ namespace pareto {
             return sqrt(std_dev) / size();
         }
 
-        /// Inverted generational distance
+        /// \brief Inverted generational distance
         double igd(const front &reference) const {
             return reference.gd(*this);
         }
 
-        /// Standard deviation from the inverted generational distance
+        /// \brief Standard deviation from the inverted generational distance
         double std_igd(const front &reference) const {
             return reference.std_gd(*this);
         }
 
+        /// \brief Hausdorff indicator: max(GD,IGD)
         double hausdorff(const front &reference) const {
             return std::max(gd(reference), igd(reference));
         }
 
+        /// \brief IGD+ indicator
         double igd_plus(const front &reference_front) const {
             double distances = 0.;
             // for each element in the reference front
             for (const auto &item: reference_front) {
                 auto min_it = std::min_element(begin(), end(), [&](const auto &a, const auto &b) {
                     return a.first.distance_to_dominated_box(item.first, is_minimization_) <
-                           b.first.distance_to_dominated_box(item.first, is_minimization_);
+                            b.first.distance_to_dominated_box(item.first, is_minimization_);
                 });
                 distances += min_it->first.distance_to_dominated_box(item.first, is_minimization_);
             }
             return distances / reference_front.size();
         }
 
+        /// \brief STD-IGD+ indicator
         double std_igd_plus(const front &reference_front) const {
             double _igd_plus = igd_plus(reference_front);
             double std_dev = 0.;
             for (const auto &item: reference_front) {
                 auto min_it = std::min_element(begin(), end(), [&](const auto &a, const auto &b) {
                     return a.first.distance_to_dominated_box(item.first, is_minimization_) <
-                           b.first.distance_to_dominated_box(item.first, is_minimization_);
+                            b.first.distance_to_dominated_box(item.first, is_minimization_);
                 });
                 auto distance = min_it->first.distance_to_dominated_box(item.first, is_minimization_);
                 std_dev += pow(distance - _igd_plus, 2.);
@@ -906,7 +976,7 @@ namespace pareto {
             return sqrt(std_dev) / size();
         }
 
-        /// Uniformity metric
+        /// \brief Uniformity metric
         /// This is the minimal distance between two points of the Pareto front
         /// approximation. This measure is straightforward to compute and easy
         /// to understand. However, it does not really provide pertinent
@@ -926,6 +996,7 @@ namespace pareto {
             return min_distance;
         }
 
+        /// \brief Average distance between points
         [[nodiscard]] double average_distance() const {
             double sum = 0.0;
             for (auto ita = begin(); ita != end(); ++ita) {
@@ -938,6 +1009,7 @@ namespace pareto {
             return sum / (((size() - 1) * (size())) / 2);
         }
 
+        /// \brief Average nearest distance between points
         [[nodiscard]] double average_nearest_distance(size_t k = 5) const {
             double sum = 0.0;
             for (auto ita = begin(); ita != end(); ++ita) {
@@ -950,6 +1022,7 @@ namespace pareto {
             return sum / size();
         }
 
+        /// \brief Crowding distance of an element
         double crowding_distance(const_iterator element, point_type worst_point, point_type ideal_point) const {
             double sum = 0.0;
             // for each dimension
@@ -969,10 +1042,12 @@ namespace pareto {
             return sum;
         }
 
+        /// \brief Crowding distance of an element
         double crowding_distance(const_iterator element) const {
             return crowding_distance(element, worst(), ideal());
         }
 
+        /// \brief Crowding distance of a point in the set
         double crowding_distance(const point_type &point) const {
             auto element = find(point);
             if (element != end()) {
@@ -983,6 +1058,7 @@ namespace pareto {
             }
         }
 
+        /// \brief Average crowding distance of all elements in the front
         [[nodiscard]] double average_crowding_distance() const {
             double sum = 0.0;
             const point_type worst_point = worst();
@@ -994,7 +1070,7 @@ namespace pareto {
             return sum / size();
         }
 
-        /// Direct conflict between objectives
+        /// \brief Direct conflict between objectives
         /// Use this conflict measure when:
         /// - Objectives are equally important
         /// - Objectives are in the same units
@@ -1019,6 +1095,7 @@ namespace pareto {
             return c_ab;
         }
 
+        /// \brief Normalized direct between two objectives ([0,1])
         [[nodiscard]] double normalized_direct_conflict(const size_t a, const size_t b) const {
             // max value in each term is max_a-min_a or max_b-min_b
             number_type range_a = is_minimization(a) ? worst(a) - ideal(a) : ideal(a) - worst(a);
@@ -1026,7 +1103,7 @@ namespace pareto {
             return static_cast<double>(direct_conflict(a, b)) / (std::max(range_a, range_b) * size());
         }
 
-        /// Maxmin conflict between objectives
+        /// \brief Maxmin conflict between objectives
         /// Use this conflict measure when:
         /// - Objective importance is proportional to its range of values
         /// - Objectives are in comparable units
@@ -1054,11 +1131,12 @@ namespace pareto {
             return c_ab;
         }
 
+        /// \brief Normalized maxmin conflict between two objectives ([0,1])
         [[nodiscard]] double normalized_maxmin_conflict(const size_t a, const size_t b) const {
             return maxmin_conflict(a, b) / size();
         }
 
-        /// Non-parametric conflict between objectives
+        /// \brief Non-parametric conflict between objectives
         /// This is the most general case of conflict
         /// Use this conflict measure when:
         /// - Objective importance is not comparable
@@ -1108,6 +1186,9 @@ namespace pareto {
             return static_cast<double>(c_ab);
         }
 
+        /// \brief Normalized conflict between two objectives
+        /// This function returns non-paremetric conflict and is the default
+        /// function when we don't know which type of conflict to use
         [[nodiscard]] double normalized_conflict(const size_t a, const size_t b) const {
             double denominator = 0.;
             auto n = static_cast<double>(size());
@@ -1117,77 +1198,135 @@ namespace pareto {
             return static_cast<double>(conflict(a, b)) / denominator;
         }
 
-        /// \brief Check if this front weakly dominates a point
+        /// \brief \brief Check if this front weakly dominates a point
         /// A front a weakly dominates a solution p if it has at least
-        /// one solution that dominates p
+        /// one solution that dominates p.
+        /// Some of these lists of conditions could be checked with a single
+        /// predicate list, but we do not do it this way because boost_tree
+        /// is very inefficient with predicate lists.
         /// \see http://www.cs.nott.ac.uk/~pszjds/research/files/dls_emo2009_1.pdf
         bool dominates(const point_type &p) const {
-            const_iterator it = data_.begin_intersection(ideal(), p, [&p, this](const value_type &x) {
-                return x.first.dominates(p, is_minimization_);
-            });
-            return it != end();
+            // trivial case: front is empty
+            if (empty()) {
+                return false;
+            }
+
+            // trivial case: p is not behind ideal
+            point_type ideal_point = ideal();
+            const bool p_is_not_behind_ideal = !ideal_point.dominates(p, is_minimization_);
+            if (p_is_not_behind_ideal) {
+                return false;
+            }
+
+            // trivial case: p is in the front
+            if (find(p) != end()) {
+                return false;
+            }
+
+            // general case (removing trivial case 1)
+            // points intersecting(ideal,p)
+            const_iterator first_element_that_dominates = data_.begin_intersection(ideal_point, p);
+            return first_element_that_dominates != end();
         }
 
-        /// \brief Check if this front strongly dominates a point
+        /// \brief \brief Check if this front strongly dominates a point
         /// A front a strongly dominates a solution b if a has a solution
         /// that is strictly better than b in all objectives.
         bool strongly_dominates(const point_type &p) const {
-            const_iterator it = data_.begin_intersection(ideal(), p, [&p, this](const value_type &x) {
-                return x.first.strongly_dominates(p, is_minimization_);
-            });
+            // trivial case: front is empty
+            if (empty()) {
+                return false;
+            }
+
+            // trivial case:
+            // p is not strictly behind ideal point
+            point_type ideal_point = ideal();
+            const bool ideal_strongly_dominates_p = ideal_point.strongly_dominates(p, is_minimization_);
+            if (!ideal_strongly_dominates_p) {
+                return false;
+            }
+
+            // general case
+            // * p is behind ideal point (trivial case)
+            // * points intersect(ideal, p+epsilon) != empty set
+            // This works because:
+            // * the border around p cannot strongly dominate p
+            //   the epsilon removes this border
+            // * the border around ideal *can* strongly dominate p
+            //   the epsilon leaves this border there
+            number_type epsilon = std::is_floating_point_v<number_type> ? std::numeric_limits<number_type>::epsilon()
+                                                                        : static_cast<number_type>(1);
+            auto p_line = p;
+            for (size_t i = 0; i < p.dimensions(); ++i) {
+                if (is_minimization_[i]) {
+                    p_line[i] -= epsilon;
+                } else {
+                    p_line[i] += epsilon;
+                }
+            }
+            const_iterator it = data_.begin_intersection(ideal_point, p_line);
             return it != end();
         }
 
-        /// \brief Check if this front non-dominates the point
+        /// \brief True if front is partially dominated by p
+        bool is_partially_dominated_by(const point_type &p) const {
+            // trivial case: front is empty
+            if (empty()) {
+                return true;
+            }
+
+            // trivial case: p is in the front
+            if (find(p) != end()) {
+                return false;
+            }
+
+            // get points in the intersection between worst and p
+            // we already know p is not in the front, and any point
+            // in this query that is not p is a point dominated by p
+            const_iterator it = data_.begin_intersection(worst(), p);
+            // if there's someone p dominates, then it's partially dominated by p
+            return it != end();
+        }
+
+        /// \brief True if front is completely dominated by p
+        bool is_completely_dominated_by(const point_type &p) const {
+            // trivial case: front is empty
+            if (empty()) {
+                return true;
+            }
+
+            auto ideal_point = ideal();
+            return p.dominates(ideal_point, is_minimization_);
+        }
+
+        /// \brief \brief Check if this front non-dominates the point
         /// A solution a weakly dominates a solution b if a is better
         /// than b in at least one objective and is as good as b in
         /// all other objectives.
         /// \see http://www.cs.nott.ac.uk/~pszjds/research/files/dls_emo2009_1.pdf
         bool non_dominates(const point_type &p) const {
+            // trivial case: front is empty
+            if (empty()) {
+                return true;
+            }
+
             // Ensure pareto does not dominate p
             // Ensure p does not dominate anyone in the pareto
             return !dominates(p) && !is_partially_dominated_by(p);
         }
 
-        bool is_partially_dominated_by(const point_type &p) const {
-            // get points in the intersection between worst and p that p dominates
-            const_iterator it = data_.begin_intersection(worst(), p, [&p, this](const value_type &x) {
-                return p.dominates(x.first, is_minimization_);
-            });
-            // if there's someone p dominates, then it's partially dominated by p
-            return it != end();
-        }
 
-        bool is_completely_dominated_by(const point_type &p) const {
-            // Get points outside the intersection between worst and p that p dominates.
-            // These are the points p is certainly not going to dominate.
-            const_iterator it = data_.begin_disjoint(worst(), p);
-            for (; it != data_.end(); ++it) {
-                if (!p.dominates(it->first, is_minimization_)) {
-                    return false;
-                }
-            }
-            // If there's no one outside the intersection, then we
-            // check inside the intersection, because we are not sure
-            // p dominates all points inside this intersection
-            // get points in the intersection between worst and p that p dominates
-            it = data_.begin_intersection(worst(), p, [&p, this](const value_type &x) {
-                return !p.dominates(x.first, is_minimization_);
-            });
-            // if there's someone p dominates, then it's completely dominated by p
-            return it == end();
-        }
-
-
-        /// \brief Check if this front dominates another front
+        /// \brief \brief Check if this front dominates another front
         /// P1 dominates P2 if all points in P1 dominate or at least
         /// non-dominate P2
         /// To avoid both operations, it's easy to check if P1
         /// fails to dominate any point in P2
         bool dominates(const front &P2) const {
+            // trivial case: front is empty
             if (empty()) {
                 return false;
             }
+
             bool dominates_any = false;
             for (auto&[k, v]: P2) {
                 if (!dominates(k)) {
@@ -1201,11 +1340,13 @@ namespace pareto {
             return dominates_any;
         }
 
-        /// Check if this front strongly dominates another front
+        /// \brief Check if this front strongly dominates another front
         bool strongly_dominates(const front &p) const {
+            // trivial case: front is empty
             if (empty()) {
                 return false;
             }
+
             for (auto&[k, v]: p) {
                 if (!strongly_dominates(k)) {
                     return false;
@@ -1214,11 +1355,13 @@ namespace pareto {
             return true;
         }
 
-        /// Check if this front non-dominates another front
+        /// \brief Check if this front non-dominates another front
         bool non_dominates(const front &p) const {
+            // trivial case: front is empty
             if (empty()) {
                 return true;
             }
+
             for (auto&[k, v]: p) {
                 if (!non_dominates(k)) {
                     return false;
@@ -1227,11 +1370,13 @@ namespace pareto {
             return true;
         }
 
-        /// Check if this front is is_partially_dominated_by another front
+        /// \brief Check if this front is is_partially_dominated_by another front
         bool is_partially_dominated_by(const front &p) const {
+            // trivial case: front is empty
             if (empty()) {
                 return true;
             }
+
             for (auto&[k, v]: p) {
                 if (is_partially_dominated_by(k)) {
                     return true;
@@ -1240,19 +1385,22 @@ namespace pareto {
             return false;
         }
 
-        /// Check if this front is is_partially_dominated_by another front
+        /// \brief Check if this front is is_partially_dominated_by another front
         bool is_completely_dominated_by(const front &p) const {
+            // trivial case: front is empty
             if (empty()) {
                 return true;
             }
+
             for (auto&[k, v]: *this) {
-                if (p.is_partially_dominated_by(k)) {
+                if (!p.dominates(k)) {
                     return false;
                 }
             }
             return true;
         }
 
+        /// \brief Ideal point in the front
         point_type ideal() const {
             point_type r(dimensions());
             for (size_t i = 0; i < r.dimensions(); ++i) {
@@ -1261,15 +1409,17 @@ namespace pareto {
             return r;
         }
 
+        /// \brief Ideal value in a front dimension
         number_type ideal(size_t d) const {
             return is_minimization(d) ? data_.min_value(d) : data_.max_value(d);
         }
 
+        /// \brief Get iterator to element with best value in dimension d
         const_iterator dimension_ideal(size_t d) const {
             return is_minimization(d) ? data_.min_element(d) : data_.max_element(d);
         }
 
-        /// The nadir point is the worst point among the
+        /// \brief The nadir point is the worst point among the
         /// non-dominated points. There is a difference
         /// between the nadir point and the worst point
         /// for archives.
@@ -1281,38 +1431,62 @@ namespace pareto {
             return r;
         }
 
+        /// \brief Nadir value in dimension d
         number_type nadir(size_t d) const {
             return is_minimization(d) ? data_.max_value(d) : data_.min_value(d);
         }
 
+        /// \brief Element with nadir value in front dimension d
         const_iterator dimension_nadir(size_t d) const {
             return is_minimization(d) ? data_.max_element(d) : data_.min_element(d);
         }
 
+        /// \brief Worst point in the front
+        /// Worst is the same as nadir for fronts.
+        /// In archives, worst != nadir because there are
+        /// many front.
         point_type worst() const {
             return nadir();
         }
 
+        /// \brief Worst value in front dimension d
         number_type worst(size_t d) const {
             return nadir(d);
         }
 
+        /// \brief Iterator to element with worst value in front dimension d
         const_iterator dimension_worst(size_t d) const {
             return dimension_nadir(d);
         }
 
+        /// \brief Find element by point
         const_iterator find(const key_type &k) const {
             return data_.find(k);
         }
 
+        /// \brief Find element by point
         iterator find(const key_type &k) {
             return data_.find(k);
         }
 
+        /// \brief Check if front contains the point k
         bool contains(const key_type &k) const {
             return find(k) != end();
         }
 
+        /// \brief Check if front passes the variants that define a front
+        [[nodiscard]] bool check_invariants() const {
+            for (const value_type &item : data_) {
+                for (const value_type &item2 : data_) {
+                    if (item.first.dominates(item2.first, is_minimization_)) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        /// \brief Stream front properties to an ostream
         friend std::ostream &operator<<(std::ostream &os, const front &pf) {
             os << "Pareto front (" << pf.size() << " elements - {";
             for (size_t i = 0; i < pf.is_minimization_.size() - 1; ++i) {
@@ -1322,204 +1496,6 @@ namespace pareto {
             return os;
         }
 
-#ifdef BUILD_FRONTS_WITH_TRASE
-        /// Setup a trace figure with the plot
-        void setup_trase_figure(std::shared_ptr<trase::Figure>& fig, point_type min_point, point_type max_point, point_type worst_point, bool plot_ideal = true, bool plot_worst = true, bool plot_nadir = true, float point_color = 0.f, std::optional<point_type> extra_point = std::nullopt, std::optional<const_iterator> it = std::nullopt) const {
-            std::shared_ptr<trase::Axis> ax = fig->axis();
-            std::vector<trase::Vector<float, 3>> my_colors = {
-                    {0.f, 0.0f, 1.f}, // points
-                    {0.f, 0.7f, 0.f}, // ideal
-                    {1.f, 0.f, 0.f}, // worst
-                    {.7f, .7f, 0.f}, // nadir
-                    {0.f, 0.f, 0.f}, // extra point
-                    {1.f, 0.4f, 0.f} // extra set
-            };
-            trase::Colormap my_map(my_colors);
-            if (dimensions() == 2) {
-                // get x and y in order
-                std::vector<const_iterator> v;
-                for (auto it = begin(); it != end(); ++it) {
-                    v.push_back(it);
-                }
-                std::sort(v.begin(), v.end(), [](const_iterator const& i, const_iterator const& j) { return i->first[0] < j->first[0]; } );
-                std::vector<number_type> x;
-                std::vector<number_type> y;
-                std::vector<float> color;
-                for (const auto& it : v) {
-                    x.emplace_back(it->first[0]);
-                    y.emplace_back(it->first[1]);
-                    color.emplace_back(point_color);
-                }
-                // get max and min for both dimensions
-                number_type x_min = min_point[0];
-                number_type x_max = max_point[0];
-                number_type x_range = x_max - x_min;
-                number_type y_min = min_point[1];
-                number_type y_max = max_point[1];
-                number_type y_range = y_max - y_min;
-                // plot x and y points
-                auto data = trase::create_data().x(x).y(y).color(color).color(0,6).fill(color).fill(0,6);
-                auto points = ax->points(data);
-                trase::Colormap & cm = const_cast<trase::Colormap &>(points->get_colormap());
-                cm = my_map;
-                points->set_label("points");
-                // plot dominated area
-                std::vector<number_type> x_line;
-                x_line.reserve(x.size()*2+2);
-                std::vector<number_type> y_line;
-                y_line.reserve(y.size()*2+2);
-                // first line point outside the front
-                if (is_minimization(0)) {
-                    x_line.emplace_back(x[0]);
-                    y_line.emplace_back(is_minimization(1) ? y_max + y_range*0.3 : y_min - y_range*0.3);
-                } else {
-                    x_line.emplace_back(x_min - x_range*0.3);
-                    y_line.emplace_back(y[0]);
-                }
-                // all points in the front (but last)
-                for (size_t i = 0; i < x.size() - 1; ++i) {
-                    // front point
-                    x_line.emplace_back(x[i]);
-                    y_line.emplace_back(y[i]);
-                    // line to next front
-                    if (is_minimization(0)) {
-                        x_line.emplace_back(x[i+1]);
-                        y_line.emplace_back(y[i]);
-                    } else {
-                        x_line.emplace_back(x[i]);
-                        y_line.emplace_back(y[i+1]);
-                    }
-                }
-                // last point
-                x_line.emplace_back(x.back());
-                y_line.emplace_back(y.back());
-                // last from last point to outside the plot
-                if (is_minimization(0)) {
-                    x_line.emplace_back(x_max + x_range*0.2);
-                    y_line.emplace_back(y.back());
-                } else {
-                    x_line.emplace_back(x.back());
-                    y_line.emplace_back(is_minimization(1) ? y_max + y_range * 0.2 : y_min - y_range * 0.2);
-                }
-                auto data_line = trase::create_data().x(x_line).y(y_line);
-                auto plt = ax->line(data_line);
-                trase::Vector<float,3> line_color = {0.f,0.f,0.f};
-                plt->style().line_width(3-point_color*2).color(trase::RGBA(line_color));
-                // plot reference points
-                if (plot_ideal) {
-                    auto k = ideal();
-                    x.emplace_back(k[0]);
-                    y.emplace_back(k[1]);
-                    // color.emplace_back("#00FF00");
-                    color.emplace_back(1);
-                }
-                if (plot_worst) {
-                    auto k = worst_point;
-                    x.emplace_back(k[0]);
-                    y.emplace_back(k[1]);
-                    // color.emplace_back("#FF0000");
-                    color.emplace_back(2);
-                }
-                if (plot_nadir) {
-                    auto k = nadir();
-                    x.emplace_back(k[0]);
-                    y.emplace_back(k[1]);
-                    // color.emplace_back("#FFFF00");
-                    color.emplace_back(3);
-                }
-                if (extra_point) {
-                    auto k = *extra_point;
-                    x.emplace_back(k[0]);
-                    y.emplace_back(k[1]);
-                    // color.emplace_back("#000000");
-                    color.emplace_back(4);
-                }
-                if (it) {
-                    while (*it != end()) {
-                        auto k = (**it).first;
-                        x.emplace_back(k[0]);
-                        y.emplace_back(k[1]);
-                        // color.emplace_back("#FFA500");
-                        color.emplace_back(5);
-                        ++(*it);
-                    }
-                }
-                auto data_reference = trase::create_data().x(x).y(y).color(color).color(0,6).fill(color).fill(0,6);
-                auto points_reference = ax->points(data_reference);
-                trase::Colormap & cm_points_reference = const_cast<trase::Colormap &>(points_reference->get_colormap());
-                cm_points_reference = my_map;
-                points_reference->set_label("points");
-                ax->xlabel("<tspan font-style=\"italic\">f</tspan><tspan baseline-shift=\"sub\" font-size=\"small\">1</tspan>");
-                ax->ylabel("<tspan font-style=\"italic\">f</tspan><tspan baseline-shift=\"sub\" font-size=\"small\">2</tspan>");
-            } else {
-                auto include_line = [&my_colors, this](const point_type p, int color, float line_width, std::shared_ptr<trase::Axis> ax, const std::string& label = "") {
-                    std::vector<number_type> x;
-                    std::vector<number_type> y;
-                    std::vector<double> colors;
-                    for (size_t i = 0; i < p.dimensions(); ++i) {
-                        y.emplace_back(p[i]);
-                        x.emplace_back(i+1);
-                        colors.emplace_back(color);
-                    }
-                    trase::DataWithAesthetic data = trase::create_data().x(x).y(y);
-                    std::shared_ptr<trase::Geometry> plt_line = ax->line(data);
-                    auto rgb_color_data = my_colors[color];
-                    rgb_color_data *= 255;
-                    plt_line->style().color(trase::RGBA(rgb_color_data)).line_width(line_width);
-                    if (!label.empty()) {
-                        plt_line->set_label(label);
-                    }
-                };
-                for (const auto& [k,v] : *this) {
-                    include_line(k, 0, 2, ax);
-                }
-                for (int i = 0; i < dimensions(); ++i) {
-                    include_line(dimension_ideal(i)->first, 0, 4, ax);
-                }
-                include_line(ideal(), 1, 4, ax, "ideal");
-                include_line(worst(), 2, 4, ax, "worst");
-                include_line(nadir(), 3, 4, ax, "nadir");
-                if (extra_point) {
-                    include_line(*extra_point,4,6,ax, "reference");
-                }
-                if (it) {
-                    while (*it != end()) {
-                        include_line((**it).first,5,3,ax, "query");
-                        ++(*it);
-                    }
-                }
-                ax->xlabel("f(x)");
-                ax->ylabel("x");
-            }
-
-        }
-
-        /// Setup a trace figure with the plot
-        void setup_trase_figure(std::shared_ptr<trase::Figure>& fig, std::optional<point_type> extra_point = std::nullopt, std::optional<const_iterator> it = std::nullopt) const {
-            point_type min_point = ideal();
-            point_type worst_point = worst();
-            point_type max_point = worst_point;
-            normalize_corners(min_point, max_point);
-            float point_color = 0.f;
-            setup_trase_figure(fig, min_point, max_point, worst_point, true, true, true, point_color, extra_point, it);
-        }
-
-        /// Plot the pareto front as a svg plot
-        /// \param extra_point An extra point that will be plotted over the graph (default = nullopt)
-        /// \param it An iterator to a set of points to be highlighted in the graph (default = nullopt)
-        /// \return String with the plot in svg format
-        std::string svg(std::optional<point_type> extra_point = std::nullopt, std::optional<const_iterator> it = std::nullopt) const {
-            std::shared_ptr<trase::Figure> fig = trase::figure();
-            // create a trace figure
-            setup_trase_figure(fig, extra_point, it);
-            // stream it to a stringstream
-            std::stringstream ss;
-            trase::BackendSVG backend(ss);
-            fig->draw(backend);
-            return ss.str();
-        }
-#endif
-
     private /* functions */:
         /// \brief Clear solutions are dominated by p
         /// Pareto-optimal front is the set F consisting of
@@ -1528,57 +1504,12 @@ namespace pareto {
         /// solution. Note that this means two solutions
         /// might have the same values though.
         size_t clear_dominated(const point_type &p) {
-            // The modification of the rtree may invalidate the iterators
-            // https://www.boost.org/doc/libs/1_60_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/boost__geometry__index__rtree/begin__.html
-            // Remove doesn't take iterators pointing to values
-            // Remove removes values equal to these passed as a range
-            // https://www.boost.org/doc/libs/1_73_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/group__rtree__functions/remove_rtree_________iterator__iterator_.html
-            // We have to make only one query and get a copy of all ITEMS (not iterators)
-            // we want to remove.
             if (!empty()) {
-                // Query
-                const_iterator it = data_.begin_intersection(p, worst(), [&p, this](const value_type &x) {
-                    return p.dominates(x.first, is_minimization_);
-                });
-                // erase these elements
+                const_iterator it = find_dominated(p);
                 return erase(it, const_iterator(end()));
             }
             return 0;
         }
-
-        /// \brief Clear all solutions dominated by some point
-        size_t clear_dominated() {
-            // The modification of the rtree may invalidate the iterators
-            // https://www.boost.org/doc/libs/1_60_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/boost__geometry__index__rtree/begin__.html
-            // Remove doesn't take iterators pointing to values
-            // Remove removes values equal to these passed as a range
-            // https://www.boost.org/doc/libs/1_73_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/group__rtree__functions/remove_rtree_________iterator__iterator_.html
-            // We have to make only one query and get a copy of all ITEMS (not iterators)
-            // we want to remove.
-            if (size() > 1) {
-                // Query everyone
-                // Put them all in a separate list
-                // because iterators will be invalidated
-                auto it = find_intersection(ideal(), worst());
-                auto it_end = end();
-                std::vector<value_type> all;
-                while (it != it_end) {
-                    all.emplace_back(*it);
-                    ++it;
-                }
-                // Iterate removing points they dominate
-                size_t sum_removed = 0;
-                for (const auto&[k, v]: all) {
-                    // if k hasn't been removed yet
-                    if (find(k) != end()) {
-                        sum_removed += clear_dominated(k);
-                    }
-                }
-                return sum_removed;
-            }
-            return 0;
-        }
-
 
         double distance(const point_type &p1, const point_type &p2) const {
 #ifdef BUILD_BOOST_TREE
