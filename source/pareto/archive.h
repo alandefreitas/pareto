@@ -710,28 +710,20 @@ namespace pareto {
             const bool front_is_valid = front_idx < data_.size();
             if (front_is_valid) {
                 // Get all points this solution dominates in front i
-                auto v_dominates_x = [&v, this](const value_type &x) {
-                    return v.first.dominates(x.first, is_minimization_);
-                };
-                auto dominated_it = data_[front_idx].data_.begin_intersection(v.first, data_[front_idx].worst(),
-                                                                              v_dominates_x);
+                auto dominated_it = data_[front_idx].find_dominated(v.first);
 
                 // Copy dominated solutions to vector
-                // This does not work on some compilers
-                // std::vector<value_type> dominated_solutions(dominated_it, data_[i].data_.end());
                 std::vector<value_type> dominated_solutions;
-                auto begin_it = dominated_it;
-                auto end_it = data_[front_idx].data_.end();
-                while (begin_it != end_it) {
-                    dominated_solutions.emplace_back(*begin_it);
-                    ++begin_it;
-                }
+                typename pareto_front_type::const_iterator front_end(data_[front_idx].end());
+                std::copy(dominated_it, front_end, std::back_inserter(dominated_solutions));
 
                 // Remove dominated solutions from the current front
-                data_[front_idx].erase(dominated_it,
-                                       typename pareto_front_type::const_iterator(data_[front_idx].data_.end()));
+                data_[front_idx].erase(dominated_it, front_end);
 
-                // Recursively insert dominated solutions into next front
+                // Recursively insert dominated solutions into the next front
+                // Should we make this algorithm iterative?
+                // The front might be |A| = n in the worst case,
+                // so calling this too many times might cause a problem
                 for (const auto &v2: dominated_solutions) {
                     try_insert(front_idx + 1, v2);
                 }
@@ -902,7 +894,7 @@ namespace pareto {
         /// Erase element from the archive
         /// \param v Point
         size_type erase(const key_type &point) {
-            return try_erase(0, point);
+            return try_erase(front_search(point), point);
         }
 
         /// \brief Try to erase element from front or subsequent fronts
@@ -915,66 +907,35 @@ namespace pareto {
         /// \param point
         /// \return
         size_type try_erase(size_t front_idx, key_type point) {
-            // Find first front that does not dominate the point
-            // The point cannot be in a front that dominates it,
-            // or it would be there already.
-            auto lower_bound_it = std::lower_bound(data_.begin() + front_idx, data_.end(), true,
-                                                   [&point](const auto &a, const bool &b) {
-                                                       return !a.dominates(point) < b;
-                                                   });
-            // Find first front partially dominated by the point.
-            // Point cannot be in a front it dominates, or it would be
-            // there already.
-            auto upper_bound_it = std::lower_bound(lower_bound_it, data_.end(), true,
-                                                   [&point](const auto &a, const bool &b) {
-                                                       return a.is_partially_dominated_by(point) < b;
-                                                   });
-            size_t c = 0;
-            for (size_t i = lower_bound_it - data_.begin(); i < static_cast<size_t>(upper_bound_it - data_.begin()); ++i) {
-                c = data_[i].erase(point);
-                // if we could erase in this front
-                if (c != 0) {
-                    // if front became empty
-                    if (data_[i].empty()) {
-                        // just erase the front and we're all set
-                        data_.erase(data_.begin() + i);
+            size_t n_erased = data_[front_idx].erase(point);
+            if (n_erased == 0) {
+                return 0;
+            }
+
+            const bool front_became_empty = data_[front_idx].empty();
+            if (front_became_empty) {
+                data_.erase(data_.begin() + front_idx);
+            } else if (front_idx + 1 < data_.size()) {
+                // Some elements from next front might not be dominated now
+                auto previously_dominated_it = data_[front_idx + 1].find_dominated(point);
+                typename pareto_front_type::const_iterator it_end(data_[front_idx + 1].end());
+
+                // Copy these points because erasing them would invalidate iterators
+                std::vector<value_type> previously_dominated;
+                std::copy(previously_dominated_it, it_end, std::back_inserter(previously_dominated));
+
+                // Move these elements to this front
+                for (const auto &v: previously_dominated) {
+                    if (!data_[front_idx].dominates(v.first)) {
+                        data_[front_idx].insert(v);
+                        try_erase(front_idx + 1, v.first);
                     }
-                    // if front is not empty because of this removal, and there are other fronts
-                    else if (i + 1 < data_.size()) {
-                        // Some elements from next front might not be
-                        // dominated in this front now. Move these
-                        // elements from next front to this front.
-                        // This happens recursively to trigger the same
-                        // effect on the next fronts.
-                        // Get points that might now not be dominated by the current front
-                        auto it = data_[i + 1].find_intersection(point, data_[i + 1].worst());
-                        // Copy these points because erasing the points would invalidate iterators
-                        std::vector<value_type> intersection;
-                        auto it_end = data_[i + 1].end();
-                        while (it != it_end) {
-                            intersection.emplace_back(*it);
-                            ++it;
-                        }
-                        // For each of these points
-                        for (auto p_it = intersection.begin(); p_it != intersection.end(); ++p_it) {
-                            // If this front doesn't dominate the point
-                            if (!data_[i].dominates(p_it->first)) {
-                                // Insert it in this front
-                                data_[i].insert(*p_it);
-                                // Trigger the same process recursively
-                                // to remove it from the following fronts
-                                try_erase(i + 1, p_it->first);
-                            }
-                        }
-                    }
-                    return c;
                 }
             }
-            return c;
+            return n_erased;
         }
 
-
-        /// Erase element pointed by iterator from the front
+        /// \brief Erase element pointed by iterator from the front
         /// \warning The modification of the rtree may invalidate the iterators.
         size_t erase(const_iterator position) {
             if (position.ar_ == this) {
