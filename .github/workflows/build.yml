@@ -76,7 +76,7 @@ jobs:
         if: github.event_name == 'push'
         working-directory: ./build
         run: |
-          cmake .. ${{ matrix.config.args }} -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DBUILD_LONG_TESTS=ON -DMAX_NUM_DIMENSIONS_PYTHON=10 -DBUILD_BINDING_FOR_ALL_STRUCTURES=ON
+          cmake .. ${{ matrix.config.args }} -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DBUILD_LONG_TESTS=ON -DMAX_NUM_DIMENSIONS_PYTHON=5 -DBUILD_BINDING_FOR_ALL_STRUCTURES=ON
       - name: Build
         working-directory: ./build
         run: cmake --build . -j ${{ matrix.config.cores }} --config ${{ matrix.config.config }}
