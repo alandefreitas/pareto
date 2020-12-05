@@ -325,7 +325,9 @@ namespace pareto {
                 : data_(first, last) {}
 
 
-    public /* iterators */:        /// \brief Get iterator to first element
+    public /* iterators */:
+
+        /// \brief Get iterator to first element
         const_iterator begin() const noexcept {
             return const_iterator(data_.begin(), data_.end());
         }
@@ -335,10 +337,14 @@ namespace pareto {
             return const_iterator(data_, [ps](const value_type &v) {
                 return ps.pass_predicate(v);
             });
-        }        /// \brief Get iterator to last + 1 element
+        }
+
+        /// \brief Get iterator to last + 1 element
         const_iterator end() const noexcept {
             return const_iterator(data_.end(), data_.end());
-        }        /// \brief Get iterator to first element
+        }
+
+        /// \brief Get iterator to first element
         iterator begin() noexcept {
             return iterator(data_.begin(), data_.end());
         }
@@ -348,7 +354,9 @@ namespace pareto {
             return iterator(data_, [ps](const value_type &v) {
                 return ps.pass_predicate(v);
             });
-        }        /// \brief Get iterator to last + 1 element
+        }
+
+        /// \brief Get iterator to last + 1 element
         iterator end() noexcept {
             return iterator(data_.end(), data_.end());
         }
