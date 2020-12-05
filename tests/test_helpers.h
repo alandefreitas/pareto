@@ -12,6 +12,10 @@
 #include <vector>
 #include <pareto/front.h>
 
+constexpr uint64_t fixed_seed() {
+    return 3957603322;
+}
+
 inline uint64_t seed() {
     static uint64_t seed = static_cast<unsigned int>(std::random_device()()) |
                            static_cast<unsigned int>(std::chrono::high_resolution_clock::now().time_since_epoch().count());
@@ -20,7 +24,7 @@ inline uint64_t seed() {
 }
 
 inline std::mt19937 &generator() {
-    static std::mt19937 g(seed());
+    static std::mt19937 g(fixed_seed());
     return g;
 }
 
