@@ -11,14 +11,38 @@ namespace pareto {
 
     struct boost_tree_tag;
 
+    /// \class R-Tree based on Boost.Geometry
     /// This is a r-tree with all the operations we need using
     /// boost r-tree as underlying data structure.
-    /// The boost r-tree is planned to work in lots of scenarios
-    /// that we don't really need for pareto fronts. It also does
-    /// not make good use of the custom allocators that are
+    /// We only really need points for Pareto fronts. So the boost
+    /// r-tree is planned to work in lots of scenarios that we don't
+    /// really need for pareto fronts.
+    /// It also does not make good use of the custom allocators that are
     /// fundamental in small trees.
+    /// Although we used this tree for our initial experiments,
+    /// we are deprecating this class in later versions of this
+    /// library because:
+    /// * Very poor performance for fronts compared with our own R-Tree
+    /// * R-Trees are not even design for fast performance when the the
+    ///   tree contains only points, and we already have two R-Tree
+    ///   implementations besides this one
+    /// * It seems like boost.geometry is not being maintained and C++
+    ///   has changed a lot since then
+    /// * Boost.Geometry has a lot of boost dependencies. Besides
+    ///   (i) the pain of having the library limited by a boost dependency just
+    ///   because of header-only libraries that could easily be on github nowadays,
+    ///   (ii) boost libraries tend to depend on other boost libraries implementing
+    ///   features that have been on the C++ standard library for more than a decade,
+    ///   (iii) boost is famous for having cyclic dependencies,
+    ///   (iv) boost.geometry depends on other boost libraries that are now deprecated,
+    ///   (v) it emits lots of warnings on modern C++ besides the deprecated dependencies,
+    ///   (vi) and it requires lots of workarounds to make it work with the same interface
+    ///        as our other trees. For instance, we cannot create predicate lists in runtime
+    ///        with boost and we have to recur to some inefficient workarounds that make
+    ///        boost.geometry iterate the whole tree
+    ///   (vii) the front dimension cannot be set in runtime with boost.geometry
     template<typename NUMBER_TYPE, size_t NUMBER_OF_DIMENSIONS, typename ELEMENT_TYPE, typename ALLOCATOR = std::allocator<std::pair<::pareto::point<NUMBER_TYPE, NUMBER_OF_DIMENSIONS>, ELEMENT_TYPE>>>
-    class boost_tree {
+    class [[deprecated]] boost_tree {
     public:
         friend front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, boost_tree_tag>;
         using self_type = boost_tree<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, ALLOCATOR>;
@@ -29,6 +53,8 @@ namespace pareto {
         using mapped_type = ELEMENT_TYPE;
         using value_type = std::pair<key_type, mapped_type>;
         using box_type = query_box<number_type, number_of_compile_dimensions>;
+        using predicate_variant_type = predicate_variant<number_type, NUMBER_OF_DIMENSIONS, mapped_type>;
+        using predicate_list_type = predicate_list<number_type, NUMBER_OF_DIMENSIONS, mapped_type>;
 
         using tree_type = boost::geometry::index::rtree<value_type, boost::geometry::index::quadratic<16>>;
         using difference_type = typename tree_type::const_query_iterator::difference_type;
@@ -270,6 +296,13 @@ namespace pareto {
                                   data_.qend());
         }
 
+        /// \brief Get iterator to first element with the predicates
+        const_iterator begin(const predicate_list_type &ps) const noexcept {
+            return const_iterator(data_.qbegin(
+                    boost::geometry::index::satisfies([&ps](auto const &x) { return ps.pass_predicate(x); })),
+                                  data_.qend());
+        }
+
         /// \brief Get iterator to last + 1 element
         const_iterator end() const noexcept {
             return const_iterator(data_.qend(), data_.qend());
@@ -278,6 +311,13 @@ namespace pareto {
         /// \brief Get iterator to first element
         iterator begin() noexcept {
             return iterator(data_.qbegin(boost::geometry::index::satisfies([](auto const &x) { return true; })),
+                            data_.qend());
+        }
+
+        /// \brief Get iterator to first element with the predicates
+        iterator begin(const predicate_list_type &ps) noexcept {
+            return iterator(data_.qbegin(
+                    boost::geometry::index::satisfies([&ps](auto const &x) { return ps.pass_predicate(x); })),
                             data_.qend());
         }
 
