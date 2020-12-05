@@ -2,13 +2,7 @@
 #include <catch2/catch.hpp>
 #include <pareto/archive.h>
 #include <pareto/front.h>
-
-unsigned randi();
-//bool rand_flip();
-double randn();
-double randu();
-using uint8_t_vector_iterator = std::vector<uint8_t>::iterator;
-//bool next_combination(uint8_t_vector_iterator first, uint8_t_vector_iterator last, uint8_t max_value = 0x01);
+#include "../test_helpers.h"
 
 template <size_t COMPILE_DIMENSION, typename TAG = pareto::default_tag<COMPILE_DIMENSION>>
 void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
@@ -112,10 +106,10 @@ void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         r = ar.insert(std::move(v2));
         r = ar.insert(random_point(), randi());
         unsigned m = randi();
-        r = ar.insert(random_point(), std::move(m));
+        r = ar.insert(random_point(), m);
         std::vector v3 = {random_value(), random_value(), random_value()};
         ar.insert(v3.begin(), v3.end());
-        ar.insert({random_value(),random_value(),random_value()});
+        ar.insert({random_value(), random_value(), random_value()});
         for (size_t i = 0; i < 1000 / test_dimension; ++i) {
             auto x = random_value();
             try {
@@ -125,11 +119,12 @@ void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
                 std::cout << "i - " << i << " - v: [" << x.first << ", " << x.second << "]" << std::endl;
             }
         }
+        REQUIRE(ar.check_invariants());
         return ar;
     };
 
     SECTION("Container functions and iterators " + section_name) {
-        // RUNTIME_DIMENSION = {size_t} 2
+        // RUNTIME_DIMENSION = {size_t} 2’
         // test_dimension = {size_t} 2
         auto ar = random_pareto_archive();
         size_t counter = 0;
@@ -154,7 +149,7 @@ void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         REQUIRE(!ar.contains(random_point()));
         ar.clear();
         REQUIRE(ar.empty());
-        REQUIRE(ar.size() == 0);
+        REQUIRE(ar.size() == 0); // NOLINT(readability-container-size-empty)
         REQUIRE(ar.dimensions() == test_dimension);
     }
 
@@ -175,7 +170,7 @@ void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         ar2.insert(random_value());
         // erase by iterator
         ar2.erase(ar2.begin(), ar2.end());
-        REQUIRE(ar2.size() == 0);
+        REQUIRE(ar2.size() == 0); // NOLINT(readability-container-size-empty)
         REQUIRE(ar2.empty());
         ar2 = ar;
         REQUIRE_FALSE(ar2.empty());
@@ -299,6 +294,7 @@ void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
 
     SECTION("Pareto Dominance " + section_name) {
         auto ar = random_pareto_archive();
+        REQUIRE(ar.check_invariants());
         // Point dominance
         REQUIRE_NOTHROW(ar.dominates(random_point()));
         point_type p = ar.begin()->first;
@@ -328,10 +324,11 @@ void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         for (const auto &[k, v2] : v) {
             point_type k2 = k;
             for (size_t i = 0; i < p.dimensions(); ++i) {
-                k2[i] -= (is_mini[i] ? 1 : -1);
+                k2[i] += (is_mini[i] ? -1 : +1);
             }
             ar2.emplace(k2, v2);
         }
+        REQUIRE(ar2.check_invariants());
         REQUIRE_FALSE(ar.dominates(ar2));
         REQUIRE_FALSE(ar.strongly_dominates(ar2));
         REQUIRE_FALSE(ar.non_dominates(ar2));
@@ -340,7 +337,7 @@ void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         REQUIRE_FALSE(ar2.non_dominates(ar));
         ar2.clear();
         for (auto &[k, v2] : v) {
-            for (size_t i=0; i < k.dimensions(); ++i) {
+            for (size_t i = 0; i < k.dimensions(); ++i) {
                 k[i] = k[i] + (is_mini[i] ? 2 : -2);
             }
             ar2.emplace(k, v2);
@@ -368,367 +365,73 @@ void test_archive(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
     }
 }
 
+template<size_t M>
+void test_all_tags(const std::vector<uint8_t> &is_mini) {
+    using namespace pareto;
+    test_archive<M, vector_tree_tag>(M, is_mini);
+    test_archive<0, vector_tree_tag>(M, is_mini);
+    test_archive<M, quad_tree_tag>(M, is_mini);
+    test_archive<0, quad_tree_tag>(M, is_mini);
+    test_archive<M, kd_tree_tag>(M, is_mini);
+    test_archive<0, kd_tree_tag>(M, is_mini);
+    test_archive<M, boost_tree_tag>(M, is_mini);
+    test_archive<M, r_tree_tag>(M, is_mini);
+    test_archive<0, r_tree_tag>(M, is_mini);
+    test_archive<M, r_star_tree_tag>(M, is_mini);
+    test_archive<0, r_star_tree_tag>(M, is_mini);
+}
+
 #ifdef BUILD_LONG_TESTS
+
 TEST_CASE("Archive - 1 dimension") {
     using namespace pareto;
-    std::vector<uint8_t> is_mini = {0};
-    test_archive<1, vector_tree_tag>(1, is_mini);
-    test_archive<0, vector_tree_tag>(1, is_mini);
-    test_archive<1, quad_tree_tag>(1, is_mini);
-    test_archive<0, quad_tree_tag>(1, is_mini);
-    test_archive<1, kd_tree_tag>(1, is_mini);
-    test_archive<0, kd_tree_tag>(1, is_mini);
-    test_archive<1, boost_tree_tag>(1, is_mini);
-    test_archive<1, r_tree_tag>(1, is_mini);
-    test_archive<0, r_tree_tag>(1, is_mini);
-    test_archive<1, r_star_tree_tag>(1, is_mini);
-    test_archive<0, r_star_tree_tag>(1, is_mini);
+    test_all_tags<1>({0});
 }
+
 #endif
 
 TEST_CASE("Archive - 2 dimensions") {
     using namespace pareto;
-    std::vector<uint8_t> is_mini = {0, 0};
-    test_archive<2, vector_tree_tag>(2, is_mini);
-    test_archive<0, vector_tree_tag>(2, is_mini);
-    test_archive<2, quad_tree_tag>(2, is_mini);
-    test_archive<0, quad_tree_tag>(2, is_mini);
-    test_archive<2, kd_tree_tag>(2, is_mini);
-    test_archive<0, kd_tree_tag>(2, is_mini);
-    test_archive<2, boost_tree_tag>(2, is_mini);
-    test_archive<2, r_tree_tag>(2, is_mini);
-    test_archive<0, r_tree_tag>(2, is_mini);
-    test_archive<0, r_tree_tag>(2, is_mini);
-    test_archive<2, r_star_tree_tag>(2, is_mini);
-    test_archive<0, r_star_tree_tag>(2, is_mini);
-
-    is_mini = {0, 1};
-    test_archive<2, vector_tree_tag>(2, is_mini);
-    test_archive<0, vector_tree_tag>(2, is_mini);
-    test_archive<2, quad_tree_tag>(2, is_mini);
-    test_archive<0, quad_tree_tag>(2, is_mini);
-    test_archive<2, kd_tree_tag>(2, is_mini);
-    test_archive<0, kd_tree_tag>(2, is_mini);
-    test_archive<2, boost_tree_tag>(2, is_mini);
-    test_archive<2, r_tree_tag>(2, is_mini);
-    test_archive<0, r_tree_tag>(2, is_mini);
-    test_archive<0, r_tree_tag>(2, is_mini);
-    test_archive<2, r_star_tree_tag>(2, is_mini);
-    test_archive<0, r_star_tree_tag>(2, is_mini);
-
-    is_mini = {1, 0};
-    test_archive<2, vector_tree_tag>(2, is_mini);
-    test_archive<0, vector_tree_tag>(2, is_mini);
-    test_archive<2, quad_tree_tag>(2, is_mini);
-    test_archive<0, quad_tree_tag>(2, is_mini);
-    test_archive<2, kd_tree_tag>(2, is_mini);
-    test_archive<0, kd_tree_tag>(2, is_mini);
-    test_archive<2, boost_tree_tag>(2, is_mini);
-    test_archive<2, r_tree_tag>(2, is_mini);
-    test_archive<0, r_tree_tag>(2, is_mini);
-    test_archive<0, r_tree_tag>(2, is_mini);
-    test_archive<2, r_star_tree_tag>(2, is_mini);
-    test_archive<0, r_star_tree_tag>(2, is_mini);
-
-    is_mini = {1, 1};
-    test_archive<2, vector_tree_tag>(2, is_mini);
-    test_archive<0, vector_tree_tag>(2, is_mini);
-    test_archive<2, quad_tree_tag>(2, is_mini);
-    test_archive<0, quad_tree_tag>(2, is_mini);
-    test_archive<2, kd_tree_tag>(2, is_mini);
-    test_archive<0, kd_tree_tag>(2, is_mini);
-    test_archive<2, boost_tree_tag>(2, is_mini);
-    test_archive<2, r_tree_tag>(2, is_mini);
-    test_archive<0, r_tree_tag>(2, is_mini);
-    test_archive<0, r_tree_tag>(2, is_mini);
-    test_archive<2, r_star_tree_tag>(2, is_mini);
-    test_archive<0, r_star_tree_tag>(2, is_mini);
+    test_all_tags<2>({0, 0});
+    test_all_tags<2>({0, 1});
+    test_all_tags<2>({1, 0});
+    test_all_tags<2>({1, 1});
 }
 
 #ifdef BUILD_LONG_TESTS
 TEST_CASE("Archive - 3 dimensions") {
     using namespace pareto;
-    std::vector<uint8_t> is_mini = {0, 0, 0};
-    test_archive<3, vector_tree_tag>(3, is_mini);
-    test_archive<0, vector_tree_tag>(3, is_mini);
-    test_archive<3, quad_tree_tag>(3, is_mini);
-    test_archive<0, quad_tree_tag>(3, is_mini);
-    test_archive<3, kd_tree_tag>(3, is_mini);
-    test_archive<0, kd_tree_tag>(3, is_mini);
-    test_archive<3, boost_tree_tag>(3, is_mini);
-    test_archive<3, r_tree_tag>(3, is_mini);
-    test_archive<0, r_tree_tag>(3, is_mini);
-    test_archive<3, r_star_tree_tag>(3, is_mini);
-    test_archive<0, r_star_tree_tag>(3, is_mini);
-
-    is_mini = {0, 1, 0};
-    test_archive<3, vector_tree_tag>(3, is_mini);
-    test_archive<0, vector_tree_tag>(3, is_mini);
-    test_archive<3, quad_tree_tag>(3, is_mini);
-    test_archive<0, quad_tree_tag>(3, is_mini);
-    test_archive<3, kd_tree_tag>(3, is_mini);
-    test_archive<0, kd_tree_tag>(3, is_mini);
-    test_archive<3, boost_tree_tag>(3, is_mini);
-    test_archive<3, r_tree_tag>(3, is_mini);
-    test_archive<0, r_tree_tag>(3, is_mini);
-    test_archive<3, r_star_tree_tag>(3, is_mini);
-    test_archive<0, r_star_tree_tag>(3, is_mini);
-
-    is_mini = {1, 0, 0};
-    test_archive<3, vector_tree_tag>(3, is_mini);
-    test_archive<0, vector_tree_tag>(3, is_mini);
-    test_archive<3, quad_tree_tag>(3, is_mini);
-    test_archive<0, quad_tree_tag>(3, is_mini);
-    test_archive<3, kd_tree_tag>(3, is_mini);
-    test_archive<0, kd_tree_tag>(3, is_mini);
-    test_archive<3, boost_tree_tag>(3, is_mini);
-    test_archive<3, r_tree_tag>(3, is_mini);
-    test_archive<0, r_tree_tag>(3, is_mini);
-    test_archive<3, r_star_tree_tag>(3, is_mini);
-    test_archive<0, r_star_tree_tag>(3, is_mini);
+    test_all_tags<3>({0, 0, 0});
+    test_all_tags<3>({0, 1, 0});
+    test_all_tags<3>({1, 0, 0});
 
 }
 
 TEST_CASE("Archive - 5 dimensions") {
     using namespace pareto;
-    std::vector<uint8_t> is_mini = {0, 0, 0, 0, 0};
-    test_archive<5, vector_tree_tag>(5, is_mini);
-    test_archive<0, vector_tree_tag>(5, is_mini);
-    test_archive<5, quad_tree_tag>(5, is_mini);
-    test_archive<0, quad_tree_tag>(5, is_mini);
-    test_archive<5, kd_tree_tag>(5, is_mini);
-    test_archive<0, kd_tree_tag>(5, is_mini);
-    test_archive<5, boost_tree_tag>(5, is_mini);
-    test_archive<5, r_tree_tag>(5, is_mini);
-    test_archive<0, r_tree_tag>(5, is_mini);
-    test_archive<5, r_star_tree_tag>(5, is_mini);
-    test_archive<0, r_star_tree_tag>(5, is_mini);
-
-    is_mini = {0, 0, 1, 0, 0};
-    test_archive<5, vector_tree_tag>(5, is_mini);
-    test_archive<0, vector_tree_tag>(5, is_mini);
-    test_archive<5, quad_tree_tag>(5, is_mini);
-    test_archive<0, quad_tree_tag>(5, is_mini);
-    test_archive<5, kd_tree_tag>(5, is_mini);
-    test_archive<0, kd_tree_tag>(5, is_mini);
-    test_archive<5, boost_tree_tag>(5, is_mini);
-    test_archive<5, r_tree_tag>(5, is_mini);
-    test_archive<0, r_tree_tag>(5, is_mini);
-    test_archive<5, r_star_tree_tag>(5, is_mini);
-    test_archive<0, r_star_tree_tag>(5, is_mini);
-
-    is_mini = {1, 0, 0, 1, 0};
-    test_archive<5, vector_tree_tag>(5, is_mini);
-    test_archive<0, vector_tree_tag>(5, is_mini);
-    test_archive<5, quad_tree_tag>(5, is_mini);
-    test_archive<0, quad_tree_tag>(5, is_mini);
-    test_archive<5, kd_tree_tag>(5, is_mini);
-    test_archive<0, kd_tree_tag>(5, is_mini);
-    test_archive<5, boost_tree_tag>(5, is_mini);
-    test_archive<5, r_tree_tag>(5, is_mini);
-    test_archive<0, r_tree_tag>(5, is_mini);
-    test_archive<5, r_star_tree_tag>(5, is_mini);
-    test_archive<0, r_star_tree_tag>(5, is_mini);
-
-    is_mini = {0, 0, 0, 1, 0};
-    test_archive<5, vector_tree_tag>(5, is_mini);
-    test_archive<0, vector_tree_tag>(5, is_mini);
-    test_archive<5, quad_tree_tag>(5, is_mini);
-    test_archive<0, quad_tree_tag>(5, is_mini);
-    test_archive<5, kd_tree_tag>(5, is_mini);
-    test_archive<0, kd_tree_tag>(5, is_mini);
-    test_archive<5, boost_tree_tag>(5, is_mini);
-    test_archive<5, r_tree_tag>(5, is_mini);
-    test_archive<0, r_tree_tag>(5, is_mini);
-    test_archive<5, r_star_tree_tag>(5, is_mini);
-    test_archive<0, r_star_tree_tag>(5, is_mini);
+    test_all_tags<5>({0, 0, 0, 0, 0});
+    test_all_tags<5>({0, 0, 1, 0, 0});
+    test_all_tags<5>({1, 0, 0, 1, 0});
+    test_all_tags<5>({0, 0, 0, 1, 0});
 
 }
 
 TEST_CASE("Archive - 9 dimensions") {
     using namespace pareto;
-    std::vector<uint8_t> is_mini = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-    test_archive<9, vector_tree_tag>(9, is_mini);
-    test_archive<0, vector_tree_tag>(9, is_mini);
-    test_archive<9, quad_tree_tag>(9, is_mini);
-    test_archive<0, quad_tree_tag>(9, is_mini);
-    test_archive<9, kd_tree_tag>(9, is_mini);
-    test_archive<0, kd_tree_tag>(9, is_mini);
-    test_archive<9, boost_tree_tag>(9, is_mini);
-    test_archive<9, r_tree_tag>(9, is_mini);
-    test_archive<0, r_tree_tag>(9, is_mini);
-    test_archive<9, r_star_tree_tag>(9, is_mini);
-    test_archive<0, r_star_tree_tag>(9, is_mini);
-
-    is_mini = {0, 0, 0, 0, 0, 0, 0, 0, 1};
-    test_archive<9, vector_tree_tag>(9, is_mini);
-    test_archive<0, vector_tree_tag>(9, is_mini);
-    test_archive<9, quad_tree_tag>(9, is_mini);
-    test_archive<0, quad_tree_tag>(9, is_mini);
-    test_archive<9, kd_tree_tag>(9, is_mini);
-    test_archive<0, kd_tree_tag>(9, is_mini);
-    test_archive<9, boost_tree_tag>(9, is_mini);
-    test_archive<9, r_tree_tag>(9, is_mini);
-    test_archive<0, r_tree_tag>(9, is_mini);
-    test_archive<9, r_star_tree_tag>(9, is_mini);
-    test_archive<0, r_star_tree_tag>(9, is_mini);
-
-    is_mini = {0, 0, 0, 1, 0, 0, 0, 0, 0};
-    test_archive<9, vector_tree_tag>(9, is_mini);
-    test_archive<0, vector_tree_tag>(9, is_mini);
-    test_archive<9, quad_tree_tag>(9, is_mini);
-    test_archive<0, quad_tree_tag>(9, is_mini);
-    test_archive<9, kd_tree_tag>(9, is_mini);
-    test_archive<0, kd_tree_tag>(9, is_mini);
-    test_archive<9, boost_tree_tag>(9, is_mini);
-    test_archive<9, r_tree_tag>(9, is_mini);
-    test_archive<0, r_tree_tag>(9, is_mini);
-    test_archive<9, r_star_tree_tag>(9, is_mini);
-    test_archive<0, r_star_tree_tag>(9, is_mini);
-
-    is_mini = {0, 0, 0, 0, 1, 1, 0, 0, 1};
-    test_archive<9, vector_tree_tag>(9, is_mini);
-    test_archive<0, vector_tree_tag>(9, is_mini);
-    test_archive<9, quad_tree_tag>(9, is_mini);
-    test_archive<0, quad_tree_tag>(9, is_mini);
-    test_archive<9, kd_tree_tag>(9, is_mini);
-    test_archive<0, kd_tree_tag>(9, is_mini);
-    test_archive<9, boost_tree_tag>(9, is_mini);
-    test_archive<9, r_tree_tag>(9, is_mini);
-    test_archive<0, r_tree_tag>(9, is_mini);
-    test_archive<9, r_star_tree_tag>(9, is_mini);
-    test_archive<0, r_star_tree_tag>(9, is_mini);
-
-    is_mini = {0, 0, 0, 0, 0, 1, 0, 0, 1};
-    test_archive<9, vector_tree_tag>(9, is_mini);
-    test_archive<0, vector_tree_tag>(9, is_mini);
-    test_archive<9, quad_tree_tag>(9, is_mini);
-    test_archive<0, quad_tree_tag>(9, is_mini);
-    test_archive<9, kd_tree_tag>(9, is_mini);
-    test_archive<0, kd_tree_tag>(9, is_mini);
-    test_archive<9, boost_tree_tag>(9, is_mini);
-    test_archive<9, r_tree_tag>(9, is_mini);
-    test_archive<0, r_tree_tag>(9, is_mini);
-    test_archive<9, r_star_tree_tag>(9, is_mini);
-    test_archive<0, r_star_tree_tag>(9, is_mini);
+    test_all_tags<9>({0, 0, 0, 0, 0, 0, 0, 0, 0});
+    test_all_tags<9>({0, 0, 0, 0, 0, 0, 0, 0, 1});
+    test_all_tags<9>({0, 0, 0, 1, 0, 0, 0, 0, 0});
+    test_all_tags<9>({0, 0, 0, 0, 1, 1, 0, 0, 1});
+    test_all_tags<9>({0, 0, 0, 0, 0, 1, 0, 0, 1});
 
 }
 
 TEST_CASE("Archive - 13 dimensions") {
     using namespace pareto;
-    std::vector<uint8_t> is_mini = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    test_archive<13, vector_tree_tag>(13, is_mini);
-    test_archive<0, vector_tree_tag>(13, is_mini);
-    test_archive<13, quad_tree_tag>(13, is_mini);
-    test_archive<0, quad_tree_tag>(13, is_mini);
-    test_archive<13, kd_tree_tag>(13, is_mini);
-    test_archive<0, kd_tree_tag>(13, is_mini);
-    test_archive<13, boost_tree_tag>(13, is_mini);
-    test_archive<13, r_tree_tag>(13, is_mini);
-    test_archive<0, r_tree_tag>(13, is_mini);
-    test_archive<13, r_star_tree_tag>(13, is_mini);
-    test_archive<0, r_star_tree_tag>(13, is_mini);
-
-    is_mini = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
-    test_archive<13, vector_tree_tag>(13, is_mini);
-    test_archive<0, vector_tree_tag>(13, is_mini);
-    test_archive<13, quad_tree_tag>(13, is_mini);
-    test_archive<0, quad_tree_tag>(13, is_mini);
-    test_archive<13, kd_tree_tag>(13, is_mini);
-    test_archive<0, kd_tree_tag>(13, is_mini);
-    test_archive<13, boost_tree_tag>(13, is_mini);
-    test_archive<13, r_tree_tag>(13, is_mini);
-    test_archive<0, r_tree_tag>(13, is_mini);
-    test_archive<13, r_star_tree_tag>(13, is_mini);
-    test_archive<0, r_star_tree_tag>(13, is_mini);
-
-    is_mini = {0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1};
-    test_archive<13, vector_tree_tag>(13, is_mini);
-    test_archive<0, vector_tree_tag>(13, is_mini);
-    test_archive<13, quad_tree_tag>(13, is_mini);
-    test_archive<0, quad_tree_tag>(13, is_mini);
-    test_archive<13, kd_tree_tag>(13, is_mini);
-    test_archive<0, kd_tree_tag>(13, is_mini);
-    test_archive<13, boost_tree_tag>(13, is_mini);
-    test_archive<13, r_tree_tag>(13, is_mini);
-    test_archive<0, r_tree_tag>(13, is_mini);
-    test_archive<13, r_star_tree_tag>(13, is_mini);
-    test_archive<0, r_star_tree_tag>(13, is_mini);
-
-    is_mini = {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0};
-    test_archive<13, vector_tree_tag>(13, is_mini);
-    test_archive<0, vector_tree_tag>(13, is_mini);
-    test_archive<13, quad_tree_tag>(13, is_mini);
-    test_archive<0, quad_tree_tag>(13, is_mini);
-    test_archive<13, kd_tree_tag>(13, is_mini);
-    test_archive<0, kd_tree_tag>(13, is_mini);
-    test_archive<13, boost_tree_tag>(13, is_mini);
-    test_archive<13, r_tree_tag>(13, is_mini);
-    test_archive<0, r_tree_tag>(13, is_mini);
-    test_archive<13, r_star_tree_tag>(13, is_mini);
-    test_archive<0, r_star_tree_tag>(13, is_mini);
-
-    is_mini = {0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1};
-    test_archive<13, vector_tree_tag>(13, is_mini);
-    test_archive<0, vector_tree_tag>(13, is_mini);
-    test_archive<13, quad_tree_tag>(13, is_mini);
-    test_archive<0, quad_tree_tag>(13, is_mini);
-    test_archive<13, kd_tree_tag>(13, is_mini);
-    test_archive<0, kd_tree_tag>(13, is_mini);
-    test_archive<13, boost_tree_tag>(13, is_mini);
-    test_archive<13, r_tree_tag>(13, is_mini);
-    test_archive<0, r_tree_tag>(13, is_mini);
-    test_archive<13, r_star_tree_tag>(13, is_mini);
-    test_archive<0, r_star_tree_tag>(13, is_mini);
-
+    test_all_tags<13>({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0});
+    test_all_tags<13>({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1});
+    test_all_tags<13>({0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1});
+    test_all_tags<13>({0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0});
+    test_all_tags<13>({0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1});
 }
 #endif
-
-uint64_t seed() {
-//    static uint64_t seed = static_cast<uint64_t>(std::random_device()()) |
-//                           std::chrono::high_resolution_clock::now().time_since_epoch().count();
-    static uint64_t seed = 513178110262263;
-    std::cout << "Test seed: " << seed << std::endl;
-    return seed;
-}
-
-std::mt19937 &generator() {
-    static std::mt19937 g(static_cast<unsigned int>(seed()));
-    return g;
-}
-
-//bool rand_flip() {
-//    static std::uniform_int_distribution<unsigned> ud(0, 1);
-//    return ud(generator());
-//}
-
-unsigned randi() {
-    static std::uniform_int_distribution<unsigned> ud(0, 40);
-    return ud(generator());;
-}
-
-double randu() {
-    static std::uniform_real_distribution<double> ud(0., 1.);
-    return ud(generator());
-}
-
-double randn() {
-    static std::normal_distribution nd;
-    return nd(generator());
-}
-
-//bool next_combination(uint8_t_vector_iterator first, uint8_t_vector_iterator last, uint8_t max_value) {
-//    using value_type = uint8_t;
-//    if (first == last) return false;
-//    auto i = last;
-//    do {
-//        --i;
-//        if (*i == max_value) {
-//            *i = std::numeric_limits<value_type>::min();
-//        } else {
-//            ++(*i);
-//            return true;
-//        }
-//    } while (i != first);
-//    return false;
-//}
