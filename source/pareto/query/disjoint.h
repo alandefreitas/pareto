@@ -22,6 +22,9 @@ namespace pareto {
         explicit disjoint(const query_box_type &data) : data_(data) {}
 
         /// \brief Construct predicate from query box corners
+        explicit disjoint(const point_type &single_point) : data_(query_box_type(single_point,single_point)) {}
+
+        /// \brief Construct predicate from query box corners
         disjoint(const point_type &min_corner, const point_type &max_corner) : data_(query_box_type(min_corner,max_corner)) {}
 
     public:
