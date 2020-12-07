@@ -17,6 +17,7 @@ namespace pareto {
         using self_type = archive<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, TAG>;
         using pareto_front_type =
         front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, TAG>;
+        using internal_type = typename pareto_front_type::internal_type;
         static constexpr size_t number_of_compile_dimensions = NUMBER_OF_DIMENSIONS;
         using number_type = typename pareto_front_type::number_type;
         using point_type = typename pareto_front_type::point_type;
@@ -29,7 +30,6 @@ namespace pareto {
         using pointer = typename pareto_front_type::pointer;
         using const_pointer = typename pareto_front_type::const_pointer;
         using size_type = typename pareto_front_type::size_type;
-        using internal_type = typename pareto_front_type::internal_type;
         using internal_minimization_type = typename pareto_front_type::internal_minimization_type;
         using difference_type = typename pareto_front_type::difference_type;
         using node_allocator_type = typename pareto_front_type::node_allocator_type;
@@ -598,16 +598,13 @@ namespace pareto {
         /// \brief Check if archive is empty
         [[nodiscard]] bool empty() const noexcept {
             return data_.empty() ||
-                    std::all_of(data_.begin(), data_.end(), [](const pareto_front_type &pf) { return pf.empty(); });
+                   std::all_of(data_.begin(), data_.end(), [](const pareto_front_type &pf) { return pf.empty(); });
         }
 
         /// \brief Get archive size
         size_type size() const noexcept {
-            size_t s = 0;
-            for (const auto &pf: data_) {
-                s += pf.size();
-            }
-            return s;
+            return std::accumulate(data_.begin(), data_.end(), size_t{0},
+                                   [](const size_t c, const pareto_front_type &pf) { return c + pf.size(); });
         }
 
         /// \brief Get maximum archive size
@@ -858,19 +855,33 @@ namespace pareto {
         /// \param new_size
         void resize(size_t new_size) {
             size_t current_size = size();
-            if (current_size < new_size) {
-                max_size_ = new_size;
-            } else {
+            max_size_ = new_size;
+            if (new_size > current_size) {
                 size_t excess = current_size - new_size;
                 while (excess > 0) {
-                    if (excess >= data_.back().size()) {
-                        // if excess is more than the last front
-                        // remove it completely
+                    const bool excess_larger_than_last_front = excess >= data_.back().size();
+                    if (excess_larger_than_last_front) {
                         excess -= data_.back().size();
                         data_.pop_back();
                     } else {
-                        // if excess is less than last front
-                        // remove the most crowded elements
+                        const bool remove_some_random_elements = excess > 2 * log2(static_cast<double>(max_size_));
+                        if (remove_some_random_elements) {
+                            pareto_front_type &last_front = data_.back();
+                            size_t n_to_remove = excess - 2 * log2(static_cast<double>(max_size_));
+                            box_type b(last_front.ideal(), last_front.nadir());
+                            auto &g = pareto_front_type::generator();
+                            for (size_t i = 0; i < n_to_remove; ++i) {
+                                point_type r(dimensions());
+                                for (size_t j = 0; j < r.dimensions(); ++j) {
+                                    std::uniform_real_distribution<number_type> d(b.min()[j], b.max()[j]);
+                                    r[j] = d(g);
+                                }
+                                auto it = last_front.find_nearest(r);
+                                last_front.erase(it);
+                            }
+                        }
+
+                        // remove the most crowded O(log n) elements
                         std::vector<std::pair<point_type, double>> candidates;
                         candidates.reserve(data_.back().size());
                         for (const auto&[k, v] : data_.back()) {
@@ -882,6 +893,7 @@ namespace pareto {
                             // point k and crowding distance d
                             candidates.emplace_back(k, d);
                         }
+
                         // smallest crowding distance comes first
                         std::partial_sort(candidates.begin(), candidates.begin() + excess, candidates.end(),
                                           [](const auto &a, const auto &b) {
@@ -890,6 +902,7 @@ namespace pareto {
                         for (size_t i = 0; i < excess; ++i) {
                             data_.back().erase(candidates[i].first);
                         }
+
                         excess = 0;
                     }
                 }
