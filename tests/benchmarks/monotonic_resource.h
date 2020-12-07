@@ -37,7 +37,8 @@
 #include <memory>			// align, allocator_arg_t, __uses_alloc
 #include <utility>			// pair, index_sequence
 #include <cstddef>			// size_t, max_align_t
-#include <tuple>			// tuple
+#include <tuple>            // tuple
+#include <cassert>
 
 namespace std __attribute__ ((visibility ("default"))) {
 namespace pmr

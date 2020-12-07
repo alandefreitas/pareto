@@ -108,8 +108,11 @@ void create_shared_pointer_vector_fast_pool([[maybe_unused]] benchmark::State &s
     for (auto _ : state) {
         for (long long i = 0; i < state.range(0); ++i) {
             auto p = alloc.allocate(1);
-            alloc.construct(p);
-            v.emplace(v.end(), p, [&alloc](auto p){ alloc.destroy(p); alloc.deallocate(p,1); });
+            new(p) std::array<double, 3>();
+            v.emplace(v.end(), p, [&alloc](auto p) {
+                alloc.destroy(p);
+                alloc.deallocate(p, 1);
+            });
             v.back()->operator[](0) = 0;
             v.back()->operator[](1) = 1;
             v.back()->operator[](2) = 2;
@@ -147,7 +150,7 @@ void create_pointer_vector_fast_pool([[maybe_unused]] benchmark::State &state) {
         long long i = 0;
         for (i = 0; i < state.range(0); ++i) {
             auto p = alloc.allocate(1);
-            alloc.construct(p);
+            new(p) std::array<double, 3>();
             v.emplace(v.end(), p);
             v.back()->operator[](0) = i;
             v.back()->operator[](1) = i+1;
@@ -173,7 +176,7 @@ void create_pointer_vector_new([[maybe_unused]] benchmark::State &state) {
         long long i = 0;
         for (i = 0; i < state.range(0); ++i) {
             auto p = alloc.allocate(1);
-            alloc.construct(p);
+            new(p) std::array<double, 3>();
             v.emplace(v.end(), p);
             v.back()->operator[](0) = i;
             v.back()->operator[](1) = i+1;
