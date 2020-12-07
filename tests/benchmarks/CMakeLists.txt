@@ -1,25 +1,18 @@
 #######################################################
 ### Google benchmark                                ###
 #######################################################
-# Force some options for the google benchmark library
-if (NOT CMAKE_BUILD_TYPE MATCHES Debug)
-    add_definitions(-DNDEBUG)
-    set(LLVMAR_EXECUTABLE ON CACHE BOOL "Release mode" FORCE)
-    set(LLVMNM_EXECUTABLE ON CACHE BOOL "Release mode" FORCE)
-    set(LLVMRANLIB_EXECUTABLE ON CACHE BOOL "Release mode" FORCE)
-    set(GCC_AR ON CACHE BOOL "Release mode" FORCE)
-    set(GCC_RANLIB ON CACHE BOOL "Release mode" FORCE)
-endif()
-set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "Enable installation of benchmark" FORCE)
-
-# Find or get the google benchmark library
-# Note that CPM will try to find(benchmark) before downloading it
 CPMAddPackage(
         NAME benchmark
         GITHUB_REPOSITORY google/benchmark
         VERSION 1.5.1
         OPTIONS
         "BENCHMARK_ENABLE_TESTING Off"
+        "LLVMAR_EXECUTABLE ON"
+        "LLVMNM_EXECUTABLE ON"
+        "LLVMRANLIB_EXECUTABLE ON"
+        "GCC_AR ON"
+        "GCC_RANLIB ON"
+        "BENCHMARK_ENABLE_INSTALL OFF"
 )
 
 if (benchmark_ADDED)
