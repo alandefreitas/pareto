@@ -1,14 +1,16 @@
 remote_theme: pmarsceill/just-the-docs
 #theme: "just-the-docs"
-title: "ParetoFront"
+title: "Pareto"
 description: "Efficient Pareto fronts for Python and C++"
 
 search_enabled: true
 
 aux_links:
-  "ParetoFront on GitHub":
-    - "//github.com/alandefreitas/pareto-front"
+  "Pareto on GitHub":
+    - "//github.com/alandefreitas/pareto"
+  "Pareto on CodeDocs":
+    - "https://codedocs.xyz/alandefreitas/pareto/"
 
 aux_links_new_tab: false
 
-footer_content: "Copyright &copy; Alan Freitas. Distributed by an <a href=\"https://github.com/alandefreitas/pareto-front/tree/master/LICENSE.txt\">MIT license.</a>"
+footer_content: "Copyright &copy; Alan Freitas. Distributed by an <a href=\"https://github.com/alandefreitas/pareto/tree/master/LICENSE.txt\">MIT license.</a>"
