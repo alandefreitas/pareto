@@ -79,7 +79,7 @@ namespace pareto {
     /// the front dimension is set and we cannot change it.
     template<typename NUMBER_TYPE = double, size_t NUMBER_OF_DIMENSIONS = 0, typename ELEMENT_TYPE = unsigned, typename TAG = default_tag<NUMBER_OF_DIMENSIONS>>
     class front {
-    public:
+    public /* types */:
         friend archive<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, TAG>;
         using self_type =
         front<NUMBER_TYPE, NUMBER_OF_DIMENSIONS, ELEMENT_TYPE, TAG>;
@@ -423,19 +423,19 @@ namespace pareto {
         }
 
         /// \brief True if all dimensions are minimization
-        [[nodiscard]] size_type is_minimization() const noexcept {
+        [[nodiscard]] bool is_minimization() const noexcept {
             return std::all_of(is_minimization_.begin(), is_minimization_.end(),
                                [](auto i) { return i == uint8_t(1); });
         }
 
         /// \brief True if all dimensions are maximization
-        [[nodiscard]] size_type is_maximization() const noexcept {
+        [[nodiscard]] bool is_maximization() const noexcept {
             return std::all_of(is_minimization_.begin(), is_minimization_.end(),
                                [](auto i) { return i == uint8_t(0); });
         }
 
         /// \brief True if i-th dimension is minimization
-        [[nodiscard]] size_type is_minimization(size_t dimension) const noexcept {
+        [[nodiscard]] bool is_minimization(size_t dimension) const noexcept {
             if constexpr (number_of_compile_dimensions > 0) {
                 return is_minimization_[dimension] > 0;
             } else {
@@ -448,7 +448,7 @@ namespace pareto {
         }
 
         /// \brief True if i-th dimension is maximization
-        [[nodiscard]] size_type is_maximization(size_t dimension) const noexcept {
+        [[nodiscard]] bool is_maximization(size_t dimension) const noexcept {
             if constexpr (number_of_compile_dimensions > 0) {
                 return is_minimization_[dimension] == 0;
             } else {
@@ -1444,7 +1444,7 @@ namespace pareto {
         /// \brief Worst point in the front
         /// Worst is the same as nadir for fronts.
         /// In archives, worst != nadir because there are
-        /// many front.
+        /// many fronts.
         point_type worst() const {
             return nadir();
         }
