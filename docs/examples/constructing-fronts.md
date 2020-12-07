@@ -26,7 +26,7 @@ This is a 2-dimensional front with a few elements:
 
 ![2-dimensional front](../img/front2d_b.svg)
 
-If you need to plot these fronts, [`examples/matplotpp_example.cpp`](https://github.com/alandefreitas/pareto-front/blob/master/examples/matplotpp_example.cpp) includes an example that uses [Matplot++](https://github.com/alandefreitas/matplotplusplus). In Python, you can use [Matplotlib](https://matplotlib.org).
+If you need to plot these fronts, [`examples/matplotpp_example.cpp`](https://github.com/alandefreitas/pareto/blob/master/examples/matplotpp_example.cpp) includes an example that uses [Matplot++](https://github.com/alandefreitas/matplotplusplus). In Python, you can use [Matplotlib](https://matplotlib.org).
 
 If the dimensions are not supposed to be minimized, we can define one optimization direction for each dimension:
 
