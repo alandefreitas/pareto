@@ -34,7 +34,7 @@ jobs:
             name: "Windows/Static/X64/Release",
             os: windows-2019,
             config: Release,
-            args: -G "Visual Studio 16 2019" -A x64,
+            args: -G "Visual Studio 16 2019" -A x64 -DCMAKE_CXX_FLAGS="/O2",
             get_core_cmd: "WMIC CPU Get DeviceID,NumberOfCores,NumberOfLogicalProcessors",
             sudocmd: "",
             artifact_name: "Windows",
@@ -44,7 +44,7 @@ jobs:
             name: "Linux/Static/X64/Release",
             os: ubuntu-18.04,
             config: Release,
-            args: "-DCMAKE_C_COMPILER=/usr/bin/gcc-8 -DCMAKE_CXX_COMPILER=/usr/bin/g++-8",
+            args: "-DCMAKE_C_COMPILER=/usr/bin/gcc-8 -DCMAKE_CXX_COMPILER=/usr/bin/g++-8 -DCMAKE_CXX_FLAGS=\"-O2\"",
             get_core_cmd: "lscpu",
             sudocmd: "sudo",
             artifact_name: "Linux",
@@ -54,7 +54,7 @@ jobs:
             name: "MacOSX/Static/X64/Release",
             os: macos-10.15,
             config: Release,
-            args: "",
+            args: "-DCMAKE_CXX_FLAGS=\"-O2\"",
             get_core_cmd: "system_profiler SPHardwareDataType",
             sudocmd: "sudo",
             artifact_name: "MacOSX",
@@ -76,7 +76,7 @@ jobs:
         if: github.event_name == 'push'
         working-directory: ./build
         run: |
-          cmake .. ${{ matrix.config.args }} -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DBUILD_LONG_TESTS=ON -DMAX_NUM_DIMENSIONS_PYTHON=5 -DBUILD_BINDING_FOR_ALL_STRUCTURES=ON
+          cmake .. ${{ matrix.config.args }} -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DBUILD_LONG_TESTS=ON -DMAX_NUM_DIMENSIONS_PYTHON=3 -DBUILD_BINDING_FOR_ALL_STRUCTURES=ON
       - name: Build
         working-directory: ./build
         run: cmake --build . -j ${{ matrix.config.cores }} --config ${{ matrix.config.config }}
