@@ -1,14 +1,8 @@
-#define CATCH_CONFIG_MAIN
+
 
 #include <catch2/catch.hpp>
-
-#ifdef BUILD_UNIT_TEST_EXTERN_INSTANTIATION
-#include "instantiation/test_instantiations.h"
-#endif
-
 #include <pareto/front.h>
 #include <pareto/point.h>
-
 
 /// The point object has a better distance function
 /// This one is for comparisons only
@@ -26,7 +20,7 @@ TEST_CASE("Point dominance") {
     // Compile size is 0, so the dimension is inferred from
     // the point_type
     using pareto_front_t = front<double, 0, unsigned>;
-    using point_t = pareto_front_t::point_type;
+    using point_t = pareto_front_t::key_type;
 
     // Points
     point_t p1 = {6.5, 4.6};
