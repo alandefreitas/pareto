@@ -550,7 +550,14 @@ template <class C, class T> void check_allocator_aware_concept() {
                                      std::allocator<typename C::value_type>>()
                               << std::endl;
                 }
-                REQUIRE(std::is_same_v<decltype(a.get_allocator()), A>);
+
+                if (!std::is_same_v<decltype(a.get_allocator()), A>) {
+                    std::cout << "demangle<decltype(a.get_allocator())>(): "
+                              << pareto::demangle<decltype(a.get_allocator())>()
+                              << std::endl;
+                    std::cout << "demangle<A>(): " << pareto::demangle<A>()
+                              << std::endl;
+                }
             }
 
             SECTION("empty constructor") {
