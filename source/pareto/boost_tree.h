@@ -261,7 +261,7 @@ namespace pareto {
             /// This is the expected return type for iterators
             iterator_impl operator++(int) { // NOLINT(cert-dcl21-cpp):
                 auto tmp = *this;
-                query_it_ = query_it_.operator++(i);
+                query_it_ = query_it_.operator++();
                 return tmp;
             }
 
