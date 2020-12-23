@@ -12,10 +12,23 @@ namespace pareto {
     void plot_front(const FRONT_TYPE &pf,
                     bool draw_rect = true,
                     bool draw_text = false,
-                    const std::optional<typename FRONT_TYPE::point_type> &ref = std::nullopt) {
-        bool p = matplot::gca()->hold();
-        if (pf.dimensions() == 1) {
+                    const std::optional<typename FRONT_TYPE::key_type> &ref = std::nullopt,
+                    std::string_view line_spec = "-") {
+        if (pf.empty()) {
             return;
+        }
+        bool p = matplot::gca()->hold();
+        bool q = matplot::gcf()->quiet_mode();
+        matplot::gcf()->quiet_mode(true);
+        if (pf.dimensions() == 1) {
+            std::vector<double> x;
+            std::vector<double> y;
+            for (const auto &[k, v] : pf) {
+                x.emplace_back(k[0]);
+                y.emplace_back(0.);
+            }
+            matplot::scatter(x,y);
+            matplot::xlabel("f_1");
         } else if (pf.dimensions() == 2) {
             std::vector<std::pair<double, double>> xs;
             std::vector<double> x;
@@ -75,7 +88,7 @@ namespace pareto {
             }
             x_stairs.emplace_back(pf.is_minimization(0) ? reference_point[0] : x.back());
             y_stairs.emplace_back(pf.is_minimization(0) ? y.back() : reference_point[1]);
-            matplot::plot(x_stairs,y_stairs);
+            matplot::plot(x_stairs,y_stairs,line_spec);
             matplot::hold(true);
 
             // Scatter plot
@@ -118,6 +131,8 @@ namespace pareto {
             matplot::hold(false);
         }
         matplot::gca()->hold(p);
+        matplot::gcf()->quiet_mode(q);
+        matplot::gcf()->draw();
     }
 }
 
