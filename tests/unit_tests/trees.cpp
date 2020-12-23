@@ -1,15 +1,14 @@
-#define CATCH_CONFIG_MAIN
 
 #include <catch2/catch.hpp>
-
-#ifdef BUILD_UNIT_TEST_EXTERN_INSTANTIATION
 #include "instantiation/test_instantiations.h"
-#endif
 
-#include <pareto/front.h>
-#include "../test_helpers.h"
+uint64_t seed();
+unsigned randi();
+bool rand_flip();
+double randn();
+double randu();
 
-template<class TREE_TYPE = pareto::r_tree<double, 0, unsigned>>
+template <class TREE_TYPE = pareto::r_tree<double, 0, unsigned>>
 void test_tree() {
     using namespace pareto;
     using tree_type = TREE_TYPE;
@@ -302,4 +301,37 @@ TEST_CASE("R-Tree") {
 TEST_CASE("R*-Tree") {
     test_tree<pareto::r_star_tree<double, 0, unsigned>>();
     test_tree<pareto::r_star_tree<double, 3, unsigned>>();
+}
+
+uint64_t seed() {
+    static uint64_t seed = static_cast<uint64_t>(std::random_device()()) |
+                           std::chrono::high_resolution_clock::now().time_since_epoch().count();
+//    static uint64_t seed = 0;
+    std::cout << "Test seed: " << seed << std::endl;
+    return seed;
+}
+
+std::mt19937 &generator() {
+    static std::mt19937 g(static_cast<unsigned int>(seed()));
+    return g;
+}
+
+//bool rand_flip() {
+//    static std::uniform_int_distribution<unsigned> ud(0, 1);
+//    return ud(generator());
+//}
+
+unsigned randi() {
+    static std::uniform_int_distribution<unsigned> ud(0, 40);
+    return ud(generator());;
+}
+
+double randu() {
+    static std::uniform_real_distribution<double> ud(0., 1.);
+    return ud(generator());
+}
+
+double randn() {
+    static std::normal_distribution nd;
+    return nd(generator());
 }
