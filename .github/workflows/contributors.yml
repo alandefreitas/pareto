@@ -14,7 +14,7 @@ on:
 
 jobs:
   contrib-readme-job:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     name: Contributions
     steps:
       - name: Update Contribution List

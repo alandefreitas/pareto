@@ -42,7 +42,7 @@ jobs:
           }
           - {
             name: "Linux/Static/X64/Release",
-            os: ubuntu-18.04,
+            os: ubuntu-20.04,
             config: Release,
             args: "-DCMAKE_C_COMPILER=/usr/bin/gcc-8 -DCMAKE_CXX_COMPILER=/usr/bin/g++-8 -DCMAKE_CXX_FLAGS=\"-O2\"",
             get_core_cmd: "lscpu",
