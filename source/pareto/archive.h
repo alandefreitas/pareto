@@ -240,7 +240,8 @@ namespace pareto {
                           const std::vector<front_set_iterator> &begins,
                           container_iterator current_iter,
                           size_t current_front_idx)
-                : current_archive_(ar), current_element_(current_front_idx),
+                : current_archive_(ar),
+                  current_element_(current_iter),
                   current_front_idx_(current_front_idx) {
                 auto it = ar->fronts_.begin();
                 auto el_it = begins.begin();
@@ -261,7 +262,8 @@ namespace pareto {
                           const fronts_and_elements_type &begins,
                           container_iterator current_iter,
                           size_t current_front_idx)
-                : front_begins_(begins), current_archive_(ar),
+                : front_begins_(begins),
+                  current_archive_(ar),
                   current_element_(current_iter),
                   current_front_idx_(current_front_idx) {
                 advance_if_invalid();
@@ -356,7 +358,7 @@ namespace pareto {
 
             /// \brief Advance iterator
             /// This is the expected return type for iterators
-            iterator_impl operator++(int i) { // NOLINT(cert-dcl21-cpp):
+            iterator_impl operator++(int) { // NOLINT(cert-dcl21-cpp):
                 auto tmp = *this;
                 current_element_.operator++();
                 advance_if_invalid();
@@ -381,7 +383,7 @@ namespace pareto {
 
             /// \brief Decrement iterator
             /// This is the expected return type for iterators
-            iterator_impl operator--(int i) { // NOLINT(cert-dcl21-cpp)
+            iterator_impl operator--(int) { // NOLINT(cert-dcl21-cpp)
                 auto tmp = *this;
                 return_to_previous_valid();
                 return tmp;
@@ -795,6 +797,7 @@ namespace pareto {
                     placeholder_allocator<allocator_type>())
             : fronts_(front_set_allocator_type(
                   construct_allocator<front_set_allocator_type>(alloc))),
+              capacity_(capacity),
               alloc_(construct_allocator<allocator_type>(alloc)), comp_(comp) {
             initialize_directions(first_dir, last_dir);
             // note: this->insert(...) is very different from data_.insert(...)
