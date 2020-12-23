@@ -34,7 +34,7 @@ namespace pareto {
     /// This makes the list of predicates more efficient
     template<typename NUMBER_T, std::size_t DimensionCount, class ELEMENT_TYPE>
     class predicate_list {
-        using number_type = NUMBER_T;
+        using dimension_type = NUMBER_T;
         static constexpr size_t number_of_compile_dimensions = DimensionCount;
         using query_box_type = query_box<NUMBER_T, DimensionCount>;
         using point_type = point<NUMBER_T, DimensionCount>;
@@ -42,20 +42,29 @@ namespace pareto {
         using key_type = point_type;
         using mapped_type = ELEMENT_TYPE;
         using value_type = std::pair<key_type, mapped_type>;
-        using predicate_variant_type = predicate_variant<NUMBER_T, DimensionCount, ELEMENT_TYPE>;
-        using intersects_type = intersects<number_type, number_of_compile_dimensions>;
-        using disjoint_type = disjoint<number_type, number_of_compile_dimensions>;
-        using within_type = within<number_type, number_of_compile_dimensions>;
-        using nearest_type = nearest<number_type, number_of_compile_dimensions>;
-        using satisfies_type = satisfies<number_type, number_of_compile_dimensions, ELEMENT_TYPE>;
+        using predicate_variant_type =
+            predicate_variant<NUMBER_T, DimensionCount, ELEMENT_TYPE>;
+        using intersects_type =
+            intersects<dimension_type, number_of_compile_dimensions>;
+        using disjoint_type =
+            disjoint<dimension_type, number_of_compile_dimensions>;
+        using within_type =
+            within<dimension_type, number_of_compile_dimensions>;
+        using nearest_type =
+            nearest<dimension_type, number_of_compile_dimensions>;
+        using satisfies_type =
+            satisfies<dimension_type, number_of_compile_dimensions,
+                      ELEMENT_TYPE>;
         using vector_type = std::vector<predicate_variant_type>;
 
-    public /* constructors */:
+      public /* constructors */:
         /// \brief Construct an empty predicate list
         predicate_list() : predicates_({}) {}
 
         /// \brief Construct from a list of predicates
-        explicit predicate_list(const std::vector<predicate_variant_type> &predicates) : predicates_(predicates) {
+        explicit predicate_list(
+            const std::vector<predicate_variant_type> &predicates)
+            : predicates_(predicates) {
             compress();
         }
 
@@ -94,32 +103,42 @@ namespace pareto {
         explicit predicate_list(const predicate_variant_type &predicate) : predicates_({predicate}) {}
 
         /// \brief Construct from a intersects predicate
-        explicit predicate_list(const intersects<number_type, number_of_compile_dimensions> &predicate)
-                : predicates_({predicate_variant_type(predicate)}) {}
+        explicit predicate_list(
+            const intersects<dimension_type, number_of_compile_dimensions>
+                &predicate)
+            : predicates_({predicate_variant_type(predicate)}) {}
 
         /// \brief Construct from a disjoint predicate
-        explicit predicate_list(const disjoint<number_type, number_of_compile_dimensions> &predicate)
-                : predicates_({predicate_variant_type(predicate)}) {}
+        explicit predicate_list(
+            const disjoint<dimension_type, number_of_compile_dimensions>
+                &predicate)
+            : predicates_({predicate_variant_type(predicate)}) {}
 
         /// \brief Construct from a within predicate
-        explicit predicate_list(const within<number_type, number_of_compile_dimensions> &predicate)
-                : predicates_({predicate_variant_type(predicate)}) {}
+        explicit predicate_list(
+            const within<dimension_type, number_of_compile_dimensions>
+                &predicate)
+            : predicates_({predicate_variant_type(predicate)}) {}
 
         /// \brief Construct from a nearest predicate
-        explicit predicate_list(const nearest<number_type, number_of_compile_dimensions> &predicate)
-                : predicates_({predicate_variant_type(predicate)}) {}
+        explicit predicate_list(
+            const nearest<dimension_type, number_of_compile_dimensions>
+                &predicate)
+            : predicates_({predicate_variant_type(predicate)}) {}
 
         /// \brief Construct from a satisfies predicate
-        explicit predicate_list(const satisfies<number_type, number_of_compile_dimensions, mapped_type> &predicate)
-                : predicates_({predicate_variant_type(predicate)}) {}
+        explicit predicate_list(
+            const satisfies<dimension_type, number_of_compile_dimensions,
+                            mapped_type> &predicate)
+            : predicates_({predicate_variant_type(predicate)}) {}
 
-    public /* vector functions */:
+      public /* vector functions */:
         /// \brief Get iterator to first predicate
         typename vector_type::iterator begin() {
             return predicates_.begin();
         }
 
-        /// \brief Get iterator to last + 1 predicate
+        /// \brief Get iterator to past-the-end predicate
         typename vector_type::iterator end() {
             return predicates_.end();
         }
@@ -129,7 +148,7 @@ namespace pareto {
             return predicates_.begin();
         }
 
-        /// \brief Get iterator to last + 1 predicate
+        /// \brief Get iterator to past-the-end predicate
         typename vector_type::const_iterator end() const {
             return predicates_.end();
         }
@@ -226,7 +245,8 @@ namespace pareto {
         }
 
         /// \brief Get a predicate of type intersects if the list contains any
-        const intersects<number_type, number_of_compile_dimensions> *get_intersects() const {
+        const intersects<dimension_type, number_of_compile_dimensions> *
+        get_intersects() const {
             for (const auto &p : predicates_) {
                 if (p.is_intersects()) {
                     return &p.as_intersects();
@@ -236,7 +256,8 @@ namespace pareto {
         }
 
         /// \brief Get a predicate of type disjoint if the list contains any
-        const disjoint<number_type, number_of_compile_dimensions> *get_disjoint() const {
+        const disjoint<dimension_type, number_of_compile_dimensions> *
+        get_disjoint() const {
             for (const auto &p : predicates_) {
                 if (p.is_disjoint()) {
                     return &p.as_disjoint();
@@ -246,7 +267,8 @@ namespace pareto {
         }
 
         /// \brief Get a predicate of type within if the list contains any
-        const within<number_type, number_of_compile_dimensions> *get_within() const {
+        const within<dimension_type, number_of_compile_dimensions> *
+        get_within() const {
             for (const auto &p : predicates_) {
                 if (p.is_within()) {
                     return &p.as_within();
@@ -256,7 +278,8 @@ namespace pareto {
         }
 
         /// \brief Get a predicate of type nearest if the list contains any
-        const nearest<number_type, number_of_compile_dimensions> *get_nearest() const {
+        const nearest<dimension_type, number_of_compile_dimensions> *
+        get_nearest() const {
             for (const auto &p : predicates_) {
                 if (p.is_nearest()) {
                     return &p.as_nearest();
@@ -266,7 +289,9 @@ namespace pareto {
         }
 
         /// \brief Get a predicate of type satisfies if the list contains any
-        const satisfies<number_type, number_of_compile_dimensions, mapped_type> *get_satisfies() const {
+        const satisfies<dimension_type, number_of_compile_dimensions,
+                        mapped_type> *
+        get_satisfies() const {
             for (const auto &p : predicates_) {
                 if (p.is_satisfies()) {
                     return &p.as_satisfies();
@@ -276,7 +301,8 @@ namespace pareto {
         }
 
         /// \brief Get predicate of type intersects if the list contains any
-        intersects<number_type, number_of_compile_dimensions> *get_intersects() {
+        intersects<dimension_type, number_of_compile_dimensions> *
+        get_intersects() {
             for (auto &p : predicates_) {
                 if (p.is_intersects()) {
                     return &p.as_intersects();
@@ -286,7 +312,7 @@ namespace pareto {
         }
 
         /// \brief Get predicate of type disjoint if the list contains any
-        disjoint<number_type, number_of_compile_dimensions> *get_disjoint() {
+        disjoint<dimension_type, number_of_compile_dimensions> *get_disjoint() {
             for (auto &p : predicates_) {
                 if (p.is_disjoint()) {
                     return &p.as_disjoint();
@@ -296,7 +322,7 @@ namespace pareto {
         }
 
         /// \brief Get predicate of type within if the list contains any
-        within<number_type, number_of_compile_dimensions> *get_within() {
+        within<dimension_type, number_of_compile_dimensions> *get_within() {
             for (auto &p : predicates_) {
                 if (p.is_within()) {
                     return &p.as_within();
@@ -306,7 +332,7 @@ namespace pareto {
         }
 
         /// \brief Get predicate of type nearest if the list contains any
-        nearest<number_type, number_of_compile_dimensions> *get_nearest() {
+        nearest<dimension_type, number_of_compile_dimensions> *get_nearest() {
             for (auto &p : predicates_) {
                 if (p.is_nearest()) {
                     return &p.as_nearest();
@@ -316,7 +342,8 @@ namespace pareto {
         }
 
         /// \brief Get predicate of type satisfies if the list contains any
-        satisfies<number_type, number_of_compile_dimensions, mapped_type> *get_satisfies() {
+        satisfies<dimension_type, number_of_compile_dimensions, mapped_type> *
+        get_satisfies() {
             for (auto &p : predicates_) {
                 if (p.is_satisfies()) {
                     return &p.as_satisfies();
@@ -375,8 +402,9 @@ namespace pareto {
 
         /// \brief Sort predicates by how restrictive they are
         /// Sorting puts the predicates in its most efficient order
-        /// \param total_volume Total volume of the data structure we are manipulating
-        void sort(number_type total_volume) {
+        /// \param total_volume Total volume of the data structure we are
+        /// manipulating
+        void sort(dimension_type total_volume) {
             const bool nothing_to_sort = predicates_.size() < 2;
             if (nothing_to_sort) {
                 return;
@@ -384,7 +412,8 @@ namespace pareto {
 
             const bool only_two_predicates = predicates_.size() == 2;
             if (only_two_predicates) {
-                if (predicates_[1].is_more_restrictive(predicates_[0], total_volume)) {
+                if (predicates_[1].is_more_restrictive(predicates_[0],
+                                                       total_volume)) {
                     std::swap(predicates_[0], predicates_[1]);
                 }
                 return;
@@ -397,9 +426,13 @@ namespace pareto {
 
         /// \brief This function merges predicates with that same meaning
         void compress() {
+            if (predicates_.size() < 2) {
+                return;
+            }
             for (size_t i = 0; i < predicates_.size() - 1; ++i) {
                 for (size_t j = i + 1; j < predicates_.size(); ++j) {
-                    auto compressed_predicate = compress(predicates_[i], predicates_[j]);
+                    auto compressed_predicate =
+                        compress(predicates_[i], predicates_[j]);
                     if (compressed_predicate) {
                         predicates_[i] = *compressed_predicate;
                         predicates_.erase(predicates_.begin() + j);
@@ -549,7 +582,7 @@ namespace pareto {
             if (!aq.overlap(bq)) {
                 return a;
             } else if (bq.contains(aq)) {
-                auto max_number = std::numeric_limits<number_type>::max();
+                auto max_number = std::numeric_limits<dimension_type>::max();
                 return disjoint_type(point_type(bq.dimensions(), -max_number), point_type(bq.dimensions(), max_number));
             }
             return std::nullopt;
