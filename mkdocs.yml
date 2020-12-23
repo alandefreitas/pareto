@@ -11,7 +11,7 @@ theme:
     scheme: preference
   features:
     # - navigation.instant # this doesn't work well with pymdownx.arithmatex
-    - navigation.sections
+    # - navigation.sections
     - toc.integrate
     - header.autohide
   icon:
