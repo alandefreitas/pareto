@@ -3,15 +3,15 @@
 #include "../test_helpers.h"
 
 template<size_t dimensions, size_t runtime_dimensions>
-typename pareto::front<double, dimensions, unsigned>::point_type random_point() {
-    typename pareto::front<double, dimensions, unsigned>::point_type p(runtime_dimensions);
+typename pareto::front<double, dimensions, unsigned>::key_type random_point() {
+    typename pareto::front<double, dimensions, unsigned>::key_type p(runtime_dimensions);
     std::generate(p.begin(), p.end(), randn);
     return p;
 }
 
 template<size_t dimensions, size_t runtime_dimensions>
 typename pareto::front<double, dimensions, unsigned>::value_type random_value() {
-    auto v = std::make_pair<typename pareto::front<double, dimensions, unsigned>::point_type, unsigned>(
+    auto v = std::make_pair<typename pareto::front<double, dimensions, unsigned>::key_type, unsigned>(
             random_point<dimensions, runtime_dimensions>(), randi());
     return v;
 }
@@ -44,7 +44,7 @@ create_test_pareto(size_t target_size) {
 template<size_t dimensions>
 void calculate_hypervolume(benchmark::State &state) {
     // using pareto_front_t = pareto::front<double, dimensions, unsigned>;
-    // using point_t = typename pareto_front_t::point_type;
+    // using point_t = typename pareto_front_t::key_type;
     double hv = 0.0;
     static std::map<size_t, double> known_hv;
     if constexpr (dimensions == 0) {
@@ -65,7 +65,7 @@ void calculate_hypervolume(benchmark::State &state) {
                 benchmark::DoNotOptimize(hv = pf.hypervolume(nadir));
             }
         } else {
-            benchmark::DoNotOptimize(hv = pf.hypervolume(nadir, state.range(1)));
+            benchmark::DoNotOptimize(hv = pf.hypervolume(state.range(1), nadir));
         }
     }
 
