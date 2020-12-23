@@ -1,147 +1,132 @@
-#include <iostream>
-#include <random>
 #include <chrono>
+#include <iostream>
 #include <map>
 #include <pareto/archive.h>
+#include <pareto/kd_tree.h>
+#include <random>
 
 int main() {
     using std::cout;
     using std::endl;
     using namespace pareto;
-    archive<double, 3, unsigned> ar(100, {minimization, maximization, minimization});
+    // Constructor
+    size_t capacity = 1000;
+    archive<double, 3, unsigned> ar(capacity, {min, max, min});
 
-    ar(0.00139845, 0.731828, -0.417717) = 39;
-    ar(0.241096, 0.378685, 0.625521) = 9;
-    ar(-0.844514, 0.93904, -1.32369) = 17;
-    ar(-2.07746, 0.0428126, 0.601997) = 3;
-    ar(-0.23166, 0.246729, 0.0105463) = 21;
-    ar(1.60364, 0.2668, 0.194744) = 40;
-    ar(-0.206962, 1.17536, -0.541873) = 30;
-    ar(0.96463, 0.501958, 0.10121) = 15;
-    ar(1.05309, 0.643423, 1.18504) = 40;
-    ar(-1.45982, -2.16546, -1.03786) = 18;
-    ar(0.494578, -0.417599, -0.975301) = 39;
-    ar(0.182242, -0.339061, -0.453524) = 29;
-    ar(-1.99458, 0.536806, -0.329274) = 2;
-    ar(0.585719, 1.12752, 1.28625) = 11;
-    ar(0.754551, -0.718838, 1.11063) = 15;
-    ar(-0.891867, -0.244561, 0.188812) = 34;
-    ar(-0.749172, -0.0725296, 1.00695) = 30;
-    ar(-0.228034, -0.752103, 0.845463) = 35;
-    ar(-0.0954375, 0.570624, 0.519089) = 24;
-    ar(-0.685613, 0.197224, 0.00797375) = 29;
-    ar(-0.889068, 0.129467, -0.41679) = 27;
-    ar(1.54816, -1.19259, -0.458453) = 26;
-    ar(1.07679, -0.437278, 0.165807) = 12;
-    ar(0.256203, -0.225997, -0.462255) = 33;
-    ar(0.00322445, -0.570125, -0.471465) = 24;
-    ar(0.134622, -0.143287, 1.12839) = 28;
-    ar(-0.478452, 2.0099, -1.19138) = 34;
-    ar(1.33658, -0.949733, 1.52429) = 37;
-    ar(-0.393048, -0.6078, -1.04685) = 21;
-    ar(-0.462544, -0.142344, -0.796835) = 22;
-    ar(1.11088, -0.593916, -0.612791) = 36;
-    ar(0.802046, -1.78496, 0.623616) = 38;
-    ar(-0.560324, -1.13717, 0.968791) = 27;
-    ar(-1.50408, 0.539859, 0.462301) = 21;
-    ar(1.46727, 1.068, 0.311819) = 24;
-    ar(-0.885645, 0.473441, 0.0844403) = 39;
-    ar(-2.27298, 0.613653, -0.83334) = 3;
-    ar(-0.381352, 0.165189, 0.135104) = 40;
-    ar(-0.652758, -0.217548, -1.13146) = 19;
-    ar(1.57291, -0.674738, -1.70623) = 38;
-    ar(0.354773, -0.947818, -0.324024) = 17;
-    ar(0.156779, -0.752439, 0.497127) = 0;
-    ar(-0.571312, 0.965466, -0.87946) = 35;
-    ar(-1.08102, 1.12723, 0.943715) = 8;
-    ar(0.517248, -0.716396, -0.217674) = 13;
-    ar(0.12237, -0.0683769, 1.17239) = 14;
-    ar(-1.18463, 0.0203785, -0.757749) = 17;
-    ar(0.0942627, 2.38411, -0.108849) = 12;
-    ar(0.50611, -0.556946, 0.871486) = 11;
-    ar(0.0279349, -0.174863, -0.242363) = 19;
+    // Element access
+    ar(-2.57664, -1.52034, 0.600798) = 17;
+    ar(-2.14255, -0.518684, -2.92346) = 32;
+    ar(-1.63295, 0.912108, -2.12953) = 36;
+    ar(-0.653036, 0.927688, -0.813932) = 13;
+    ar(-0.508188, 0.871096, -2.25287) = 32;
+    ar(-2.55905, -0.271349, 0.898137) = 6;
+    ar(-2.31613, -0.219302, 0) = 8;
+    ar(-0.639149, 1.89515, 0.858653) = 10;
+    ar(-0.401531, 2.30172, 0.58125) = 39;
+    ar(0.0728106, 1.91877, 0.399664) = 25;
+    ar(-1.09756, 1.33135, 0.569513) = 20;
+    ar(-0.894115, 1.01387, 0.462008) = 11;
+    ar(-1.45049, 1.35763, 0.606019) = 17;
+    ar(0.152711, 1.99514, -0.112665) = 13;
+    ar(-2.3912, 0.395611, 2.78224) = 11;
+    ar(-0.00292544, 1.29632, -0.578346) = 20;
+    ar(0.157424, 2.30954, -1.23614) = 6;
+    ar(0.453686, 1.02632, -2.24833) = 30;
+    ar(0.693712, 1.12267, -1.37375) = 12;
+    ar(1.49101, 3.24052, 0.724771) = 24;
 
-    ar.erase({0.0279349, -0.174863, -0.242363});
-
-    cout << ar << endl;
-    cout << ar.size() << " elements in the archive" << endl;
-    if (!ar.empty()) {
-        cout << "Front is not empty" << endl;
+    if (ar.contains({1.49101, 3.24052, 0.724771})) {
+        std::cout << "Element access: " << ar(1.49101, 3.24052, 0.724771) << std::endl;
+    } else {
+        std::cout << "{1.49101, 3.24052, 0.724771} was dominated" << std::endl;
     }
-    cout << ar.dimensions() << "dimensions" << endl;
-    cout << (ar.is_minimization() ? "All" : "Not all") << " dimensions are minimization" << endl;
-    cout << "Dimension 0 is " << (ar.is_minimization(0) ? "minimization" : "not minimization") << endl;
-    cout << "Dimension 1 is " << (ar.is_maximization(1) ? "maximization" : "not maximization") << endl;
-    cout << "Dimension 2 is " << (ar.is_minimization(2) ? "minimization" : "not minimization") << endl;
 
-    cout << "Ideal point: " << ar.ideal() << endl;
-    cout << "Nadir point: " << ar.nadir() << endl;
-    cout << "Worst point: " << ar.worst() << endl;
-    cout << "Ideal point in dimension 0: " << ar.dimension_ideal(0)->first << endl;
-    cout << "Ideal point in dimension 1: " << ar.dimension_ideal(1)->first << endl;
-    cout << "Ideal point in dimension 2: " << ar.dimension_ideal(2)->first << endl;
-    cout << "Nadir point in dimension 0: " << ar.dimension_nadir(0)->first << endl;
-    cout << "Nadir point in dimension 1: " << ar.dimension_nadir(1)->first << endl;
-    cout << "Nadir point in dimension 2: " << ar.dimension_nadir(2)->first << endl;
-    cout << "Worst point in dimension 0: " << ar.dimension_worst(0)->first << endl;
-    cout << "Worst point in dimension 1: " << ar.dimension_worst(1)->first << endl;
-    cout << "Worst point in dimension 2: " << ar.dimension_worst(2)->first << endl;
-
-    ar.insert(std::make_pair(archive<double, 3, unsigned>::point_type({0.0279349, -0.174863, -0.242363}), 19));
-
+    // Iterators
+    std::cout << "Iterators:" << std::endl;
     for (const auto& [point, value]: ar) {
         cout << point << " -> " << value << endl;
     }
 
+    std::cout << "Reversed Iterators:" << std::endl;
     for (auto it = ar.rbegin(); it != ar.rend(); ++it) {
         cout << it->first << " -> " << it->second << endl;
     }
 
-    for (auto it = ar.find_intersection(ar.ideal(), {0.517248, -0.716396, -0.217674}); it != ar.end(); ++it) {
-        cout << it->first << " -> " << it->second << endl;
+    std::cout << "Front Iterators:" << std::endl;
+    for (auto it = ar.begin_front(); it != ar.end_front(); ++it) {
+        cout << "Front with " << it->size() << " elements" << endl;
+        for (const auto &[k, v] : *it) {
+            cout << k << " -> " << v << endl;
+        }
     }
-    for (auto it = ar.find_within(ar.ideal(), {0.517248, -0.716396, -0.217674}); it != ar.end(); ++it) {
-        cout << it->first << " -> " << it->second << endl;
-    }
-    for (auto it = ar.find_disjoint(ar.worst(), {+0.71, +1.19, +0.98}); it != ar.end(); ++it) {
-        cout << it->first << " -> " << it->second << endl;
-    }
-    for (auto it = ar.find_nearest({0.517248, -0.716396, -0.217674}, 2); it != ar.end(); ++it) {
-        cout << it->first << " -> " << it->second << endl;
-    }
-    auto it = ar.find_nearest({2.5, 2.5, 2.5});
-    cout << it->first << " -> " << it->second << endl;
 
-    archive<double, 3, unsigned>::point_type p1({0, 0, 0});
-    archive<double, 3, unsigned>::point_type p2({1, 1, 1});
-    cout << (p1.dominates(p2) ? "p1 dominates p2" : "p1 does not dominate p2") << endl;
-    cout << (p1.strongly_dominates(p2) ? "p1 strongly dominates p2" : "p1 does not strongly dominate p2") << endl;
-    cout << (p1.non_dominates(p2) ? "p1 non-dominates p2" : "p1 does not non-dominate p2") << endl;
+    // Capacity and Reference Points
+    if (ar.empty()) {
+        cout << "Archive is empty" << endl;
+    } else {
+        cout << "Archive is not empty" << endl;
+    }
+    cout << ar.size() << " elements in the archive" << endl;
+    cout << ar.dimensions() << " dimensions" << endl;
+    for (size_t i = 0; i < ar.dimensions(); ++i) {
+        if (ar.is_minimization(i)) {
+            cout << "Dimension " << i << " is minimization" << endl;
+        } else {
+            cout << "Dimension " << i << " is maximization" << endl;
+        }
+        cout << "Best value in dimension " << i << ": " << ar.ideal(i) << endl;
+        cout << "Min value in dimension " << i << ": " << ar.min_value(i) << endl;
+        cout << "Max value in dimension " << i << ": " << ar.max_value(i) << endl;
+        cout << "Best value in dimension " << i << ": " << ar.ideal(i) << endl;
+        cout << "Nadir value in dimension " << i << ": " << ar.nadir(i) << endl;
+        cout << "Worst value in dimension " << i << ": " << ar.worst(i) << endl;
+    }
+    std::cout << "Ideal point: " << ar.ideal() << std::endl;
+    std::cout << "Nadir point: " << ar.nadir() << std::endl;
+    std::cout << "Worst point: " << ar.worst() << std::endl;
+    std::cout << "Capacity: " << ar.capacity() << std::endl;
+    std::cout << "Number of fronts: " << ar.size_fronts() << std::endl;
 
+    // Point-point dominance
+    using point_type = archive<double, 3, unsigned>::key_type;
+    point_type p1({0, 0, 0});
+    point_type p2({1, 1, 1});
+    std::vector<bool> is_minimization = {true, false, true};
+    cout << (p1.dominates(p2, is_minimization) ? "p1 dominates p2" : "p1 does not dominate p2") << endl;
+    cout << (p1.strongly_dominates(p2, is_minimization) ? "p1 strongly dominates p2" : "p1 does not strongly dominate p2") << endl;
+    cout << (p1.non_dominates(p2, is_minimization) ? "p1 non-dominates p2" : "p1 does not non-dominate p2") << endl;
+
+    // Archive-point dominance
     cout << (ar.dominates(p2) ? "ar dominates p2" : "ar does not dominate p2") << endl;
     cout << (ar.strongly_dominates(p2) ? "ar strongly dominates p2" : "ar does not strongly dominate p2") << endl;
     cout << (ar.non_dominates(p2) ? "ar non-dominates p2" : "ar does not non-dominate p2") << endl;
     cout << (ar.is_partially_dominated_by(p2) ? "ar is partially dominated by p2" : "ar is not is partially dominated by p2") << endl;
     cout << (ar.is_completely_dominated_by(p2) ? "ar is completely dominated by p2" : "ar is not is completely dominated by p2") << endl;
 
-    archive<double, 3, unsigned> ar2(100, {minimization, maximization, minimization});
+    // Archive-archive dominance
+    archive<double, 3, unsigned> ar2({min, max, min});
     for (const auto& [p,v]: ar) {
-        ar2[p - 1] = v;
+        ar2[point_type({p[0] - 1, p[1] + 1, p[2] - 1})] = v;
     }
-
     cout << (ar.dominates(ar2) ? "ar dominates ar2" : "ar does not dominate ar2") << endl;
     cout << (ar.strongly_dominates(ar2) ? "ar strongly dominates ar2" : "ar does not strongly dominate ar2") << endl;
     cout << (ar.non_dominates(ar2) ? "ar non-dominates ar2" : "ar does not non-dominate ar2") << endl;
     cout << (ar.is_partially_dominated_by(ar2) ? "ar is partially dominated by ar2" : "ar is not is partially dominated by ar2") << endl;
     cout << (ar.is_completely_dominated_by(ar2) ? "ar is completely dominated by ar2" : "ar is not is completely dominated by ar2") << endl;
 
+    // Indicators
+    // Hypervolume
     cout << "Exact hypervolume: " << ar.hypervolume(ar.nadir()) << endl;
-    cout << "Hypervolume approximation (10000 samples): " << ar.hypervolume(ar.nadir(), 10000) << endl;
+    cout << "Hypervolume approximation (10000 samples): " << ar.hypervolume(10000, ar.nadir()) << endl;
 
+    // Coverage
     cout << "C-metric: " << ar.coverage(ar2) << endl;
     cout << "Coverage ratio: " << ar.coverage_ratio(ar2) << endl;
+    cout << "C-metric: " << ar2.coverage(ar) << endl;
+    cout << "Coverage ratio: " << ar2.coverage_ratio(ar) << endl;
 
-    archive<double, 3, unsigned> ar_star(100, {minimization, maximization});
+    // Convergence
+    archive<double, 3, unsigned> ar_star({min, max, min});
     for (const auto &[p,v] : ar) {
         ar_star(p[0] - 1.0, p[1] + 1.0, p[2] - 1.0) = v;
     }
@@ -155,13 +140,15 @@ int main() {
     cout << "IGD+: " << ar.igd_plus(ar_star) << endl;
     cout << "STDIGD+: " << ar.std_igd_plus(ar_star) << endl;
 
+    // Distribution
     cout << "Uniformity: " << ar.uniformity() << endl;
     cout << "Average distance: " << ar.average_distance() << endl;
     cout << "Average nearest distance: " << ar.average_nearest_distance(5) << endl;
-    auto near_origin = ar.find_nearest({0.0,0.0});
+    auto near_origin = ar.find_nearest({0.0, 0.0, 0.0});
     cout << "Crowding distance: " << ar.crowding_distance(near_origin) << endl;
     cout << "Average crowding distance: " << ar.average_crowding_distance() << endl;
 
+    // Correlation
     cout << "Direct conflict(0,1): " << ar.direct_conflict(0,1) << endl;
     cout << "Normalized direct conflict(0,1): " << ar.normalized_direct_conflict(0,1) << endl;
     cout << "Maxmin conflict(0,1): " << ar.maxmin_conflict(0,1) << endl;
@@ -176,6 +163,73 @@ int main() {
     cout << "Non-parametric conflict(1,2): " << ar.conflict(1,2) << endl;
     cout << "Normalized conflict(1,2): " << ar.normalized_conflict(1,2) << endl;
 
+    // Modifiers
+    ar.insert(std::make_pair(archive<double, 3, unsigned>::key_type({1.49101, 3.24052, 0.724771}), 24));
+    ar.erase({1.49101, 3.24052, 0.724771});
+
+    // Lookup and queries
+    std::cout << "Lookup and queries" << std::endl;
+    for (auto it = ar.find_intersection(ar.ideal(), {-2.3912, 0.395611, 2.78224}); it != ar.end(); ++it) {
+        cout << it->first << " -> " << it->second << endl;
+    }
+    for (auto it = ar.find_within(ar.ideal(), {-2.3912, 0.395611, 2.78224}); it != ar.end(); ++it) {
+        cout << it->first << " -> " << it->second << endl;
+    }
+    for (auto it = ar.find_disjoint(ar.worst(), {+0.71, +1.19, +0.98}); it != ar.end(); ++it) {
+        cout << it->first << " -> " << it->second << endl;
+    }
+    for (auto it = ar.find_nearest({-2.3912, 0.395611, 2.78224}, 2); it != ar.end(); ++it) {
+        cout << it->first << " -> " << it->second << endl;
+    }
+    auto it_near = ar.find_nearest({2.5, 2.5, 2.5});
+    cout << it_near->first << " -> " << it_near->second << endl;
+    for (auto it = ar.find_dominated({-10, +10, -10}); it != ar.end(); ++it) {
+        cout << it->first << " -> " << it->second << endl;
+    }
+    for (size_t i = 0; i < ar.dimensions(); ++i) {
+        cout << "Ideal element in dimension " << i << ": " << ar.ideal_element(i)->first << endl;
+        cout << "Nadir element in dimension " << i << ": " << ar.nadir_element(i)->first << endl;
+        cout << "Worst element in dimension " << i << ": " << ar.worst_element(i)->first << endl;
+    }
+
+    // Observers
+    auto fn = ar.dimension_comp();
+    if (fn(2.,3.)) {
+        std::cout << "2 is less than 3" << std::endl;
+    } else {
+        std::cout << "2 is not less than 3" << std::endl;
+    }
+
+    // Relational operators
+    archive<double, 3, unsigned> ar3(ar);
+    if (ar == ar3) {
+        std::cout << "The archives have the same elements" << std::endl;
+    } else {
+        if (ar.size() != ar3.size()) {
+            std::cout << "The archives do not have the same elements" << std::endl;
+        } else {
+            std::cout << "The archives might not have the same elements"
+                      << std::endl;
+        }
+    }
+
+    archive<double, 3, unsigned> ar4(ar.begin(), ar.end());
+    if (ar == ar4) {
+        std::cout << "The archives have the same elements" << std::endl;
+    } else {
+        if (ar.size() != ar4.size()) {
+            std::cout << "The archives do not have the same elements" << std::endl;
+        } else {
+            std::cout << "The archives might not have the same elements"
+                      << std::endl;
+        }
+    }
+
+    if (ar_star < ar) {
+        std::cout << "ar* dominates ar" << std::endl;
+    } else {
+        std::cout << "ar* does not dominate ar" << std::endl;
+    }
 
     return 0;
 }
