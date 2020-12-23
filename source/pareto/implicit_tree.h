@@ -248,7 +248,7 @@ namespace pareto {
 
             /// \brief Advance iterator
             /// This is the expected return type for iterators
-            iterator_impl operator++(int i) { // NOLINT(cert-dcl21-cpp):
+            iterator_impl operator++(int) { // NOLINT(cert-dcl21-cpp):
                 auto tmp = *this;
                 query_it_ = query_it_.operator++();
                 maybe_advance_predicate();
@@ -265,9 +265,9 @@ namespace pareto {
 
             /// \brief Decrement iterator
             /// This is the expected return type for iterators
-            iterator_impl operator--(int i) { // NOLINT(cert-dcl21-cpp)
+            iterator_impl operator--(int) { // NOLINT(cert-dcl21-cpp)
                 auto tmp = *this;
-                query_it_ = query_it_.operator--(i);
+                query_it_ = query_it_.operator--();
                 maybe_rewind_predicate();
                 return tmp;
             }
