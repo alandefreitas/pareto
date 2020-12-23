@@ -3,7 +3,9 @@
 #include <catch2/catch.hpp>
 
 #include "../test_helpers.h"
+#ifdef BUILD_BOOST_TREE
 #include <pareto/boost_tree.h>
+#endif
 #include <pareto/front.h>
 #include <pareto/implicit_tree.h>
 #include <pareto/kd_tree.h>
@@ -387,11 +389,13 @@ TEST_CASE("kd-Tree") {
     }
 }
 #elif boost_TREETAG
+#ifdef BUILD_BOOST_TREE
 TEST_CASE("Boost-Tree") {
     SECTION("Compile Time Dimension") {
         test_tree<pareto::r_tree<double, 3, unsigned>>();
     }
 }
+#endif
 #elif r_TREETAG
 TEST_CASE("R-Tree") {
     SECTION("Runtime Dimension") {
