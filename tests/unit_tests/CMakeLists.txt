@@ -33,7 +33,10 @@ target_link_libraries(ut_concepts PUBLIC pareto catch_main)
 target_longtests_definitions(ut_concepts)
 target_exception_options(ut_concepts)
 target_bigobj_options(ut_concepts)
-catch_discover_tests(ut_concepts)
+if (NOT MSVC)
+    # The concepts do not generalize for MSVC yet
+    catch_discover_tests(ut_concepts)
+endif ()
 
 #######################################################
 ### Test points and query boxes                     ###
