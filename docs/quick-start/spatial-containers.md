@@ -57,10 +57,7 @@ Queries can limit or expand their search region with a conjunction of predicates
 and nearest points.
 
 !!! tip "Predicate Lists"
-To make queries more efficient, the `pareto::predicate_list` object compresses redundant predicates and sorts these
-predicates by how restrictive they are. All tree nodes store their minimum bounding rectangles, and these underlying
-data structures are then explored to avoid nodes that might not pass the predicate list. This allows us to find each
-query element in $O(m \log n)$ time, regardless of how complex the query is.
+    To make queries more efficient, the `pareto::predicate_list` object compresses redundant predicates and sorts these predicates by how restrictive they are. All tree nodes store their minimum bounding rectangles, and these underlying data structures are then explored to avoid nodes that might not pass the predicate list. This allows us to find each query element in $O(m \log n)$ time, regardless of how complex the query is.
 
 
 

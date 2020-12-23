@@ -79,8 +79,7 @@ multidimensional optimization problem due to the curse of dimensionality. With s
 only $O(m \log n)$.
 
 !!! tip "Indicators"
-Because Pareto fronts include solutions that are incomparable by definition, we need metrics to tell us the quality of a
-front. The `front` objects implement lots of performance indicators that can give us measures of:
+    Because Pareto fronts include solutions that are incomparable by definition, we need metrics to tell us the quality of a front. The `front` objects implement lots of performance indicators that can give us measures of:
 
     * hypervolume
     * convergence
