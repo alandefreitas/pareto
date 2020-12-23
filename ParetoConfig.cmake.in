@@ -3,23 +3,23 @@
 @PACKAGE_INIT@
 
 # Capture BUILD_SHARED_LIBS from configure time
-set(PARETOFRONT_BUILT_SHARED "@BUILD_SHARED_LIBS@")
-if(NOT ${PARETOFRONT_BUILT_SHARED})
+set(PARETO_BUILT_SHARED "@BUILD_SHARED_LIBS@")
+if(NOT ${PARETO_BUILT_SHARED})
     # CMakeFindDependencyMacro wraps find_package for Config files
     # find_dependency forwards QUIET and REQUIRED to find_package
     # https://cmake.org/cmake/help/v3.18/module/CMakeFindDependencyMacro.html
     include(CMakeFindDependencyMacro)
 
     # Add this config dir to CMAKE_MODULE_PATH
-    list(APPEND CMAKE_MODULE_PATH ${PARETOFRONT_CONFIG_INSTALL_DIR})
+    list(APPEND CMAKE_MODULE_PATH ${PARETO_CONFIG_INSTALL_DIR})
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
     list(POP_BACK CMAKE_MODULE_PATH)
 endif()
 
 # Find any dependencies or any extra step here
 # before including the targets file
-include("${CMAKE_CURRENT_LIST_DIR}/ParetoFrontTargets.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/ParetoTargets.cmake")
 
-# Called at the end if package has components to set ParetoFront_FOUND
+# Called at the end if package has components to set Pareto_FOUND
 # https://cmake.org/cmake/help/v3.0/module/CMakePackageConfigHelpers.html
-check_required_components(ParetoFront)
+check_required_components(Pareto)
