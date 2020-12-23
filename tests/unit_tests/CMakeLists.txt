@@ -22,6 +22,7 @@ CPMAddPackage(
 include(${Catch2_SOURCE_DIR}/contrib/Catch.cmake)
 add_library(catch_main ${Catch2_SOURCE_DIR}/examples/000-CatchMain.cpp)
 target_link_libraries(catch_main PUBLIC Catch2)
+target_exception_options(catch_main)
 
 #######################################################
 ### Concepts                                        ###
