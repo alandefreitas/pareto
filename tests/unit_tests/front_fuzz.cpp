@@ -1,54 +1,41 @@
-#define CATCH_CONFIG_MAIN
-#include <catch2/catch.hpp>
-#ifdef BUILD_UNIT_TEST_EXTERN_INSTANTIATION
-#include "instantiation/test_instantiations.h"
-#endif
-#include "../test_helpers.h"
 
-template <size_t COMPILE_DIMENSION,
-    typename TAG = pareto::default_tag<COMPILE_DIMENSION>>
+#include "../test_helpers.h"
+#include <catch2/catch.hpp>
+#include <pareto/common/demangle.h>
+#ifdef implicit_TREETAG
+#include <pareto/implicit_tree.h>
+#elif quad_TREETAG
+#include <pareto/quad_tree.h>
+#elif kd_TREETAG
+#include <pareto/kd_tree.h>
+#elif boost_TREETAG
+#include <pareto/boost_tree.h>
+#elif r_TREETAG
+#include <pareto/r_tree.h>
+#elif r_star_TREETAG
+#include <pareto/r_star_tree.h>
+#endif
+
+#include <pareto/front.h>
+
+template <size_t COMPILE_DIMENSION, typename Container>
 void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
-                const std::vector<uint8_t> &is_mini = {0x00}) {
+                const std::vector<bool> &is_mini = {}) {
     size_t test_dimension =
         COMPILE_DIMENSION != 0 ? COMPILE_DIMENSION : RUNTIME_DIMENSION;
-    // create a string to make section names unique
-    // see: https://github.com/catchorg/Catch2/issues/816
-    std::string section_name =
-        std::to_string(test_dimension) + " dimensions - ";
-    section_name +=
-        std::to_string(COMPILE_DIMENSION) + " compile dimensions - ";
-    section_name +=
-        std::to_string(RUNTIME_DIMENSION) + " runtime dimensions - ";
-    auto type_name = std::string(typeid(TAG).name());
-    type_name = std::regex_replace(
-        type_name, std::regex("(N\\d+)pareto([\\d]+)([^E]+)E"), "pareto::$3");
-    section_name += type_name + " - ";
-    if (is_mini[0]) {
-        section_name += "{minimization";
-    } else {
-        section_name += "{maximization";
-    }
-    for (size_t i = 1; i < is_mini.size(); ++i) {
-        if (is_mini[i]) {
-            section_name += ", minimization";
-        } else {
-            section_name += ", maximization";
-        }
-    }
-    section_name += "}";
-
     using namespace pareto;
-    using pareto_front_t = front<double, COMPILE_DIMENSION, unsigned, TAG>;
-    using point_type = typename pareto_front_t::point_type;
-    using value_type = typename pareto_front_t::value_type;
+    using front_type =
+        front<double, COMPILE_DIMENSION, unsigned, Container>;
+    using point_type = typename front_type::key_type;
+    using value_type = typename front_type::value_type;
 
-    SECTION("Constructors " + section_name) {
+    SECTION("Constructors") {
         // dimensions
-        pareto_front_t pf1;
-        // dimensions and direction
-        pareto_front_t pf2(true);
+        front_type pf1;
+        // dimensions and single direction for all dimensions
+        front_type pf2({true});
         // each direction (infer dimension from number of directions)
-        pareto_front_t pf3(is_mini);
+        front_type pf3({}, is_mini.begin(), is_mini.end());
         // iterators
         point_type p1(test_dimension);
         point_type p2(test_dimension);
@@ -59,57 +46,67 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         auto v1 = std::make_pair(p1, 2);
         auto v2 = std::make_pair(p2, 5);
         std::vector<value_type> v = {v1, v2};
-        pareto_front_t pf4(v.begin(), v.end());
-        // iterators and direction
-        pareto_front_t pf5(v.begin(), v.end(), false);
+        front_type pf4(v.begin(), v.end());
+        // iterators to initial elements and a single direction for all dimensions
+        front_type pf5(v.begin(), v.end(), {false});
         // iterators and directions
-        pareto_front_t pf6(v.begin(), v.end(), is_mini);
+        front_type pf6(v.begin(), v.end(), is_mini.begin(), is_mini.end());
         // copy constructor
-        pareto_front_t pf7(pf6);
+        // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
+        front_type pf7(pf6);
         // move constructor
-        pareto_front_t pf8(std::move(pf7));
-        if (test_dimension == 2) {
-            // initializer list
-            pareto_front_t pf9({{{2.6, 3.4}, 6}, {{6.5, 2.4}, 4}});
-            // initializer list and direction
-            pareto_front_t pf10({{{2.6, 3.4}, 6}, {{6.5, 2.4}, 4}}, false);
+        front_type pf8(std::move(pf7));
+        if constexpr (COMPILE_DIMENSION == 0 || COMPILE_DIMENSION == 2) {
+            if (test_dimension == 2) {
+                // from initializer list
+                front_type pf9({{{2.6, 3.4}, 6}, {{6.5, 2.4}, 4}});
+                // from initializer list and direction
+                front_type pf10({{{2.6, 3.4}, 6}, {{6.5, 2.4}, 4}}, {max, min});
+            }
         }
-        // vector
-        pareto_front_t pf11(v);
-        // vector and direction
-        pareto_front_t pf12(v, false);
-        // vector and directions
-        pareto_front_t pf13(v, is_mini);
+        // from vector
+        front_type pf11(v.begin(), v.end());
+        // from vector and direction
+        front_type pf12(v.begin(), v.end(), {false});
+        // from vector and directions
+        front_type pf13(v.begin(), v.end(), is_mini.begin(), is_mini.end());
     }
 
     auto random_point = [&]() {
-      point_type p(test_dimension);
-      std::generate(p.begin(), p.end(), randn);
-      return p;
+        point_type p(test_dimension);
+        std::generate(p.begin(), p.end(), randn);
+        return p;
     };
 
     auto random_value = [&]() {
-      auto v = std::make_pair<point_type, unsigned>(random_point(), randi());
-      return v;
+        auto v = std::make_pair<point_type, unsigned>(random_point(), randi());
+        return v;
     };
 
     auto random_pareto_front = [&]() {
-      pareto_front_t pf(is_mini);
-      point_type p1(test_dimension);
-      point_type p2(test_dimension);
-      for (size_t i = 0; i < test_dimension; ++i) {
-          p1[i] = 2.5 + 1. * i;
-          p2[i] = 1.5 + test_dimension - 1. * i;
-      }
+        front_type pf({}, is_mini.begin(), is_mini.end());
 
-      pf.insert(std::make_pair(p1, 2));
-      pf.insert(std::make_pair(p2, 3));
+        point_type p1(test_dimension);
+        point_type p2(test_dimension);
+        for (size_t i = 0; i < test_dimension; ++i) {
+            p1[i] = 2.5 + 1. * i;
+            p2[i] = 1.5 + test_dimension - 1. * i;
+            if (!is_mini[i]) {
+                // make distribution symmetric
+                // for tests
+                p1[i] = -p1[i];
+                p2[i] = -p2[i];
+            }
+        }
 
-      pf.emplace(random_value());
-      std::vector v = {random_value(), random_value(), random_value()};
-      pf.insert(v.begin(), v.end());
-      auto r = pf.insert(random_value());
-      value_type v2 = random_value();
+        pf.insert(std::make_pair(p1, 2));
+        pf.insert(std::make_pair(p2, 3));
+
+        pf.emplace(random_value());
+        std::vector v = {random_value(), random_value(), random_value()};
+        pf.insert(v.begin(), v.end());
+        auto r = pf.insert(random_value());
+        value_type v2 = random_value();
         r = pf.insert(std::move(v2));
         r = pf.insert(std::make_pair(random_point(), randi()));
         unsigned m = randi();
@@ -124,7 +121,7 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         return pf;
     };
 
-    SECTION("Container functions and iterators " + section_name) {
+    SECTION("Container functions and iterators") {
         auto pf = random_pareto_front();
         size_t counter = 0;
         for ([[maybe_unused]] const auto &[k, v] : pf) {
@@ -137,7 +134,8 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         }
         REQUIRE(counter == pf.size());
         REQUIRE_FALSE(pf.empty());
-        REQUIRE(pf.dimensions() == test_dimension);
+        bool b = pf.dimensions() == test_dimension;
+        REQUIRE(b);
         point_type p2 = pf.begin()->first;
         REQUIRE(pf.find(p2) != pf.end());
         REQUIRE(pf.contains(p2));
@@ -150,7 +148,7 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
     }
 
     // Erasing items
-    SECTION("Erasing " + section_name) {
+    SECTION("Erasing") {
         auto pf = random_pareto_front();
         auto pf2 = pf;
         REQUIRE(pf == pf2);
@@ -166,7 +164,9 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         REQUIRE(pf2.size() == s - 1);
         pf2.insert(random_value());
         // erase by iterator
-        pf2.erase(pf2.begin(), pf2.end());
+        typename front_type::iterator first = pf2.begin();
+        typename front_type::iterator last = pf2.end();
+        pf2.erase(first, last);
         REQUIRE(pf2.size() == 0); // NOLINT(readability-container-size-empty)
         REQUIRE(pf2.empty());
         pf2 = pf;
@@ -175,13 +175,13 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         REQUIRE(pf2.empty());
     }
 
-    SECTION("Merging / swapping fronts " + section_name) {
+    SECTION("Merging / swapping fronts") {
         auto pf = random_pareto_front();
-        pareto_front_t pf2(is_mini);
+        front_type pf2({}, is_mini.begin(), is_mini.end());
         for (size_t i = 0; i < 100; ++i) {
             pf2.insert(random_value());
         }
-        pareto_front_t pf3 = pf;
+        front_type pf3 = pf;
         REQUIRE_FALSE(pf.dominates(pf3));
         pf3.merge(pf2);
         REQUIRE_FALSE(pf2.dominates(pf3));
@@ -192,7 +192,7 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         REQUIRE(pfs2 == pf.size());
     }
 
-    SECTION("Queries " + section_name) {
+    SECTION("Queries") {
         auto pf = random_pareto_front();
         auto p = random_point();
         auto ideal_ = pf.ideal();
@@ -238,7 +238,7 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         }
     }
 
-    SECTION("Indicators " + section_name) {
+    SECTION("Indicators") {
         if (RUNTIME_DIMENSION > 5) {
             return;
         }
@@ -246,14 +246,14 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         // Get indicators and check if they are in acceptable ranges
         if (pf.size() > 2) {
             REQUIRE(pf.hypervolume(pf.nadir()) >= 0);
-            REQUIRE(pf.hypervolume(pf.nadir(), 10) >= 0);
-            REQUIRE(pf.hypervolume(pf.nadir(), 100) >= 0);
-            REQUIRE(pf.hypervolume(pf.nadir(), 1000) >= 0);
-            REQUIRE(pf.hypervolume(pf.nadir(), 10000) >= 0);
-            REQUIRE(pf.hypervolume(pf.nadir(), 100000) >= 0);
+            REQUIRE(pf.hypervolume(10, pf.nadir()) >= 0);
+            REQUIRE(pf.hypervolume(100, pf.nadir()) >= 0);
+            REQUIRE(pf.hypervolume(1000, pf.nadir()) >= 0);
+            REQUIRE(pf.hypervolume(10000, pf.nadir()) >= 0);
+            REQUIRE(pf.hypervolume(100000, pf.nadir()) >= 0);
             // Compare set coverage
-            pareto_front_t pf_b(is_mini);
-            for (size_t i = 0; i < 1000; ++i) {
+            front_type pf_b({}, is_mini.begin(), is_mini.end());
+            for (size_t i = 0; i < 1000 / test_dimension; ++i) {
                 pf_b.insert({random_point(), randi()});
             }
             REQUIRE(pf.coverage(pf_b) >= 0);
@@ -265,7 +265,7 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
             }
             // Convergence metrics
             // Create a mock reference set / "real" pareto front
-            pareto_front_t pf_c(is_mini);
+            front_type pf_c({}, is_mini.begin(), is_mini.end());
             // std::cout << "Mock front: " << pf_c << std::endl;
             for (const auto &[k, v] : pf) {
                 point_type p = k;
@@ -294,7 +294,7 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         }
     }
 
-    SECTION("Pareto Dominance " + section_name) {
+    SECTION("Pareto Dominance") {
         auto pf = random_pareto_front();
         // Point dominance
         REQUIRE_NOTHROW(pf.dominates(random_point()));
@@ -312,7 +312,7 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         REQUIRE(pf.strongly_dominates(p));
         REQUIRE_FALSE(pf.non_dominates(p));
         // Pareto dominance
-        pareto_front_t pf2 = pf;
+        front_type pf2 = pf;
         REQUIRE_FALSE(pf.dominates(pf2));
         REQUIRE_FALSE(pf.strongly_dominates(pf2));
         REQUIRE(pf.non_dominates(pf));
@@ -337,10 +337,11 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         REQUIRE_FALSE(pf2.non_dominates(pf));
         pf2.clear();
         for (auto &[k, v2] : v) {
+            point_type unprotected_k = k;
             for (size_t i = 0; i < k.dimensions(); ++i) {
-                k[i] = k[i] + (is_mini[i] ? 2 : -2);
+                unprotected_k[i] = unprotected_k[i] + (is_mini[i] ? 2 : -2);
             }
-            pf2.emplace(k, v2);
+            pf2.emplace(unprotected_k, v2);
         }
         REQUIRE(pf.dominates(pf2));
         REQUIRE(pf.strongly_dominates(pf2));
@@ -350,7 +351,7 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
         REQUIRE_FALSE(pf2.non_dominates(pf));
     }
 
-    SECTION("Reference points " + section_name) {
+    SECTION("Reference points") {
         auto pf = random_pareto_front();
         point_type ideal_ = pf.ideal();
         for (const auto &[k, v] : pf) {
@@ -365,74 +366,212 @@ void test_front(size_t RUNTIME_DIMENSION = COMPILE_DIMENSION,
             REQUIRE_FALSE(worst_.dominates(k, is_mini));
         }
         REQUIRE(nadir_ == worst_);
+
+        REQUIRE(pf <= worst_);
+        REQUIRE(ideal_ <= pf);
     }
 }
 
-template<size_t M>
-void test_all_tags(const std::vector<uint8_t> &is_mini) {
-    using namespace pareto;
-    test_front<M, vector_tree_tag>(M, is_mini);
-    test_front<0, vector_tree_tag>(M, is_mini);
-    test_front<M, quad_tree_tag>(M, is_mini);
-    test_front<0, quad_tree_tag>(M, is_mini);
-    test_front<M, kd_tree_tag>(M, is_mini);
-    test_front<0, kd_tree_tag>(M, is_mini);
-    test_front<M, boost_tree_tag>(M, is_mini);
-    test_front<M, r_tree_tag>(M, is_mini);
-    test_front<0, r_tree_tag>(M, is_mini);
-    test_front<M, r_star_tree_tag>(M, is_mini);
-    test_front<0, r_star_tree_tag>(M, is_mini);
-}
+template <bool runtime, template <class,size_t,class,class,class> typename Container> void test_all_dimensions() {
+    using K = double;
+    using T = unsigned;
+    using C = std::less<K>;
 
 
 #ifdef BUILD_LONG_TESTS
-
-TEST_CASE("Front - 1 dimension") {
-    using namespace pareto;
-    test_all_tags<1>({0});
-}
-
+    SECTION("1 dimension") {
+        using namespace pareto;
+        SECTION("Direction {0}") {
+            constexpr size_t M = runtime ? 0 : 1;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(1, {0});
+        }
+    }
 #endif
 
-TEST_CASE("Front - 2 dimensions") {
-    using namespace pareto;
-    test_all_tags<2>({0, 0});
-    test_all_tags<2>({0, 1});
-    test_all_tags<2>({1, 0});
-    test_all_tags<2>({1, 1});
-}
+    SECTION("2 dimensions") {
+        using namespace pareto;
+        SECTION("Direction {0, 1}") {
+            constexpr size_t M = runtime ? 0 : 2;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(2, {0, 1});
+        }
+        SECTION("Direction {0, 0}") {
+            constexpr size_t M = runtime ? 0 : 2;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(2, {0, 0});
+        }
+        SECTION("Direction {1, 0}") {
+            constexpr size_t M = runtime ? 0 : 2;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(2, {1, 0});
+        }
+        SECTION("Direction {1, 1}") {
+            constexpr size_t M = runtime ? 0 : 2;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(2, {1, 1});
+        }
+    }
+
+    SECTION("3 dimensions") {
+        using namespace pareto;
+        SECTION("Direction {0, 1, 0}") {
+            constexpr size_t M = runtime ? 0 : 3;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(3, {0, 1, 0});
+        }
+        SECTION("Direction {0, 0, 0}") {
+            constexpr size_t M = runtime ? 0 : 3;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(3, {0, 0, 0});
+        }
+        SECTION("Direction {1, 0, 0}") {
+            constexpr size_t M = runtime ? 0 : 3;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(3, {1, 0, 0});
+        }
+    }
 
 #ifdef BUILD_LONG_TESTS
-TEST_CASE("Front - 3 dimensions") {
-    using namespace pareto;
-    test_all_tags<3>({0, 0, 0});
-    test_all_tags<3>({0, 1, 0});
-    test_all_tags<3>({1, 0, 0});
+    SECTION("5 dimensions") {
+        using namespace pareto;
+        SECTION("Direction {0, 0, 1, 0, 0}") {
+            constexpr size_t M = runtime ? 0 : 5;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(5, {0, 0, 1, 0, 0});
+        }
+        SECTION("Direction {0, 0, 0, 0, 0}") {
+            constexpr size_t M = runtime ? 0 : 5;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(5, {0, 0, 0, 0, 0});
+        }
+        SECTION("Direction {1, 0, 0, 1, 0}") {
+            constexpr size_t M = runtime ? 0 : 5;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(5, {1, 0, 0, 1, 0});
+        }
+        SECTION("Direction {0, 0, 0, 1, 0}") {
+            constexpr size_t M = runtime ? 0 : 5;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(5, {0, 0, 0, 1, 0});
+        }
+    }
+
+    SECTION("9 dimensions") {
+        using namespace pareto;
+        SECTION("Direction {0, 0, 0, 0, 0, 0, 0, 0, 1}") {
+            constexpr size_t M = runtime ? 0 : 9;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(9, {0, 0, 0, 0, 0, 0, 0, 0, 1});
+        }
+        SECTION("Direction {0, 0, 0, 1, 0, 0, 0, 0, 0}") {
+            constexpr size_t M = runtime ? 0 : 9;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(9, {0, 0, 0, 1, 0, 0, 0, 0, 0});
+        }
+        SECTION("Direction {0, 0, 0, 0, 0, 0, 0, 0, 0}") {
+            constexpr size_t M = runtime ? 0 : 9;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(9, {0, 0, 0, 0, 0, 0, 0, 0, 0});
+        }
+        SECTION("Direction {0, 0, 0, 0, 1, 1, 0, 0, 1}") {
+            constexpr size_t M = runtime ? 0 : 9;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(9, {0, 0, 0, 0, 1, 1, 0, 0, 1});
+        }
+        SECTION("Direction {0, 0, 0, 0, 0, 1, 0, 0, 1}") {
+            constexpr size_t M = runtime ? 0 : 9;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(9, {0, 0, 0, 0, 0, 1, 0, 0, 1});
+        }
+    }
+
+    SECTION("13 dimensions") {
+        using namespace pareto;
+
+        SECTION("Direction {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}") {
+            constexpr size_t M = runtime ? 0 : 13;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(
+                13, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1});
+        }
+        SECTION("Direction {0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1}") {
+            constexpr size_t M = runtime ? 0 : 13;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(
+                13, {0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1});
+        }
+        SECTION("Direction {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}") {
+            constexpr size_t M = runtime ? 0 : 13;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(
+                13, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0});
+        }
+        SECTION("Direction {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0}") {
+            constexpr size_t M = runtime ? 0 : 13;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(
+                13, {0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0});
+        }
+        SECTION("Direction {0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1}") {
+            constexpr size_t M = runtime ? 0 : 13;
+            using A = std::allocator<std::pair<const ::pareto::point<K, M>, T>>;
+            test_front<M, Container<K,M,T,C,A>>(
+                13, {0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1});
+        }
+    }
+#endif
 }
 
-TEST_CASE("Front - 5 dimensions") {
-    using namespace pareto;
-    test_all_tags<5>({0, 0, 0, 0, 0});
-    test_all_tags<5>({0, 0, 1, 0, 0});
-    test_all_tags<5>({1, 0, 0, 1, 0});
-    test_all_tags<5>({0, 0, 0, 1, 0});
+#ifdef implicit_TREETAG
+TEST_CASE("Implicit-Front") {
+    SECTION("Runtime Dimension") {
+        test_all_dimensions<true, pareto::implicit_tree>();
+    }
+    SECTION("Compile Time Dimension") {
+        test_all_dimensions<false, pareto::implicit_tree>();
+    }
 }
-
-TEST_CASE("Front - 9 dimensions") {
-    using namespace pareto;
-    test_all_tags<9>({0, 0, 0, 0, 0, 0, 0, 0, 0});
-    test_all_tags<9>({0, 0, 0, 0, 0, 0, 0, 0, 1});
-    test_all_tags<9>({0, 0, 0, 1, 0, 0, 0, 0, 0});
-    test_all_tags<9>({0, 0, 0, 0, 1, 1, 0, 0, 1});
-    test_all_tags<9>({0, 0, 0, 0, 0, 1, 0, 0, 1});
+#elif quad_TREETAG
+TEST_CASE("Quad-Front") {
+    SECTION("Runtime Dimension") {
+        test_all_dimensions<true, pareto::quad_tree>();
+    }
+    SECTION("Compile Time Dimension") {
+        test_all_dimensions<false, pareto::quad_tree>();
+    }
 }
-
-TEST_CASE("Front - 13 dimensions") {
-    using namespace pareto;
-    test_all_tags<13>({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0});
-    test_all_tags<13>({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1});
-    test_all_tags<13>({0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1});
-    test_all_tags<13>({0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0});
-    test_all_tags<13>({0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1});
+#elif kd_TREETAG
+TEST_CASE("kd-Front") {
+    SECTION("Runtime Dimension") {
+        test_all_dimensions<true, pareto::kd_tree>();
+    }
+    SECTION("Compile Time Dimension") {
+        test_all_dimensions<false, pareto::kd_tree>();
+    }
+}
+#elif boost_TREETAG
+TEST_CASE("Boost-Front") {
+    SECTION("Compile Time Dimension") {
+        test_all_dimensions<false, pareto::boost_tree>();
+    }
+}
+#elif r_TREETAG
+TEST_CASE("R-Front") {
+    SECTION("Runtime Dimension") {
+        test_all_dimensions<true, pareto::r_tree>();
+    }
+    SECTION("Compile Time Dimension") {
+        test_all_dimensions<false, pareto::r_tree>();
+    }
+}
+#elif r_star_TREETAG
+TEST_CASE("R*-Front") {
+    SECTION("Runtime Dimension") {
+        test_all_dimensions<true, pareto::r_star_tree>();
+    }
+    SECTION("Compile Time Dimension") {
+        test_all_dimensions<false, pareto::r_star_tree>();
+    }
 }
 #endif
