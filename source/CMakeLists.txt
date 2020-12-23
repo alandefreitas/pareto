@@ -60,6 +60,11 @@ if (BUILD_PRECOMPILED_HEADERS)
     cotire(pareto)
 endif()
 
+if (MSVC)
+    # MSVC requires this flag if the code uses C++ exception handling
+    target_compile_options(pareto INTERFACE /EHsc)
+endif()
+
 #######################################################
 ### Installer                                       ###
 #######################################################
