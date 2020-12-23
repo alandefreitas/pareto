@@ -85,8 +85,8 @@ jobs:
         with:
           name: Python Binary ${{ matrix.config.artifact_name }}
           path: |
-            build/bindings/pyfront.cp*-*.*
-            build/bindings/Release/pyfront.cp*-*.*
+            build/pybindings/pareto.cp*-*.*
+            build/pybindings/Release/pareto.cp*-*.*
       - name: Test
         working-directory: ./build
         run: ctest -j ${{ matrix.config.cores }} -C Release --verbose
