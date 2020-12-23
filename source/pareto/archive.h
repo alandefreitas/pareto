@@ -77,9 +77,10 @@ namespace pareto {
         using front_set_type =
             std::set<front_type, std::less<>, front_set_allocator_type>;
         static constexpr size_t default_capacity =
-            number_of_compile_dimensions == 0
-                ? 1000
-                : 50 << (number_of_compile_dimensions - 1);
+            number_of_compile_dimensions == 0 ? 1000
+            : number_of_compile_dimensions < 10
+                ? 50 << (number_of_compile_dimensions - 1)
+                : 100000;
 
       public /* iterators */:
         /// \class Archive iterator
@@ -240,8 +241,7 @@ namespace pareto {
                           const std::vector<front_set_iterator> &begins,
                           container_iterator current_iter,
                           size_t current_front_idx)
-                : current_archive_(ar),
-                  current_element_(current_iter),
+                : current_archive_(ar), current_element_(current_iter),
                   current_front_idx_(current_front_idx) {
                 auto it = ar->fronts_.begin();
                 auto el_it = begins.begin();
@@ -262,8 +262,7 @@ namespace pareto {
                           const fronts_and_elements_type &begins,
                           container_iterator current_iter,
                           size_t current_front_idx)
-                : front_begins_(begins),
-                  current_archive_(ar),
+                : front_begins_(begins), current_archive_(ar),
                   current_element_(current_iter),
                   current_front_idx_(current_front_idx) {
                 advance_if_invalid();
