@@ -21,7 +21,7 @@ The `pareto::front` object defines a container for **Pareto fronts**, which is b
 
     ```python
     # Three-dimensional Pareto front
-    # This dimension will be set when you insert your first point
+    # The dimension will be set when you insert the first element
     m = pareto.front()
     ```
 
@@ -73,10 +73,14 @@ These objectives often go in different directions (e.g., minimize price vs. maxi
 !!! tip "Plotting Fronts"
     The header `pareto/matplot/front.h` includes some snippets to plot these fronts with [Matplot++](https://github.com/alandefreitas/pareto/blob/master/).
 
-Data scientists often use linear lists to represent these fronts, with a cost of $O(mn^2)$ for several operations. This makes it unfeasible to represent the thousands or millions of solutions we usually have in a non-polynomial multidimensional optimization problem due to the curse of dimensionality.  With spatial indexes, this cost reduces to only $O(m \log n)$.
+Data scientists often use linear lists to represent these fronts, with a cost of $O(mn^2)$ for several operations. This
+makes it unfeasible to represent the thousands or millions of solutions we usually have in a non-polynomial
+multidimensional optimization problem due to the curse of dimensionality. With spatial indexes, this cost reduces to
+only $O(m \log n)$.
 
 !!! tip "Indicators"
-    Because Pareto fronts include solutions that are incomparable by definition, we need metrics to tell us the quality of a front. The `front` objects implements lots of performance indicators that can give us measures of:
+Because Pareto fronts include solutions that are incomparable by definition, we need metrics to tell us the quality of a
+front. The `front` objects implement lots of performance indicators that can give us measures of:
 
     * hypervolume
     * convergence
