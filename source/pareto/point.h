@@ -5,13 +5,14 @@
 #ifndef PARETO_FRONT_POINT_H
 #define PARETO_FRONT_POINT_H
 
-#include <vector>
-#include <array>
 #include <algorithm>
-#include <numeric>
-#include <ostream>
+#include <array>
 #include <cassert>
 #include <cmath>
+#include <numeric>
+#include <ostream>
+#include <utility>
+#include <vector>
 
 #ifdef BUILD_BOOST_TREE
 #include <boost/geometry/geometry.hpp>
@@ -37,15 +38,19 @@ namespace pareto {
     /// number type on all coordinates to later calculate indicators
     /// If your objective is an integer, you can promote it to a double
     /// in the front
-    /// \tparam NUMBER_T Number type for points
-    /// \tparam DimensionCount Number of dimensions (zero for runtime)
-    /// \tparam CoordinateSystem This is important for boost only (to be deprecated)
-    template<typename NUMBER_T, std::size_t DimensionCount = 0, typename CoordinateSystem = default_coordinate_system_for_points>
+    /// \tparam T Number type for points
+    /// \tparam M Number of dimensions (zero for runtime)
+    /// \tparam CoordinateSystem This is important for boost only (to be
+    /// deprecated)
+    template <typename T, std::size_t M = 0,
+              typename CoordinateSystem = default_coordinate_system_for_points>
     class point {
-    public:
-        using number_type = NUMBER_T;
-        using distance_type = std::conditional_t<std::is_floating_point_v<number_type>, number_type, double>;
-        static_assert((DimensionCount >= 0));
+      public:
+        using dimension_type = T;
+        using distance_type =
+            std::conditional_t<std::is_floating_point_v<dimension_type>,
+                               dimension_type, double>;
+        static_assert((M >= 0));
         using coordinate_system_t = CoordinateSystem;
 
         /// You can set the number of dimensions in compile time
@@ -53,36 +58,32 @@ namespace pareto {
         /// We need both options to support all kinds of pareto sets.
         /// In the first case, we use an array as data structure.
         /// In the second case, we use a vector as data structure.
-        static constexpr size_t compile_dimensions = DimensionCount;
+        static constexpr size_t compile_dimensions = M;
 
-        using array_type = std::conditional_t<
-                compile_dimensions == 0, std::vector<number_type>, std::array<number_type, compile_dimensions>>;
+        using array_type =
+            std::conditional_t<compile_dimensions == 0,
+                               std::vector<dimension_type>,
+                               std::array<dimension_type, compile_dimensions>>;
 
-    public:
+      public:
         /// \brief Default constructor
         /// Fill values with number type
         /// Not useful if you want runtime dimensions
         point() {
-            std::fill(values_.begin(), values_.end(), number_type());
+            std::fill(values_.begin(), values_.end(), dimension_type());
         };
-
-        /// \brief Construct from list of values
-        /// Number of arguments needs to match the compile time dimension
-        point(std::initializer_list<number_type> il) {
-            maybe_resize(values_, il.size());
-            std::copy(il.begin(), il.end(), values_.begin());
-        }
 
         /// \brief Construct with size n
         /// Has no effect if dimension is set at compile-time
         explicit point(size_t n) {
             maybe_resize(values_, n);
+            std::fill(values_.begin(), values_.end(), dimension_type{0});
             assert(values_.size() == n);
         }
 
         /// \brief Construct with size n
         /// Has no effect if dimension is set at compile-time
-        explicit point(size_t n, const number_type value) {
+        explicit point(size_t n, const dimension_type value) {
             maybe_resize(values_, n);
             std::fill(values_.begin(), values_.end(), value);
             assert(values_.size() == n);
@@ -97,16 +98,22 @@ namespace pareto {
                 : values_(std::move(rhs.values_)) {}
 
         /// \brief Constructor to set values from any other container
-        template<class Rng>
-        explicit point(const Rng &il) {
-            maybe_resize(values_, il.size());
-            std::copy(il.begin(), il.end(), values_.begin());
+        point(std::initializer_list<dimension_type> il) {
+            maybe_resize(values_, static_cast<size_t>(il.size()));
+            if (il.size() == values_.size()) {
+                std::copy(il.begin(), il.end(), values_.begin());
+            } else if (il.size() == 1) {
+                std::fill(values_.begin(), values_.end(), *il.begin());
+            } else {
+                throw std::logic_error("point:: Initializer list and expected "
+                                       "point dimensions don't match");
+            }
         }
 
         /// \brief Constructor to set values from any other container
-        template<size_t DimensionCount2>
-        explicit point(const point<NUMBER_T, DimensionCount2, CoordinateSystem> &p2)
-                : point(p2.begin(), p2.end()) {}
+        template <size_t M2>
+        explicit point(const point<T, M2, CoordinateSystem> &p2)
+            : point(p2.begin(), p2.end()) {}
 
         /// \brief Constructor to set values from any other container
         template<class Iterator, std::enable_if_t<!std::is_fundamental_v<Iterator>, int> = 0>
@@ -132,8 +139,7 @@ namespace pareto {
         /// Other containers should probably use operator[]
         /// \tparam K coordinate to get
         /// \return the coordinate
-        template<std::size_t K>
-        inline number_type const &get() const {
+        template <std::size_t K> inline dimension_type const &get() const {
             static_assert(K < compile_dimensions || compile_dimensions == 0);
             return values_[K];
         }
@@ -143,8 +149,7 @@ namespace pareto {
         /// Other containers should probably use operator[]
         /// \tparam K coordinate to set
         /// \param value value to set
-        template<std::size_t K>
-        inline void set(number_type const &value) {
+        template <std::size_t K> inline void set(dimension_type const &value) {
             static_assert(K < compile_dimensions);
             values_[K] = value;
         }
@@ -248,9 +253,10 @@ namespace pareto {
             return !dominates(p) && !p.dominates(*this);
         }
 
-        /// \brief Calculates the distance between two points (another template type)
-        template<std::size_t DimensionCount2>
-        distance_type distance(const point<NUMBER_T, DimensionCount2, CoordinateSystem> &p2) const {
+        /// \brief Calculates the distance between two points (another template
+        /// type)
+        template <std::size_t M2>
+        distance_type distance(const point<T, M2, CoordinateSystem> &p2) const {
             distance_type dist = 0.;
             for (size_t i = 0; i < dimensions(); ++i) {
                 dist += pow(operator[](i) - p2[i], 2);
@@ -260,8 +266,9 @@ namespace pareto {
 
         /// \brief Calculates the distance between two points (same template type)
         distance_type distance(const point &p2) const {
-            if constexpr (DimensionCount == 1) {
-                return operator[](0) > p2[0] ? operator[](0) - p2[0] : p2[0] - operator[](0);
+            if constexpr (M == 1) {
+                return operator[](0) > p2[0] ? operator[](0) - p2[0]
+                                             : p2[0] - operator[](0);
             } else {
                 distance_type dist = 0.;
                 for (size_t i = 0; i < dimensions(); ++i) {
@@ -280,8 +287,9 @@ namespace pareto {
             double sum = 0.0;
             auto is_mini_begin = is_minimization.begin();
             for (size_t i = 0; i < dimensions(); ++i) {
-                auto term = *is_mini_begin ? operator[](i) - p2[i] : p2[i] - operator[](i);
-                auto modified_term = std::max(number_type(0), term);
+                auto term = *is_mini_begin ? operator[](i) - p2[i]
+                                           : p2[i] - operator[](i);
+                auto modified_term = std::max(dimension_type(0), term);
                 auto pow_term = pow(modified_term, 2.0);
                 sum += pow_term;
                 ++is_mini_begin;
@@ -289,12 +297,16 @@ namespace pareto {
             return sqrt(sum);
         }
 
+        array_type &values() { return values_; }
+
+        const array_type &values() const { return values_; }
+
         /// \brief Iterator to first point component
         typename array_type::const_iterator begin() const {
             return values_.begin();
         }
 
-        /// \brief Iterator to last + 1 point component
+        /// \brief Iterator to past-the-end point component
         typename array_type::const_iterator end() const {
             return values_.end();
         }
@@ -304,42 +316,40 @@ namespace pareto {
             return values_.begin();
         }
 
-        /// \brief Iterator to last + 1 point component
-        typename array_type::iterator end() {
-            return values_.end();
-        }
+        /// \brief Iterator to past-the-end point component
+        typename array_type::iterator end() { return values_.end(); }
 
         /// \brief operator< : this dominates rhs
         /// This allows some conveniences but you're recommended to
         /// use the "dominates", "strongly_dominates", and "non_dominates"
         /// functions instead
-        bool operator<(const point &rhs) const {
-            return this->dominates(rhs);
-        }
+        /// bool operator<(const point &rhs) const {
+        ///    return this->dominates(rhs);
+        /// }
 
         /// \brief operator> : rhs dominates this
         /// This allows some conveniences but you're recommended to
         /// use the "dominates", "strongly_dominates", and "non_dominates"
         /// functions instead
-        bool operator>(const point &rhs) const {
-            return rhs.dominates(*this);
-        }
+        /// bool operator>(const point &rhs) const {
+        ///    return rhs.dominates(*this);
+        /// }
 
         /// \brief operator< : this dominates rhs or is at least non-dominated
         /// This allows some conveniences but you're recommended to
         /// use the "dominates", "strongly_dominates", and "non_dominates"
         /// functions instead
-        bool operator<=(const point &rhs) const {
-            return this->dominates(rhs) || !rhs.dominates(*this);
-        }
+        /// bool operator<=(const point &rhs) const {
+        ///    return this->dominates(rhs) || !rhs.dominates(*this);
+        /// }
 
         /// \brief operator< : this dominates rhs or is at least non-dominated
         /// This allows some conveniences but you're recommended to
         /// use the "dominates", "strongly_dominates", and "non_dominates"
         /// functions instead
-        bool operator>=(const point &rhs) const {
-            return rhs.dominates(*this) || !this->non_dominates(rhs);
-        }
+        /// bool operator>=(const point &rhs) const {
+        ///    return rhs.dominates(*this) || !this->non_dominates(rhs);
+        /// }
 
         /// \brief operator< : this dominates rhs or is at least non-dominated
         /// This allows some conveniences but you're recommended to
@@ -418,7 +428,7 @@ namespace pareto {
         }
 
         /// \brief Point addition
-        point &operator+=(number_type const &y) {
+        point &operator+=(dimension_type const &y) {
             for (size_t i = 0; i < dimensions(); ++i) {
                 values_[i] += y;
             }
@@ -426,14 +436,14 @@ namespace pareto {
         }
 
         /// \brief Point addition
-        point operator+(number_type const &y) const {
+        point operator+(dimension_type const &y) const {
             point c = *this;
             c += y;
             return c;
         }
 
         /// \brief Point subtraction
-        point &operator-=(number_type const &y) {
+        point &operator-=(dimension_type const &y) {
             for (size_t i = 0; i < dimensions(); ++i) {
                 values_[i] -= y;
             }
@@ -441,14 +451,14 @@ namespace pareto {
         }
 
         /// \brief Point subtraction
-        point operator-(number_type const &y) const {
+        point operator-(dimension_type const &y) const {
             point c = *this;
             c -= y;
             return c;
         }
 
         /// \brief Point multiplication
-        point &operator*=(number_type const &y) {
+        point &operator*=(dimension_type const &y) {
             for (size_t i = 0; i < dimensions(); ++i) {
                 values_[i] *= y;
             }
@@ -456,14 +466,14 @@ namespace pareto {
         }
 
         /// \brief Point multiplication
-        point operator*(number_type const &y) const {
+        point operator*(dimension_type const &y) const {
             point c = *this;
             c *= y;
             return c;
         }
 
         /// \brief Point division
-        point &operator/=(number_type const &y) {
+        point &operator/=(dimension_type const &y) {
             for (size_t i = 0; i < dimensions(); ++i) {
                 values_[i] /= y;
             }
@@ -471,7 +481,7 @@ namespace pareto {
         }
 
         /// \brief Point division
-        point operator/(number_type const &y) const {
+        point operator/(dimension_type const &y) const {
             point c = *this;
             c /= y;
             return c;
@@ -483,39 +493,34 @@ namespace pareto {
         }
 
         /// \brief Push value (operate on container)
-        void push_back(const number_type &v) {
-            maybe_push_back(values_, v);
-        }
+        void push_back(const dimension_type &v) { maybe_push_back(values_, v); }
 
         /// \brief Push value (operate on container)
-        void push_back(number_type &&v) {
+        void push_back(dimension_type &&v) {
             maybe_push_back(values_, std::move(v));
         }
 
         /// \brief Access point component
-        number_type &operator[](size_t n) {
-            return values_[n];
-        }
+        dimension_type &operator[](size_t n) { return values_[n]; }
 
         /// \brief Access point component
-        const number_type &operator[](size_t n) const {
-            return values_[n];
-        }
+        const dimension_type &operator[](size_t n) const { return values_[n]; }
 
-        /// \brief Relative to the this point, return on which quadrant the point p is
-        /// Given an input point p, returns an integer specifying in which quadrant
-        /// p is, relative to the this point.
+        /// \brief Relative to the this point, return on which quadrant the
+        /// point p is Given an input point p, returns an integer specifying in
+        /// which quadrant p is, relative to the this point.
         ///
-        /// Bit #k of the returned int is 1 if p is below this point along dimension k.
-        /// This attributes an index to each of the 2^m quadrants around this point.
-        /// This is useful for quadtrees, that depend on this index to work.
+        /// Bit #k of the returned int is 1 if p is below this point along
+        /// dimension k. This attributes an index to each of the 2^m quadrants
+        /// around this point. This is useful for quadtrees, that depend on this
+        /// index to work.
         ///
         /// \param p Point for which we want to know the quadrant
         /// \return Quadrant
-        size_t quadrant(const point &p) const {
+        template <class F> size_t quadrant(const point &p, F comp) const {
             size_t quad = 0;
             for (size_t i = 0; i < dimensions(); i++) {
-                quad += p[i] <= values_[i] ? 1u << i : 0;
+                quad += comp(p[i], values_[i]) ? 1u << i : 0;
             }
             return quad;
         }
@@ -523,13 +528,13 @@ namespace pareto {
         /// \brief Stream point
         friend std::ostream &operator<<(std::ostream &os, const point &point) {
             if (point.dimensions() == 0) {
-                return os << "( )";
+                return os << "[ ]";
             }
-            os << "(" << point.values_[0];
+            os << "[" << point.values_[0];
             for (size_t i = 1; i < point.values_.size(); ++i) {
                 os << ", " << point.values_[i];
             }
-            return os << ")";
+            return os << "]";
         }
 
     private:
@@ -545,42 +550,54 @@ namespace pareto {
 
 #ifdef BUILD_BOOST_TREE
 /// Define traits for boost geometry to understand out point type
-/// This is for our preliminary experiments comparing our r-tree with boost r-tree
+/// This is for our preliminary experiments comparing our r-containers with
+/// boost r-containers
 namespace boost {
     namespace geometry {
         namespace traits {
-            template <typename CoordinateType, std::size_t DimensionCount, typename CoordinateSystem>
-            struct tag<pareto::point<CoordinateType, DimensionCount, CoordinateSystem> > {
+            template <typename CoordinateType, std::size_t M,
+                      typename CoordinateSystem>
+            struct tag<pareto::point<CoordinateType, M, CoordinateSystem>> {
                 typedef point_tag type;
             };
 
-            template < typename CoordinateType, std::size_t DimensionCount, typename CoordinateSystem >
-            struct coordinate_type<pareto::point<CoordinateType, DimensionCount, CoordinateSystem> > {
+            template <typename CoordinateType, std::size_t M,
+                      typename CoordinateSystem>
+            struct coordinate_type<
+                pareto::point<CoordinateType, M, CoordinateSystem>> {
                 typedef CoordinateType type;
             };
 
-            template < typename CoordinateType, std::size_t DimensionCount, typename CoordinateSystem >
-            struct coordinate_system<pareto::point<CoordinateType, DimensionCount, CoordinateSystem> > {
+            template <typename CoordinateType, std::size_t M,
+                      typename CoordinateSystem>
+            struct coordinate_system<
+                pareto::point<CoordinateType, M, CoordinateSystem>> {
                 typedef CoordinateSystem type;
             };
 
-            template < typename CoordinateType, std::size_t DimensionCount, typename CoordinateSystem >
-            struct dimension<pareto::point<CoordinateType, DimensionCount, CoordinateSystem> >
-                    : boost::mpl::int_<DimensionCount> {
-            };
+            template <typename CoordinateType, std::size_t M,
+                      typename CoordinateSystem>
+            struct dimension<pareto::point<CoordinateType, M, CoordinateSystem>>
+                : boost::mpl::int_<M> {};
 
-            template < typename CoordinateType, std::size_t DimensionCount, typename CoordinateSystem, std::size_t Dimension >
-            struct access<pareto::point<CoordinateType, DimensionCount, CoordinateSystem>, Dimension> {
-                static inline CoordinateType get( pareto::point<CoordinateType, DimensionCount, CoordinateSystem> const &p) {
+            template <typename CoordinateType, std::size_t M,
+                      typename CoordinateSystem, std::size_t Dimension>
+            struct access<pareto::point<CoordinateType, M, CoordinateSystem>,
+                          Dimension> {
+                static inline CoordinateType
+                get(pareto::point<CoordinateType, M, CoordinateSystem> const
+                        &p) {
                     return p.template get<Dimension>();
                 }
 
-                static inline void set( pareto::point<CoordinateType, DimensionCount, CoordinateSystem> &p, CoordinateType const &value) {
+                static inline void
+                set(pareto::point<CoordinateType, M, CoordinateSystem> &p,
+                    CoordinateType const &value) {
                     p.template set<Dimension>(value);
                 }
             };
 
-        }
+        } // namespace traits
     }
 }
 #endif
