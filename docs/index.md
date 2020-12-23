@@ -1,26 +1,29 @@
 ---
 layout: default
-title: Pareto Fronts and Archives / C++ and Python
+title: Home
 nav_order: 1
 has_children: false
 has_toc: false
 ---
-# Pareto Fronts and Archives / C++ and Python
+# Pareto
 
-> Efficient Pareto fronts and archives for Python and C++
+> Spatial Containers, Pareto Fronts, and Pareto Archives
 
 [![Two-dimensional front](img/pareto_cover.svg)](https://alandefreitas.github.io/pareto/)
 
 <br/>
 
-Containers based on Pareto efficiency simultaneously consider many criteria where we cannot improve one criterion without making at least one other criterion worse off. New elements can either replace elements that are worse at all criteria or send them to a higher-level archive front. While there are many libraries for multi-objective optimization, there are no libraries focused on efficient container types for storing these fronts in general applications.
-This library provides a STL-like container representing a data structure to cache and query multi-dimensional Pareto fronts and archives with its most expensive operations in <img src="https://render.githubusercontent.com/render/math?math=O(n+\log+n)"> time.
+While most problems need to simultaneously organize objects according to many criteria, associative containers can only index objects in a single dimension. This library provides a number of containers with optimal asymptotic complexity to represent multi-dimensional associative containers. 
+
+These containers are useful in many applications such as games, maps, nearest neighbor search, range search, compression algorithms, statistics, mechanics, graphics libraries, database queries, finance, multi-criteria decision making, optimization, machine learning, hyper-parameter tuning, approximation algorithms, networks, routing algorithms, robust optimization, design, and systems control.
 
 <br/>
 
-[![Build Status](https://img.shields.io/github/workflow/status/alandefreitas/pareto/ParetoFront?event=push&label=Build&logo=Github-Actions)](https://github.com/alandefreitas/pareto/actions?query=workflow%3AParetoFront+event%3Apush)
+[![Build Status](https://img.shields.io/github/workflow/status/alandefreitas/pareto/Pareto?event=push&label=Build&logo=Github-Actions)](https://github.com/alandefreitas/pareto/actions?query=workflow%3APareto+event%3Apush)
 [![Latest Release](https://img.shields.io/github/release/alandefreitas/pareto.svg?label=Download)](https://GitHub.com/alandefreitas/pareto/releases/)
-[![Website lbesson.bitbucket.org](https://img.shields.io/website-up-down-green-red/http/alandefreitas.github.io/pareto.svg?label=Documentation)](https://alandefreitas.github.io/pareto/)
+[![Documentation](https://img.shields.io/website-up-down-green-red/http/alandefreitas.github.io/pareto.svg?label=Documentation)](https://alandefreitas.github.io/pareto/)
+[![Documentation](https://img.shields.io/website-up-down-green-red/http/alandefreitas.github.io/pareto.svg?label=CodeDocs)](https://codedocs.xyz/alandefreitas/pareto/)
+[![Discussions](https://img.shields.io/website-up-down-green-red/http/alandefreitas.github.io/pareto.svg?label=Discussions)](https://github.com/alandefreitas/pareto/discussions)
 
 <br/>
 
@@ -40,36 +43,6 @@ This library provides a STL-like container representing a data structure to cach
 
 
 
-- [Use cases](use-cases.md)
-- [Design goals](design-goals.md)
-- [Examples](examples.md)
-  - [Constructing fronts](examples/constructing-fronts.md)
-  - [Data Structures](examples/data-structures.md)
-  - [Insertion](examples/insertion.md)
-  - [Reference points](examples/reference-points.md)
-  - [Iterators](examples/iterators.md)
-  - [Queries](examples/queries.md)
-  - [Dominance](examples/dominance.md)
-  - [Indicators](examples/indicators.md)
-  - [Archives](examples/archives.md)
-- [Functions](functions.md)
-- [Benchmarks](benchmarks.md)
-- [Integration](integration.md)
-  - [Packages](integration/packages.md)
-  - [Build from source](integration/build-from-source.md)
-    - [Dependencies](integration/build-from-source/dependencies.md)
-    - [Build the Examples](integration/build-from-source/build-the-examples.md)
-    - [Installing pareto from Source](integration/build-from-source/installing-pareto-from-source.md)
-    - [Building the packages](integration/build-from-source/building-the-packages.md)
-  - [CMake targets](integration/cmake-targets.md)
-    - [Find it as a CMake Package](integration/cmake-targets/find-it-as-a-cmake-package.md)
-    - [Use it as a CMake subdirectory](integration/cmake-targets/use-it-as-a-cmake-subdirectory.md)
-    - [CMake with Automatic Download](integration/cmake-targets/cmake-with-automatic-download.md)
-  - [Other build systems](integration/other-build-systems.md)
-- [Limitations](limitations.md)
-- [Contributing](contributing.md)
-- [Thanks](thanks.md)
-- [References](references.md)
 
 
 <!-- Generated with mdsplit: https://github.com/alandefreitas/mdsplit -->

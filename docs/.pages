@@ -1,0 +1,10 @@
+nav:
+  - Home: index.md
+  - Quick start: quick-start
+  - Spatial Containers: spatial-containers
+  - Front Container: front-container
+  - Archive Container: archive-container
+  - Integration: integration
+  - Benchmarks: benchmarks
+  - Contributing: contributing
+  - References: references.md
