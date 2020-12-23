@@ -34,7 +34,7 @@ namespace pareto {
         using point_type = point<NUMBER_T, number_of_compile_dimensions_>;
 
         /// Number type of the vertices
-        using number_type = typename point_type::number_type;
+        using dimension_type = typename point_type::dimension_type;
 
         /// \brief Distance between two vertices
         /// If the number type is integer, this might need to be promoted
@@ -67,14 +67,14 @@ namespace pareto {
         explicit query_box(const point_type &single_point_box) : query_box(single_point_box, single_point_box) {}
 
         /// \brief Construct box from a center and a half width
-        query_box(const point_type &center, number_type half_width)
-                : first_(center - half_width), second_(center + half_width) {
+        query_box(const point_type &center, dimension_type half_width)
+            : first_(center - half_width), second_(center + half_width) {
             normalize_corners(first_,second_);
         }
 
         /// \brief Construct box from a center and a list of half widths for dimension
-        query_box(const point_type &center, number_type *half_widths)
-                : first_(center), second_(center) {
+        query_box(const point_type &center, dimension_type *half_widths)
+            : first_(center), second_(center) {
             for (size_t i = 0; i < dimensions(); ++i) {
                 first_[i] -= half_widths[i];
                 second_[i] += half_widths[i];
@@ -143,7 +143,7 @@ namespace pareto {
         }
 
         /// \brief Return the half width of a hyperbox in a given dimension
-        number_type half_width(size_t index) const {
+        dimension_type half_width(size_t index) const {
             return (second_[index] - first_[index]) / 2.0;
         }
 
@@ -158,8 +158,8 @@ namespace pareto {
         }
 
         /// \brief Return hypervolume of a hyperbox
-        number_type volume() const {
-            number_type v = 1.;
+        dimension_type volume() const {
+            dimension_type v = 1.;
             for (size_t i = 0; i < dimensions(); ++i) {
                 v *= (second_[i] - first_[i]);
             }
@@ -170,9 +170,7 @@ namespace pareto {
         /// Just is just a convenience function as some
         /// boxes are 2d and "volume" would be hard to guess
         /// For this reason, we inline calls to this function
-        inline number_type area() const {
-            return volume();
-        }
+        inline dimension_type area() const { return volume(); }
 
         /// \brief Combine two hyperboxes into larger one containing both
         query_box combine(const query_box &other) const {
@@ -247,17 +245,19 @@ namespace pareto {
         /// \brief Calculate how much area two query boxes have in common
         /// If they have only borders in common, this will return zero
         /// while overlap will still return true.
-        number_type overlap_area(const query_box &rhs) const {
-            number_type area = 1.;
+        dimension_type overlap_area(const query_box &rhs) const {
+            dimension_type area = 1.;
             // for each dimension
-            for (size_t index = 0; area && index < first_.dimensions(); ++index) {
+            for (size_t index = 0; area && index < first_.dimensions();
+                 ++index) {
                 // left edge outside left edge
                 if (first_[index] < rhs.first_[index]) {
                     // and right edge inside left edge
                     if (rhs.first_[index] < second_[index]) {
                         // right edge outside right edge
                         if (rhs.second_[index] < second_[index]) {
-                            area *= (double) (rhs.second_[index] - rhs.first_[index]);
+                            area *= (double)(rhs.second_[index] -
+                                             rhs.first_[index]);
                         } else {
                             area *= (double) (second_[index] - rhs.first_[index]);
                         }
@@ -381,7 +381,9 @@ namespace pareto {
         distance_type distance(const point_type &p) const {
             distance_type dist = 0.0;
             for (size_t i = 0; i < dimensions(); ++i) {
-                distance_type di = std::max(std::max(first()[i] - p[i], p[i] - second()[i]), 0.0);
+                distance_type di = static_cast<distance_type>(
+                    std::max(std::max(first()[i] - p[i], p[i] - second()[i]),
+                             dimension_type{0}));
                 dist += di * di;
             }
             return sqrt(dist);
@@ -418,8 +420,8 @@ namespace pareto {
 
         /// \brief The sum of all deltas between edges
         /// This is equivalent to the perimeter for a normalized hyperbox
-        inline number_type edge_deltas() const {
-            number_type distance = 0;
+        inline dimension_type edge_deltas() const {
+            dimension_type distance = 0;
             for (std::size_t axis = 0; axis < dimensions(); axis++) {
                 distance += second_[axis] - first_[axis];
             }
@@ -443,8 +445,8 @@ namespace pareto {
         /// be smaller than min and larger than max
         void stretch_to_infinity() {
             for (std::size_t axis = 0; axis < dimensions(); axis++) {
-                first_[axis] = std::numeric_limits<number_type>::max();
-                second_[axis] = -std::numeric_limits<number_type>::max();
+                first_[axis] = std::numeric_limits<dimension_type>::max();
+                second_[axis] = -std::numeric_limits<dimension_type>::max();
             }
         }
 

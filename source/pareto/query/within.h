@@ -36,32 +36,30 @@ namespace pareto {
         }
 
         /// \brief Set the underlying query box
-        void data(const query_box_type &data) {
-            data_ = data;
-        }
+        void data(const query_box_type &data) { data_ = data; }
 
         /// \brief Does the box pass the predicate?
         /// We use the querybox function to check that
-        bool pass_predicate(const query_box_type& rhs) const {
+        bool pass_predicate(const query_box_type &rhs) const {
             return data_.within(rhs);
-        }
-
-        /// \brief Can a child in this box pass the predicate?
-        /// We use the querybox function to check that
-        bool might_pass_predicate(const query_box_type& rhs) const {
-            return data_.overlap(rhs);
         }
 
         /// \brief Does the point pass the predicate?
         /// We use the querybox function to check that
-        bool pass_predicate(const point_type& rhs) const {
+        bool pass_predicate(const point_type &rhs) const {
             return data_.within(rhs);
         }
 
         /// \brief Can a child in this box pass the predicate?
         /// We use the querybox function to check that
-        bool might_pass_predicate(const point_type& rhs) const {
+        bool might_pass_predicate(const query_box_type &rhs) const {
             return data_.overlap(rhs);
+        }
+
+        /// \brief Can a child in this box pass the predicate?
+        /// We use the querybox function to check that
+        bool might_pass_predicate(const point_type &rhs) const {
+            return data_.within(rhs);
         }
 
         /// \brief Does the value pass the predicate?

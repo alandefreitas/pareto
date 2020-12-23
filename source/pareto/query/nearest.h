@@ -14,9 +14,9 @@ namespace pareto {
     /// If we use a hyperbox as reference, points inside the box will be
     /// considered to have distance zero
     /// This is a very special predicate because it changes how the query
-    /// algorithm happens in a tree. If an iterator has a nearest predicate,
-    /// the iterator moves from its default depth-first search to a custom
-    /// algorithm that keeps track of the potential distance to a hyperbox
+    /// algorithm happens in a containers. If an iterator has a nearest
+    /// predicate, the iterator moves from its default depth-first search to a
+    /// custom/// algorithm that keeps track of the potential distance to a hyperbox
     /// as the iterator moves forward
     template <typename NUMBER_T, std::size_t DimensionCount>
     class nearest {
@@ -26,17 +26,12 @@ namespace pareto {
         using object_variant = std::variant<point_type, query_box_type>;
 
     public /* constructors */:
-        /// \brief Construct predicate from point and k nearest
-        nearest(const point_type &data, size_t k) : k_(k), data_(data) {}
-        /// \brief Construct predicate from point and one nearest
-        explicit nearest(const point_type &data) : k_(1), data_(object_variant(data)) {}
+      /// \brief Construct predicate from point and k nearest
+      nearest(const point_type &data, size_t k = 1) : k_(k), data_(data) {}
 
-
-        /// \brief Construct predicate from query box and k nearest
-        nearest(const query_box_type &data, size_t k) : k_(k), data_(object_variant(data)) {}
-
-        /// \brief Construct predicate from query box and one nearest
-        explicit nearest(const query_box_type &data) : k_(1), data_(object_variant(data)) {}
+      /// \brief Construct predicate from query box and k nearest
+      nearest(const query_box_type &data, size_t k = 1)
+          : k_(k), data_(object_variant(data)) {}
 
     public:
         /// \brief Get number of points k considered in the query
@@ -172,10 +167,10 @@ namespace pareto {
         }
 
     private:
-        /// \brief Number of nearest points considered in the query
-        size_t k_;
+      /// \brief Number of nearest points considered in the query
+      size_t k_{1};
 
-        /// \brief Reference point or hyperbox
+      /// \brief Reference point or hyperbox
         object_variant data_;
     };
 

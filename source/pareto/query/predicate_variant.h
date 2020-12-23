@@ -22,7 +22,7 @@ namespace pareto {
     /// features with a common interface.
     template<typename NUMBER_T, std::size_t DimensionCount, class ELEMENT_TYPE>
     class predicate_variant {
-        using number_type = NUMBER_T;
+        using dimension_type = NUMBER_T;
         static constexpr size_t number_of_compile_dimensions = DimensionCount;
         using query_box_type = query_box<NUMBER_T, DimensionCount>;
         using point_type = point<NUMBER_T, DimensionCount>;
@@ -30,133 +30,186 @@ namespace pareto {
         using key_type = point_type;
         using mapped_type = ELEMENT_TYPE;
         using value_type = std::pair<key_type, mapped_type>;
-        using variant_type = std::variant<intersects < number_type, number_of_compile_dimensions>,
-        disjoint <number_type, number_of_compile_dimensions>,
-        within <number_type, number_of_compile_dimensions>,
-        nearest <number_type, number_of_compile_dimensions>,
-        satisfies <number_type, number_of_compile_dimensions, mapped_type>>;
+        using variant_type = std::variant<
+            intersects<dimension_type, number_of_compile_dimensions>,
+            disjoint<dimension_type, number_of_compile_dimensions>,
+            within<dimension_type, number_of_compile_dimensions>,
+            nearest<dimension_type, number_of_compile_dimensions>,
+            satisfies<dimension_type, number_of_compile_dimensions,
+                      mapped_type>>;
 
         variant_type predicate_;
 
-    public /* constructors */:
-        // NOLINTNEXTLINE(google-explicit-constructor): We need implicit constructors to allow the syntax of initializer lists with predicate variants
-        predicate_variant(const variant_type &predicate) : predicate_(predicate) {}
+      public /* constructors */:
+        // NOLINTNEXTLINE(google-explicit-constructor): We need implicit
+        // constructors to allow the syntax of initializer lists with predicate
+        // variants
+        predicate_variant(const variant_type &predicate)
+            : predicate_(predicate) {}
+
+        // NOLINTNEXTLINE(google-explicit-constructor): We need implicit
+        // constructors to allow the syntax of initializer lists with predicate
+        // variants
+        predicate_variant(
+            const intersects<dimension_type, number_of_compile_dimensions>
+                &predicate)
+            : predicate_(predicate) {}
 
         // NOLINTNEXTLINE(google-explicit-constructor): We need implicit constructors to allow the syntax of initializer lists with predicate variants
-        predicate_variant(const intersects <number_type, number_of_compile_dimensions> &predicate)
-                : predicate_(predicate) {}
+        predicate_variant(
+            const disjoint<dimension_type, number_of_compile_dimensions>
+                &predicate)
+            : predicate_(predicate) {}
 
         // NOLINTNEXTLINE(google-explicit-constructor): We need implicit constructors to allow the syntax of initializer lists with predicate variants
-        predicate_variant(const disjoint <number_type, number_of_compile_dimensions> &predicate)
-                : predicate_(predicate) {}
+        predicate_variant(const within<dimension_type,
+                                       number_of_compile_dimensions> &predicate)
+            : predicate_(predicate) {}
 
         // NOLINTNEXTLINE(google-explicit-constructor): We need implicit constructors to allow the syntax of initializer lists with predicate variants
-        predicate_variant(const within <number_type, number_of_compile_dimensions> &predicate)
-                : predicate_(predicate) {}
+        predicate_variant(
+            const nearest<dimension_type, number_of_compile_dimensions>
+                &predicate)
+            : predicate_(predicate) {}
 
         // NOLINTNEXTLINE(google-explicit-constructor): We need implicit constructors to allow the syntax of initializer lists with predicate variants
-        predicate_variant(const nearest <number_type, number_of_compile_dimensions> &predicate)
-                : predicate_(predicate) {}
-
-        // NOLINTNEXTLINE(google-explicit-constructor): We need implicit constructors to allow the syntax of initializer lists with predicate variants
-        predicate_variant(const satisfies <number_type, number_of_compile_dimensions, mapped_type> &predicate)
-                : predicate_(predicate) {}
+        predicate_variant(
+            const satisfies<dimension_type, number_of_compile_dimensions,
+                            mapped_type> &predicate)
+            : predicate_(predicate) {}
 
     public:
         /// \brief Check if predicate is of type intersects
         [[nodiscard]] bool is_intersects() const {
-            return std::holds_alternative<intersects<number_type, number_of_compile_dimensions>>(predicate_);
+            return std::holds_alternative<
+                intersects<dimension_type, number_of_compile_dimensions>>(
+                predicate_);
         }
 
         /// \brief Check if predicate is of type disjoint
         [[nodiscard]] bool is_disjoint() const {
-            return std::holds_alternative<disjoint<number_type, number_of_compile_dimensions>>(predicate_);
+            return std::holds_alternative<
+                disjoint<dimension_type, number_of_compile_dimensions>>(
+                predicate_);
         }
 
         /// \brief Check if predicate is of type within
         [[nodiscard]] bool is_within() const {
-            return std::holds_alternative<within<number_type, number_of_compile_dimensions>>(predicate_);
+            return std::holds_alternative<
+                within<dimension_type, number_of_compile_dimensions>>(
+                predicate_);
         }
 
         /// \brief Check if predicate is of type nearest
         [[nodiscard]] bool is_nearest() const {
-            return std::holds_alternative<nearest<number_type, number_of_compile_dimensions>>(predicate_);
+            return std::holds_alternative<
+                nearest<dimension_type, number_of_compile_dimensions>>(
+                predicate_);
         }
 
         /// \brief Check if predicate is of type satisfies
         [[nodiscard]] bool is_satisfies() const {
-            return std::holds_alternative<satisfies<number_type, number_of_compile_dimensions, mapped_type>>(
-                    predicate_);
+            return std::holds_alternative<satisfies<
+                dimension_type, number_of_compile_dimensions, mapped_type>>(
+                predicate_);
         }
 
         /// \brief Get predicate as predicate of type intersects
         /// This will throw an error if predicate is not of type intersects
         /// If not sure, use the function is_intersects() before
-        const intersects <number_type, number_of_compile_dimensions> &as_intersects() const {
-            return std::get<intersects<number_type, number_of_compile_dimensions>>(predicate_);
+        const intersects<dimension_type, number_of_compile_dimensions> &
+        as_intersects() const {
+            return std::get<
+                intersects<dimension_type, number_of_compile_dimensions>>(
+                predicate_);
         }
 
         /// \brief Get predicate as predicate of type disjoint
         /// This will throw an error if predicate is not of type disjoint
         /// If not sure, use the function is_disjoint() before
-        const disjoint <number_type, number_of_compile_dimensions> &as_disjoint() const {
-            return std::get<disjoint<number_type, number_of_compile_dimensions>>(predicate_);
+        const disjoint<dimension_type, number_of_compile_dimensions> &
+        as_disjoint() const {
+            return std::get<
+                disjoint<dimension_type, number_of_compile_dimensions>>(
+                predicate_);
         }
 
         /// \brief Get predicate as predicate of type within
         /// This will throw an error if predicate is not of type within
         /// If not sure, use the function is_within() before
-        const within <number_type, number_of_compile_dimensions> &as_within() const {
-            return std::get<within<number_type, number_of_compile_dimensions>>(predicate_);
+        const within<dimension_type, number_of_compile_dimensions> &
+        as_within() const {
+            return std::get<
+                within<dimension_type, number_of_compile_dimensions>>(
+                predicate_);
         }
 
         /// \brief Get predicate as predicate of type nearest
         /// This will throw an error if predicate is not of type nearest
         /// If not sure, use the function is_nearest() before
-        const nearest <number_type, number_of_compile_dimensions> &as_nearest() const {
-            return std::get<nearest<number_type, number_of_compile_dimensions>>(predicate_);
+        const nearest<dimension_type, number_of_compile_dimensions> &
+        as_nearest() const {
+            return std::get<
+                nearest<dimension_type, number_of_compile_dimensions>>(
+                predicate_);
         }
 
         /// \brief Get predicate as predicate of type satisfies
         /// This will throw an error if predicate is not of type satisfies
         /// If not sure, use the function is_satisfies() before
-        const satisfies <number_type, number_of_compile_dimensions, mapped_type> &as_satisfies() const {
-            return std::get<satisfies<number_type, number_of_compile_dimensions, mapped_type>>(predicate_);
+        const satisfies<dimension_type, number_of_compile_dimensions,
+                        mapped_type> &
+        as_satisfies() const {
+            return std::get<satisfies<
+                dimension_type, number_of_compile_dimensions, mapped_type>>(
+                predicate_);
         }
 
         /// \brief Get predicate as predicate of type intersects
         /// This will throw an error if predicate is not of type intersects
         /// If not sure, use the function is_intersects() before
-        intersects <number_type, number_of_compile_dimensions> &as_intersects() {
-            return std::get<intersects<number_type, number_of_compile_dimensions>>(predicate_);
+        intersects<dimension_type, number_of_compile_dimensions> &
+        as_intersects() {
+            return std::get<
+                intersects<dimension_type, number_of_compile_dimensions>>(
+                predicate_);
         }
 
         /// \brief Get predicate as predicate of type disjoint
         /// This will throw an error if predicate is not of type disjoint
         /// If not sure, use the function is_disjoint() before
-        disjoint <number_type, number_of_compile_dimensions> &as_disjoint() {
-            return std::get<disjoint<number_type, number_of_compile_dimensions>>(predicate_);
+        disjoint<dimension_type, number_of_compile_dimensions> &as_disjoint() {
+            return std::get<
+                disjoint<dimension_type, number_of_compile_dimensions>>(
+                predicate_);
         }
 
         /// \brief Get predicate as predicate of type within
         /// This will throw an error if predicate is not of type within
         /// If not sure, use the function is_within() before
-        within <number_type, number_of_compile_dimensions> &as_within() {
-            return std::get<within<number_type, number_of_compile_dimensions>>(predicate_);
+        within<dimension_type, number_of_compile_dimensions> &as_within() {
+            return std::get<
+                within<dimension_type, number_of_compile_dimensions>>(
+                predicate_);
         }
 
         /// \brief Get predicate as predicate of type nearest
         /// This will throw an error if predicate is not of type nearest
         /// If not sure, use the function is_nearest() before
-        nearest <number_type, number_of_compile_dimensions> &as_nearest() {
-            return std::get<nearest<number_type, number_of_compile_dimensions>>(predicate_);
+        nearest<dimension_type, number_of_compile_dimensions> &as_nearest() {
+            return std::get<
+                nearest<dimension_type, number_of_compile_dimensions>>(
+                predicate_);
         }
 
         /// \brief Get predicate as predicate of type satisfies
         /// This will throw an error if predicate is not of type satisfies
         /// If not sure, use the function is_satisfies() before
-        satisfies <number_type, number_of_compile_dimensions, mapped_type> &as_satisfies() {
-            return std::get<satisfies<number_type, number_of_compile_dimensions, mapped_type>>(predicate_);
+        satisfies<dimension_type, number_of_compile_dimensions, mapped_type> &
+        as_satisfies() {
+            return std::get<satisfies<
+                dimension_type, number_of_compile_dimensions, mapped_type>>(
+                predicate_);
         }
 
         /// \brief Index of the current variant type
@@ -218,9 +271,11 @@ namespace pareto {
         /// if we know the total volume, we need the total front volume to make
         /// this comparison.
         /// \param other Other predicate
-        /// \param total_volume Total volume of the tree we are manipulating
-        /// \return If this predicate is more restrictive than the other
-        bool is_more_restrictive(const predicate_variant &other, number_type total_volume) const {
+        /// \param total_volume Total volume of the containers we are
+        /// manipulating \return If this predicate is more restrictive than the
+        /// other
+        bool is_more_restrictive(const predicate_variant &other,
+                                 dimension_type total_volume) const {
             // "satisfies" and "nearest" are the least restrictive
             // because any point can potentially pass the predicate
             // "satisfies" because the function is black-box to us
@@ -234,8 +289,8 @@ namespace pareto {
             }
 
             // predicates now can only be intersect, within or disjoint
-            number_type volume_a = number_type{0};
-            number_type volume_b = number_type{0};
+            dimension_type volume_a = dimension_type{0};
+            dimension_type volume_b = dimension_type{0};
             if (is_intersects()) {
                 volume_a = as_intersects().data().volume();
             } else if (is_within()) {

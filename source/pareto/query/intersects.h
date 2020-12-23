@@ -38,7 +38,7 @@ namespace pareto {
         /// \brief Does the box pass the predicate?
         /// We use the querybox function to check that
         bool pass_predicate(const query_box_type& rhs) const {
-            return predicate_querybox_.intersects(rhs);
+            return predicate_querybox_.contains(rhs);
         }
 
         /// \brief Can a child in this box pass the predicate?
@@ -50,7 +50,7 @@ namespace pareto {
         /// \brief Does the point pass the predicate?
         /// We use the querybox function to check that
         bool pass_predicate(const point_type& rhs) const {
-            return predicate_querybox_.intersects(rhs);
+            return predicate_querybox_.contains(rhs);
         }
 
         /// \brief Can a child in this box pass the predicate?
