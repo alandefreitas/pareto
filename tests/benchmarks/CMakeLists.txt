@@ -7,6 +7,7 @@ CPMAddPackage(
         VERSION 1.5.0
         OPTIONS
         "BENCHMARK_ENABLE_TESTING Off"
+        "BENCHMARK_ENABLE_INSTALL Off"
 )
 
 if (benchmark_ADDED)
