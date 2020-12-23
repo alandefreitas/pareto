@@ -8,6 +8,7 @@
 #include <cstddef>
 
 namespace pareto {
+
     /// \brief Get size of a pack
     template <typename... Targs>
     constexpr size_t pack_size(const Targs &...) {
@@ -84,7 +85,52 @@ namespace pareto {
     template <typename number_t, size_t compile_dimensions>
     void maybe_clear(std::array<number_t,compile_dimensions>& v [[maybe_unused]]) {}
 
+    template <class T1, class T2>
+    std::pair<std::add_const_t<T1>, T2>& protect_pair_key(std::pair<T1, T2>& r) {
+        std::pair<T1, T2> *p = &r;
+        using protected_type = std::pair<std::add_const_t<T1>, T2>;
+        auto *cp = reinterpret_cast<protected_type *>(p);
+        protected_type &cr = *cp;
+        return cr;
+    }
 
+    template <class T1, class T2>
+    const std::pair<std::add_const_t<T1>, T2>& protect_pair_key(const std::pair<T1, T2>& r) {
+        const std::pair<T1, T2> *p = &r;
+        using protected_type = const std::pair<std::add_const_t<T1>, T2>;
+        auto *cp = reinterpret_cast<protected_type *>(p);
+        protected_type &cr = *cp;
+        return cr;
+    }
+
+
+    template <class T1, class T2>
+    std::pair<std::remove_const_t<T1>, T2>& unprotect_pair_key(std::pair<T1, T2>& r) {
+        std::pair<T1, T2> *p = &r;
+        using unprotected_type = std::pair<std::remove_const_t<T1>, T2>;
+        auto *cp = reinterpret_cast<unprotected_type *>(p);
+        unprotected_type &cr = *cp;
+        return cr;
+    }
+
+    template <class T1, class T2>
+    const std::pair<std::remove_const_t<T1>, T2>& unprotect_pair_key(const std::pair<T1, T2>& r) {
+        const std::pair<T1, T2> *p = &r;
+        using unprotected_type = const std::pair<std::remove_const_t<T1>, T2>;
+        auto *cp = reinterpret_cast<unprotected_type *>(p);
+        unprotected_type &cr = *cp;
+        return cr;
+    }
+
+    template <class T1>
+    std::remove_const_t<T1>& unconst_reference(T1& r) {
+        return const_cast<std::remove_const_t<T1>&>(r);
+    }
+
+    template <class T1>
+    std::remove_const_t<T1>& unconst_reference(const T1& r) {
+        return const_cast<std::remove_const_t<T1>&>(r);
+    }
 
 }
 
