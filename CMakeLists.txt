@@ -109,7 +109,7 @@ endif()
 #######################################################
 ### Installer                                       ###
 #######################################################
-# Create and install pareto-fronts-config.cmake
+# Create and install pareto-config.cmake
 if (BUILD_INSTALLER)
     # https://cliutils.gitlab.io/modern-cmake/chapters/install/installing.html
     # Set variable where the cmake config is
@@ -147,9 +147,9 @@ if (BUILD_INSTALLER AND BUILD_PACKAGE)
     # https://cliutils.gitlab.io/modern-cmake/chapters/install/packaging.html
 
     # The most common cpack variables
-    set(CPACK_PACKAGE_NAME "pareto-front")
+    set(CPACK_PACKAGE_NAME "pareto")
     set(CPACK_PACKAGE_VENDOR "https://github.com/alandefreitas")
-    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Pareto Fronts and Archives for C++/Python")
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Spatial Containers, Pareto Fronts and Pareto Archives")
     set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
     set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
     set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})

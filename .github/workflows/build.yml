@@ -100,8 +100,8 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: Binary Packages ${{ matrix.config.artifact_name }}
-          path: build/pareto-front-1.?.?-*.*
+          path: build/pareto-1.?.?-*.*
       - name: Archive Installer Packages as is
         uses: kittaakos/upload-artifact-as-is@v0
         with:
-          path: build/pareto-front-1.?.?-*.*
+          path: build/pareto-1.?.?-*.*
