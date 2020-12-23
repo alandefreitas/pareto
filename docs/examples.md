@@ -7,7 +7,7 @@ has_toc: false
 ---
 # Examples
 
-For complete examples, see the directory [examples](https://github.com/alandefreitas/pareto-front/blob/master/examples).
+For complete examples, see the directory [examples](https://github.com/alandefreitas/pareto/blob/master/examples).
 
 
 - [Constructing fronts](examples/constructing-fronts.md)
