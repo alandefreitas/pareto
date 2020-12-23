@@ -14,7 +14,11 @@ if (benchmark_ADDED)
     set_target_properties(benchmark PROPERTIES CXX_STANDARD 17)
     if (NOT MSVC)
         target_compile_options(benchmark PRIVATE -Wno-error=deprecated-declarations)
-    endif()
+    endif ()
+    if (MSVC)
+        # MSVC requires this flag if the code uses C++ exception handling
+        target_compile_options(benchmark PRIVATE /EHsc)
+    endif ()
 endif()
 
 #######################################################
