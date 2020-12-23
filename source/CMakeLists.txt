@@ -49,10 +49,12 @@ endif()
 if (BUILD_BOOST_TREE)
     target_include_directories(pareto INTERFACE ${Boost_INCLUDE_DIR})
     target_compile_definitions(pareto INTERFACE BUILD_BOOST_TREE BOOST_ALLOW_DEPRECATED_HEADERS)
-    # Ignore the errors in Boost.Geometry
-    target_compile_options(pareto INTERFACE -Wno-unused-parameter -Wno-deprecated-declarations)
-    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        target_compile_options(pareto INTERFACE -Wno-error=class-memaccess)
+    if (NOT MSVC)
+        # Ignore the errors in Boost.Geometry
+        target_compile_options(pareto INTERFACE -Wno-unused-parameter -Wno-deprecated-declarations)
+        if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+            target_compile_options(pareto INTERFACE -Wno-error=class-memaccess)
+        endif()
     endif()
 endif()
 

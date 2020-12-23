@@ -12,7 +12,9 @@ CPMAddPackage(
 if (benchmark_ADDED)
     # patch google benchmark target
     set_target_properties(benchmark PROPERTIES CXX_STANDARD 17)
-    target_compile_options(benchmark PRIVATE -Wno-error=deprecated-declarations)
+    if (NOT MSVC)
+        target_compile_options(benchmark PRIVATE -Wno-error=deprecated-declarations)
+    endif()
 endif()
 
 #######################################################
@@ -60,5 +62,7 @@ endif()
 
 if (BUILD_BOOST_TREE)
     target_compile_definitions(pareto INTERFACE BUILD_BOOST_TREE)
-    target_compile_options(pareto INTERFACE -Wno-\#pragma-messages -Wno-unused-parameter -Wno-deprecated-declarations)
+    if (NOT MSVC)
+        target_compile_options(pareto INTERFACE -Wno-\#pragma-messages -Wno-unused-parameter -Wno-deprecated-declarations)
+    endif()
 endif()
