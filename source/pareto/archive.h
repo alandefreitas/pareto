@@ -78,8 +78,8 @@ namespace pareto {
             std::set<front_type, std::less<>, front_set_allocator_type>;
         static constexpr size_t default_capacity =
             number_of_compile_dimensions == 0 ? 1000
-            : number_of_compile_dimensions < 10
-                ? 50 << (number_of_compile_dimensions - 1)
+            : number_of_compile_dimensions <= 10
+                ? static_cast<unsigned long long>(50) << (number_of_compile_dimensions - 1)
                 : 100000;
 
       public /* iterators */:
