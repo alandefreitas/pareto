@@ -75,7 +75,7 @@ namespace pareto {
         return allocator_type();
     }
 
-    template <class ALLOC> bool is_placeholder_allocator(const ALLOC &alloc) {
+    template <class ALLOC> bool is_placeholder_allocator(const ALLOC &) {
         return false;
     }
 #endif

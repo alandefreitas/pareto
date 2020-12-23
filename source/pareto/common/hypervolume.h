@@ -112,8 +112,8 @@ namespace pareto {
             }
         }
 
-        inline avl_tree_t *avl_init_tree(avl_tree_t *rc, avl_compare_t cmp,
-                                         avl_freeitem_t freeitem) {
+        inline avl_tree_t *avl_init_tree(avl_tree_t *rc, avl_compare_t,
+                                         avl_freeitem_t) {
             if (rc) {
                 rc->head = nullptr;
                 rc->top = nullptr;
