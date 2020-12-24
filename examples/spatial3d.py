@@ -1,5 +1,21 @@
 import pareto
 
+# Short example
+m = pareto.spatial_map()
+m[-2.5, -1.5] = 17
+m[-2.1, -0.5] = 32
+m[-1.6, 0.9] = 36
+m[-0.6, 0.9] = 13
+m[-0.5, 0.8] = 32
+print("Closest elements to [0, 0]:")
+for [k, v] in m.find_nearest(pareto.point([0.,0.]), 2):
+    print(k, ":", v)
+
+print("Elements between [-1, -1] and [+1, +1]:")
+for [k, v] in m.find_intersection(pareto.point([-1.,-1.]), pareto.point([+1, +1])):
+    print(k, ":", v)
+
+
 # Constructor
 m = pareto.spatial_map()
 
