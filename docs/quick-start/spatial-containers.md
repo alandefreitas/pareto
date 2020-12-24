@@ -28,6 +28,57 @@ This library defines and implements **spatial containers**, which are an extensi
     n = pareto.spatial_map(3)
     ```
 
+Spatial containers allow you to later find its elements with query iterators:
+
+=== "C++"
+
+    ```cpp
+    spatial_map<double, 2, unsigned> m;
+    m(-2.5, -1.5) = 17;
+    m(-2.1, -0.5) = 32;
+    m(-1.6, 0.9) = 36;
+    m(-0.6, 0.9) = 13;
+    m(-0.5, 0.8) = 32;
+    std::cout << "Closest elements to [0, 0]:" << std::endl;
+    for (auto it = m.find_nearest({0.,0.}, 2); it != m.end(); ++it) {
+        std::cout << it->first << ": " << it->second << std::endl;
+    }
+    std::cout << "Elements between [-1, -1] and [+1, +1]:" << std::endl;
+    for (auto it = m.find_intersection({-1.,-1.}, {+1, +1}); it != m.end(); ++it) {
+        std::cout << it->first << ": " << it->second << std::endl;
+    }
+    ```
+
+=== "Python"
+
+    ```python
+    m = pareto.spatial_map()
+    m[-2.5, -1.5] = 17
+    m[-2.1, -0.5] = 32
+    m[-1.6, 0.9] = 36
+    m[-0.6, 0.9] = 13
+    m[-0.5, 0.8] = 32
+    print("Closest elements to [0, 0]:")
+    for [k, v] in m.find_nearest(pareto.point([0.,0.]), 2):
+        print(k, ":", v)
+    
+    print("Elements between [-1, -1] and [+1, +1]:")
+    for [k, v] in m.find_intersection(pareto.point([-1.,-1.]), pareto.point([+1, +1])):
+        print(k, ":", v)
+
+    ```
+
+=== "Output"
+
+    ```console
+    Closest elements to [0, 0]:
+    [-0.5, 0.8]: 32
+    [-0.6, 0.9]: 13
+    Elements between [-1, -1] and [+1, +1]:
+    [-0.6, 0.9]: 13
+    [-0.5, 0.8]: 32
+    ```
+
 Multi-dimensional associative containers are useful in applications where you need to simultaneously order objects according to a number for criteria, such as in:
 
 * games
