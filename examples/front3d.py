@@ -1,5 +1,16 @@
 import pareto
 
+# Short example
+pf = pareto.front()
+# Good at x[0]
+pf[0., 1.] = 17
+# Good at x[1]
+pf[1., 0.] = 32
+# Dominated by [1., 0.]
+pf[2., 1.] = 36
+for [k, v] in pf:
+    print(k, " -> ", v)
+
 # Constructor
 pf = pareto.front(['min', 'max', 'min'])
 

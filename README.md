@@ -245,7 +245,43 @@ The `pareto::front` object defines a container for **Pareto fronts**, which is b
     m = pareto.front()
     ```
 
-When inserting a new element in the front, all solutions *dominated* by the new solution are erased with spatial queries. Pareto fronts are useful in any application where we need to store the best objects according to a number of criteria, such as:
+When inserting a new element in the front, all solutions *dominated* by the new solution are erased with spatial queries. 
+
+
+=== "C++"
+
+    ```cpp
+    front<double, 2, unsigned> pf;
+    pf(0., 1.) = 17; // Good at x[0]
+    pf(1., 0.) = 32; // Good at x[1]
+    pf(2., 1.) = 36; // Dominated by [1., 0.]
+    for (const auto &[k, v] : pf) {
+        std::cout << k << " -> " << v << std::endl;
+    }
+    ```
+
+=== "Python"
+
+    ```python
+    pf = pareto.front()
+    # Good at x[0]
+    pf[0., 1.] = 17
+    # Good at x[1]
+    pf[1., 0.] = 32
+    # Dominated by [1., 0.]
+    pf[2., 1.] = 36
+    for [k, v] in pf:
+        print(k, " -> ", v)
+    ```
+
+=== "Output"
+
+    ```console
+    [0, 1] -> 17
+    [1, 0] -> 32
+    ```
+
+Pareto fronts are useful in any application where we need to store the best objects according to a number of criteria, such as:
 
 * finance
 * multi-criteria decision making

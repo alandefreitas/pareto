@@ -9,6 +9,17 @@ int main() {
     using std::cout;
     using std::endl;
     using namespace pareto;
+    // Short example
+    {
+        front<double, 2, unsigned> pf;
+        pf(0., 1.) = 17; // Good at x[0]
+        pf(1., 0.) = 32; // Good at x[1]
+        pf(2., 1.) = 36; // Dominated by [1., 0.]
+        for (const auto &[k, v] : pf) {
+            std::cout << k << " -> " << v << std::endl;
+        }
+    }
+
     // Constructor
     front<double, 3, unsigned> pf({min, max, min});
 
