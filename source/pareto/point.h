@@ -19,6 +19,7 @@
 #endif
 
 #include <pareto/common/common.h>
+#include <pareto/common/promote_to_floating_point.h>
 
 namespace pareto {
 
@@ -47,10 +48,8 @@ namespace pareto {
     class point {
       public:
         using dimension_type = T;
-        using distance_type =
-            std::conditional_t<std::is_floating_point_v<dimension_type>,
-                               dimension_type, double>;
-        static_assert((M >= 0));
+        using distance_type = promote_to_floating_point<dimension_type>;
+
         using coordinate_system_t = CoordinateSystem;
 
         /// You can set the number of dimensions in compile time

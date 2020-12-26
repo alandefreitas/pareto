@@ -14,6 +14,7 @@
 #include <pareto/common/hypervolume.h>
 #include <pareto/common/keywords.h>
 #include <pareto/common/metaprogramming.h>
+#include <pareto/common/promote_to_floating_point.h>
 
 #include <pareto/spatial_map.h>
 
@@ -905,10 +906,12 @@ namespace pareto {
             for (const auto &[k, v] : *this) {
                 point<double, point_type::compile_dimensions,
                       typename point_type::coordinate_system_t>
-                    inv = k;
+                    inv(k.size());
                 for (size_t i = 0; i < dimensions(); ++i) {
-                    if (!is_minimization(i)) {
-                        inv[i] = -inv[i];
+                    if (is_minimization(i)) {
+                        inv[i] = k[i];
+                    } else {
+                        inv[i] = -k[i];
                     }
                 }
                 data.insert(data.end(), inv.begin(), inv.end());
@@ -954,8 +957,9 @@ namespace pareto {
             for (size_t i = 0; i < max_monte_carlo_iter; ++i) {
                 point_type rand(dimensions());
                 for (size_t j = 0; j < dimensions(); ++j) {
-                    std::uniform_real_distribution<dimension_type> d(
-                        m[j], reference_point[j]);
+                    std::uniform_real_distribution<
+                        promote_to_floating_point<dimension_type>>
+                        d(m[j], reference_point[j]);
                     rand[j] = d(generator());
                 }
                 if (dominates(rand)) {

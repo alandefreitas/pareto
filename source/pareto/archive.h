@@ -6,6 +6,7 @@
 #define PARETO_FRONT_ARCHIVE_H
 
 #include <iostream>
+#include <pareto/common/promote_to_floating_point.h>
 #include <pareto/front.h>
 #include <set>
 #include <vector>
@@ -2897,8 +2898,9 @@ namespace pareto {
             for (size_t i = 0; i < n_to_remove; ++i) {
                 point_type r(dimensions());
                 for (size_t j = 0; j < r.dimensions(); ++j) {
-                    std::uniform_real_distribution<dimension_type> d(
-                        b.min()[j], b.max()[j]);
+                    std::uniform_real_distribution<
+                        promote_to_floating_point<dimension_type>>
+                        d(b.min()[j], b.max()[j]);
                     r[j] = d(g);
                 }
                 auto it = last_front.find_nearest(r);

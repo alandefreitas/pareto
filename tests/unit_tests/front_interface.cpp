@@ -76,4 +76,28 @@ TEST_CASE("Front Interface") {
             std::cout << "p: " << p << std::endl;
         }
     }
+
+    SECTION("Integer Front") {
+        /*
+         * Runtime size is useful when we don't know
+         * the number of dimensions before the application
+         * starts. This might be the case for our python
+         * bindings, for instance. This, however,
+         * is very inefficient because it requires
+         * extra memory allocations, while constant dimensions
+         * can allocate everything on the stack and use
+         * a memory pool for nodes.
+         */
+        using namespace pareto;
+        using front_type = front<int, 0, int>;
+        front_type pf;
+        pf(3, 4) = 0;
+        pf(4, 6) = 0;
+        pf(2, 7) = 0;
+        pf(1, 9) = 0;
+        for (const auto &[p, v] : pf) {
+            std::cout << "p: " << p << std::endl;
+        }
+        REQUIRE(pf.hypervolume() != 0);
+    }
 }
