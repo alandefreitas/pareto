@@ -22,7 +22,7 @@ jobs:
         uses: carlosperate/download-file-action@v1.0.3
         id: download-mdsplit
         with:
-          file-url: 'https://github.com/alandefreitas/mdsplit/releases/download/v0.1.0/Executable.Linux.zip'
+          file-url: 'https://github.com/alandefreitas/mdsplit/releases/download/v0.1.1/Executable.Linux.zip'
           file-name: 'mdsplit.zip'
           location: '.'
       - name: Unzip mdsplit
@@ -33,19 +33,6 @@ jobs:
           ls
       - name: Generate Documentation Source
         run: ./mdsplit -r alandefreitas/pareto
-#      - name: Commit Docs
-#        run: |
-#          git fetch
-#          git add docs
-#          git config --local user.email "alandefreitas@gmail.com"
-#          git config --local user.name "Alan R R Freitas"
-#          git commit -m "Update Docs" -a
-#        continue-on-error: true
-#      - name: Push docs
-#        uses: ad-m/github-push-action@master
-#        if: ${{ success() }}
-#        with:
-#          github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
