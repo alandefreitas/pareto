@@ -1,6 +1,0 @@
-nav:
-  - Embed as header-only: embed-as-header-only.md
-  - Embed as CMake subdirectory: embed-as-cmake-subdirectory.md
-  - Embed with CMake FetchContent: embed-with-cmake-fetchcontent.md
-  - Embed with CPM.cmake: embed-with-cpmcmake.md
-  - Find as CMake package: find-as-cmake-package.md
