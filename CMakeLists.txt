@@ -33,12 +33,13 @@ option(BUILD_EXAMPLES "Compile the examples" ${MASTER_PROJECT})
 option(BUILD_PYTHON_BINDING "Compile the Python binding" ${MASTER_PROJECT})
 option(BUILD_TESTS "Compile the tests" ${MASTER_PROJECT})
 option(BUILD_TARGET_WITH_ALL_TESTS "Compile the tests" OFF)
-option(BUILD_BENCHMARKS "Compile the benchmarks" ON)
-option(BUILD_MATPLOT_TARGETS "Compile the targets that depend on matplot++" ON)
+option(BUILD_BENCHMARKS "Compile the benchmarks" ${MASTER_PROJECT})
+option(BUILD_MATPLOT_TARGETS "Compile the targets that depend on matplot++" ${MASTER_PROJECT})
 option(BUILD_INSTALLER "Build an installation package" ${MASTER_PROJECT})
 option(BUILD_PACKAGE "Build an installation package" ${MASTER_PROJECT})
 
-# How to build tests
+# How to build
+option(BUILD_PARETO_WITH_PMR_BY_DEFAULT "Create the pareto target such that it uses PMR as the default allocator for trees" OFF)
 option(BUILD_LONG_TESTS "Build the Data Structure Benchmark (It takes very long)" ON)
 option(BUILD_BOOST_TREE "Include R-Tree using Boost.Geometry (Boost dependency). Deprecated: see pareto/boost_tree.h" OFF)
 option(BUILD_PRECOMPILED_HEADERS "Build with address, thread, and undefined sanitizers" OFF)

@@ -41,9 +41,9 @@ if (BUILD_WITH_PEDANTIC_WARNINGS)
 endif()
 
 # Set macro to include PMR
-if (PMR_FOUND)
+if (PMR_FOUND AND BUILD_PARETO_WITH_PMR_BY_DEFAULT)
     target_compile_definitions(pareto INTERFACE BUILD_PARETO_WITH_PMR)
-endif()
+endif ()
 
 # Set macro to include Boost.Geometry
 if (BUILD_BOOST_TREE)
