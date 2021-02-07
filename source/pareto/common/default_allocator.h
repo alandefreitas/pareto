@@ -28,19 +28,22 @@ namespace pareto {
     using default_allocator_type = std::pmr::polymorphic_allocator<T>;
 
     class placeholder_memory_resource : public std::pmr::memory_resource {
-        void *do_allocate(std::size_t bytes, std::size_t alignment) override {
+        void *do_allocate([[maybe_unused]] std::size_t bytes,
+                          [[maybe_unused]] std::size_t alignment) override {
             throw std::logic_error("You cannot allocate memory with a "
                                    "placeholder memory resource");
         };
 
-        void do_deallocate(void *p, std::size_t bytes,
-                           std::size_t alignment) override {
+        void do_deallocate([[maybe_unused]] void *p,
+                           [[maybe_unused]] std::size_t bytes,
+                           [[maybe_unused]] std::size_t alignment) override {
             throw std::logic_error("You cannot deallocate memory with a "
                                    "placeholder memory resource");
         };
 
-        [[nodiscard]] bool do_is_equal(
-            const std::pmr::memory_resource &other) const noexcept override {
+        [[nodiscard]] bool
+        do_is_equal([[maybe_unused]] const std::pmr::memory_resource &other)
+            const noexcept override {
             return false;
         };
     };
