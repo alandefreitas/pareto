@@ -383,7 +383,7 @@ They are useful in dynamic applications where the best objects might not be avai
 !!! info "Archive Capacity"
     All archive constructors include an optional parameter to define the maximum number of elements in the archive. If no maximum capacity for the archive is explicitly set, the capacity is set to $\min(50 \times 2^m, 100000)$. The exponential factor $2^m$ in this heuristic is meant to take the curse of dimensionality in consideration.
 
-Data scientists often use linear lists to represent these fronts, with a cost of $O(mn^3)$ 😱 for several operations. With spatial indexes, this cost reduces to just $O(m \log^2 n)$.
+Data scientists often use linear lists to represent these fronts, with a cost of $O(mn^3)$ p1 for several operations. With spatial indexes, this cost reduces to just $O(m \log^2 n)$.
 
 You have probably noticed by now that containers for fronts and archives have lots of use cases:
 
@@ -4958,14 +4958,14 @@ use [cppcheck](http://cppcheck.sourceforge.net), and [clang-format](https://clan
 <tr>
     <td align="center">
         <a href="https://github.com/alandefreitas">
-            <img src="https://avatars0.githubusercontent.com/u/5369819?v=4" width="100;" alt="alandefreitas"/>
+            <img src="https://avatars.githubusercontent.com/u/5369819?v=4" width="100;" alt="alandefreitas"/>
             <br />
             <sub><b>Alan De Freitas</b></sub>
         </a>
     </td>
     <td align="center">
         <a href="https://github.com/actions-user">
-            <img src="https://avatars1.githubusercontent.com/u/65916846?v=4" width="100;" alt="actions-user"/>
+            <img src="https://avatars.githubusercontent.com/u/65916846?v=4" width="100;" alt="actions-user"/>
             <br />
             <sub><b>Actions-user</b></sub>
         </a>
