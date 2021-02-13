@@ -7,6 +7,7 @@ site_description: Spatial Containers, Pareto Fronts and Pareto Archives
 
 theme:
   name: material
+  custom_dir: docs/overrides
   palette:
     scheme: preference
   features:
@@ -16,6 +17,7 @@ theme:
     - header.autohide
   icon:
     repo: fontawesome/brands/git-alt
+    logo: fontawesome/solid/code
 
 edit_uri: ""
 
