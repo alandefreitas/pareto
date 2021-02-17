@@ -10,11 +10,6 @@ theme:
   custom_dir: docs/overrides
   palette:
     scheme: preference
-  features:
-    # - navigation.instant # this doesn't work well with pymdownx.arithmatex
-    # - navigation.sections
-    - toc.integrate
-    - header.autohide
   icon:
     repo: fontawesome/brands/git-alt
     logo: fontawesome/solid/code
@@ -50,3 +45,4 @@ extra_javascript:
   - javascripts/config.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - https://media.ethicalads.io/media/client/ethicalads.min.js
