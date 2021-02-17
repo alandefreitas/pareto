@@ -413,17 +413,344 @@ All that means they work transparently with other native data structures. We inc
 
 ### Performance
 
-The problem of storing multidimensional data is simple to explain but not so easy to solve. It might seem like linear lists, even with their $O(n^2)$ pair-wise comparisons, wouldn't fair much worse than these alternative containers. Even large scale multidimensional problems have at least some subproblems with less than a hundred solutions. 
+The problem of storing multidimensional data is simple to explain but not so easy to solve. It might seem like linear lists, even with their $O(n^2)$ pair-wise comparisons, wouldn't fair much worse than these alternative containers. Even large scale multidimensional problems have at least some subproblems with less than a hundred solutions.
 
-One common problem in scientific applications is that most of these containers can only outperform linear lists when storing thousands of objects. This happens mainly because data structures based on trees require one memory allocation per node.
+One common problem in scientific applications is that most of these containers can only outperform linear lists when
+storing thousands of objects. This happens mainly because data structures based on trees require one memory allocation
+per node.
 
 !!! info "Setting the Number of Dimensions"
-    The first strategy we use to mitigate this problem is to allow the number of dimensions to be set at compile-time or runtime. This reduces the number of memory allocations because setting the dimension at runtime require one extra memory allocation per node.
+The first strategy we use to mitigate this problem is to allow the number of dimensions to be set at compile-time or
+runtime. This reduces the number of memory allocations because setting the dimension at runtime require one extra memory
+allocation per node.
 
 !!! info "Memory Allocation"
-    However, to make these associative containers fully competitive with linear lists in all scenarios, we need memory allocators. To avoid one dynamic allocation per node, pool allocators, like linear lists, pre-allocate fixed-size chucks of memory for tree nodes.
+However, to make these associative containers fully competitive with linear lists in all scenarios, we need memory
+allocators. To avoid one dynamic allocation per node, pool allocators, like linear lists, pre-allocate fixed-size chucks
+of memory for tree nodes.
 
     All containers implement the [AllocatorAwareContainer](https://en.cppreference.com/w/cpp/named_req/AllocatorAwareContainer) concept, that includes constructors that can receive custom allocators. All memory allocations happen through these custom allocators. If no allocator is provided, the build script will try to infer a proper allocator for each data structure.
+
+## Integration
+
+### C++
+
+#### Embed as header-only
+
+Copy the files from the `source` directory of this project to your `include` directory.
+
+If you want to use `std::pmr` allocators by default, set the macro `BUILD_PARETO_WITH_PMR` before including the files.
+
+=== "C++"
+
+    ```cpp
+    #def BUILD_PARETO_WITH_PMR
+    #include <pareto/front.h>
+    ```
+
+Each header in `pareto` represents a data structure.
+
+!!! warning Make sure you have C++17+ installed
+
+#### Embed as CMake subdirectory
+
+You can use pareto directly in CMake projects as a subproject.
+
+Clone the whole project inside your own project:
+
+```bash
+git clone https://github.com/alandefreitas/pareto/
+```
+
+and add the subdirectory to your CMake script:
+
+```cmake
+add_subdirectory(pareto)
+```
+
+When creating your executable, link the library to the targets you want:
+
+```cmake
+add_executable(my_target main.cpp)
+target_link_libraries(my_target PRIVATE pareto)
+```
+
+Your target will be able to see the pareto headers now.
+
+#### Embed with CMake FetchContent
+
+FetchContent is a CMake command to automatically download the repository:
+
+```cmake
+include(FetchContent)
+
+FetchContent_Declare(pareto
+        GIT_REPOSITORY https://github.com/alandefreitas/pareto
+        GIT_TAG origin/master # or whatever tag you want
+        )
+
+FetchContent_GetProperties(pareto)
+if (NOT pareto_POPULATED)
+    FetchContent_Populate(pareto)
+    add_subdirectory(${pareto_SOURCE_DIR} ${pareto_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif ()
+
+# ...
+target_link_libraries(my_target PRIVATE pareto)
+```
+
+Your target will be able to see the pareto headers now.
+
+#### Embed with CPM.cmake
+
+[CPM.cmake](https://github.com/TheLartians/CPM.cmake) is a nice wrapper around the CMake FetchContent function.
+Install [CPM.cmake](https://github.com/TheLartians/CPM.cmake) and then use this command to add Pareto to your build
+script:
+
+```cmake
+CPMAddPackage(
+        NAME Pareto
+        GITHUB_REPOSITORY alandefreitas/pareto
+        GIT_TAG origin/master # or whatever tag you want
+)
+# ...
+target_link_libraries(my_target PUBLIC pareto)
+```
+
+Your target will be able to see the pareto headers now.
+
+#### Find as CMake package
+
+If you are using CMake and have the library installed on your system, you can then find Pareto with the
+usual `find_package` command:
+
+```cmake
+find_package(Pareto REQUIRED)
+# ...
+target_link_libraries(my_target PUBLIC pareto)
+```
+
+Your target will be able to see the pareto headers now.
+
+!!! warning "find_package on windows"
+There is no easy default directory for find_package on windows. You have
+to [set it](https://stackoverflow.com/questions/21314893/what-is-the-default-search-path-for-find-package-in-windows-using-cmake)
+yourself.
+
+### Python
+
+#### Embed as project file
+
+Get the python binary from the [release section](https://github.com/alandefreitas/pareto/releases) and put it in your
+project directory. You can then use the library with:
+
+```python
+import pareto
+```
+
+#### Find as package
+
+If you have installed the library on your system, all you need in your source code is:
+
+```python
+import pareto
+```
+
+!!! warning There's no `pip install pareto` yet. Because this is a compiled library, creating a pip package is a little
+more complicated. It's still in our to-do list.
+
+### Installing
+
+Get one of binary packages from the [release section](https://github.com/alandefreitas/pareto/releases). These file
+names have the following syntax:
+
+* Python Binary <OS>
+    * This is only the binary for Python.
+    * Copy this file to your site-packages directory or to your project directory.
+    * No need to `pip install`
+* pareto-< version >-< OS >.< package extension >
+    * These packages contain the Python bindings and the C++ library.
+* Binary Packages < OS >
+    * These files contain all packages for a given OS.
+
+If using one the installers, make sure you install the Python bindings to your site-packages directory (this is the
+default directory for most packages). You can find your site-packages directory with:
+
+```bash
+python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib());"
+```
+
+These binaries refer to the last release version. If you need a more recent version of pareto, you can download
+the [binary packages from the CI artifacts](https://github.com/alandefreitas/pareto/actions?query=workflow%3APareto+event%3Apush)
+or build the library [from the source files](#build-from-source).
+
+Once the package is installed, you can use the Python library with
+
+```
+import pareto
+```
+
+or link your C++ program to the library and include the directories where you installed pareto.
+
+Unless you changed the default options, the C++ library is likely to be in `/usr/local/` (Linux / Mac OS)
+or `C:/Program Files/` (Windows). The installer will try to find the directory where you usually keep your libraries but
+that's not always perfect.
+
+CMake should be able to locate the `ParetoConfig.cmake` script automatically if you installed the library
+under `/usr/local/` (Linux / Mac OS).
+
+!!! warning "find_package on windows"
+There is no easy default directory for `find_package` on windows. You have
+to [set it](https://stackoverflow.com/questions/21314893/what-is-the-default-search-path-for-find-package-in-windows-using-cmake)
+yourself.
+
+### Building
+
+#### Dependencies
+
+**C++**
+
+Update your C++ compiler to at least C++17:
+
+=== "Ubuntu"
+
+    ```bash
+    # install GCC10
+    sudo apt install build-essential
+    sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+    sudo apt-get update
+    sudo apt install gcc-10
+    sudo apt install g++-10
+    sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 10
+    sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 10
+    # Choose gcc-10 there as the default compiler
+    update-alternatives --config g++
+    ```
+
+=== "Mac OS"
+
+    ```bash
+    # Download clang
+    curl --output clang.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.0/clang+llvm-11.0.0-x86_64-apple-darwin.tar.xz
+    mkdir clang
+    tar -xvJf clang.tar.xz -C clang
+    # Copy the files to use/local
+    cd clang/clang+llvm-11.0.0-x86_64-apple-darwin
+    sudo cp -R * /usr/local/
+    # Make it your default compiler
+    export CXX=/usr/local/bin/clang++
+    ```
+
+=== "Windows"
+
+    Update your [Visual Studio Compiler](https://visualstudio.microsoft.com/).
+
+**CMake**
+
+Update your CMake to at least CMake 3.16+. You can check your CMake version with:
+
+```bash
+cmake --version
+```
+
+If you need to update it, then
+
+=== "Ubuntu + apt"
+
+    ```bash
+    sudo apt upgrade cmake
+    ```
+
+=== "Mac OS + Homebrew"
+
+    ```bash
+    sudo brew upgrade cmake
+    ```
+
+=== "Website"
+
+    Download CMake from [https://cmake.org/download/](https://cmake.org/download/) and install it
+
+**Python**
+
+Make sure you have Python 3.6.9+ installed:
+
+```bash
+python3 --version
+```
+
+If you need to update, then
+
+=== "Ubuntu"
+
+    Use `apt-get` or download it from https://www.python.org/downloads/.
+
+=== "Mac OS"
+
+    ```bash
+    sudo brew upgrade python3
+    ```
+
+    or download the latest release version from https://www.python.org/downloads/
+
+=== "Windows"
+
+    Download Python from [https://www.python.org/downloads/](https://www.python.org/downloads/) and install it
+
+If using a Python installer, make sure you add the application directory to your PATH environment variable.
+
+#### Building
+
+After installing or updating the dependencies, clone the project with
+
+```bash
+git clone https://github.com/alandefreitas/pareto.git
+cd pareto
+```
+
+and then build it with
+
+=== "Ubuntu"
+
+    ```bash
+    mkdir build
+    cd build
+    cmake -version
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-O2"
+    cmake --build . -j 2 --config Release
+    # The next command for installing
+    sudo cmake --install .
+    # The next command for building the packages / installers
+    sudo cpack .
+    ```
+
+=== "Mac OS"
+
+    ```bash
+    mkdir build
+    cd build
+    cmake -version
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-O2"
+    cmake --build . -j 2 --config Release
+    # The next command for installing
+    cmake --install .
+    # The next command for building the packages / installers
+    cpack .
+    ```
+
+=== "Windows"
+
+    ```bash
+    mkdir build
+    cd build
+    cmake -version
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="/O2"
+    cmake --build . -j 2 --config Release
+    # The next command for installing
+    cmake --install .
+    # The next command for building the packages / installers
+    cpack .
+    ```
 
 ## Spatial Containers
 
@@ -4481,319 +4808,6 @@ Same notes as **SpatialContainer**.
     The archives have the same elements
     The archives do not have the same elements
     ar* dominates ar
-    ```
-
-## Integration
-
-### C++
-
-#### Embed as header-only
-
-Copy the files from the `source` directory of this project to your `include` directory.
-
-If you want to use `std::pmr` allocators by default, set the macro `BUILD_PARETO_WITH_PMR` before including the files.
-
-=== "C++"
-
-    ```cpp
-    #def BUILD_PARETO_WITH_PMR
-    #include <pareto/front.h>
-    ```
-
-Each header in `pareto` represents a data structure.
-
-!!! warning
-    Make sure you have C++17+ installed
-
-#### Embed as CMake subdirectory
-
-You can use pareto directly in CMake projects as a subproject. 
-
-Clone the whole project inside your own project:
-
-```bash
-git clone https://github.com/alandefreitas/pareto/
-```
-
-and add the subdirectory to your CMake script:
-
-```cmake
-add_subdirectory(pareto)
-```
-
-When creating your executable, link the library to the targets you want:
-
-```cmake
-add_executable(my_target main.cpp)
-target_link_libraries(my_target PRIVATE pareto)
-```
-
-Your target will be able to see the pareto headers now.
-
-#### Embed with CMake FetchContent
-
-FetchContent is a CMake command to automatically download the repository:
-
-```cmake
-include(FetchContent)
-
-FetchContent_Declare(pareto
-        GIT_REPOSITORY https://github.com/alandefreitas/pareto
-        GIT_TAG origin/master # or whatever tag you want
-)
-
-FetchContent_GetProperties(pareto)
-if(NOT pareto_POPULATED)
-    FetchContent_Populate(pareto)
-    add_subdirectory(${pareto_SOURCE_DIR} ${pareto_BINARY_DIR} EXCLUDE_FROM_ALL)
-endif()
-
-# ...
-target_link_libraries(my_target PRIVATE pareto)
-```
-
-Your target will be able to see the pareto headers now.
-
-#### Embed with CPM.cmake
-
-[CPM.cmake](https://github.com/TheLartians/CPM.cmake) is a nice wrapper around the CMake FetchContent function. Install [CPM.cmake](https://github.com/TheLartians/CPM.cmake) and then use this command to add Pareto to your build script:
-
-```cmake
-CPMAddPackage(
-        NAME Pareto
-        GITHUB_REPOSITORY alandefreitas/pareto
-        GIT_TAG origin/master # or whatever tag you want
-)
-# ...
-target_link_libraries(my_target PUBLIC pareto)
-```
-
-Your target will be able to see the pareto headers now.
-
-#### Find as CMake package
-
-If you are using CMake and have the library installed on your system, you can then find Pareto with the usual `find_package` command:
-
-```cmake
-find_package(Pareto REQUIRED)
-# ...
-target_link_libraries(my_target PUBLIC pareto)
-```
-
-Your target will be able to see the pareto headers now.
-
-!!! warning "find_package on windows"
-    There is no easy default directory for find_package on windows. You have to [set it](https://stackoverflow.com/questions/21314893/what-is-the-default-search-path-for-find-package-in-windows-using-cmake) yourself. 
-
-### Python
-
-#### Embed as project file
-
-Get the python binary from the [release section](https://github.com/alandefreitas/pareto/releases) and put it in your project directory. You can then use the library with:
-
-```python
-import pareto
-```
-
-#### Find as package
-
-If you have installed the library on your system, all you need in your source code is:
-
-```python
-import pareto
-```
-
-!!! warning
-    There's no `pip install pareto` yet. Because this is a compiled library, creating a pip package is a little more complicated. It's still in our to-do list.
-
-### Installing
-
-Get one of binary packages from the [release section](https://github.com/alandefreitas/pareto/releases). These file names have the following syntax:
-
-* Python Binary <OS>
-    * This is only the binary for Python.
-    * Copy this file to your site-packages directory or to your project directory.
-    * No need to `pip install`
-* pareto-< version >-< OS >.< package extension >
-    * These packages contain the Python bindings and the C++ library.
-* Binary Packages < OS >
-    * These files contain all packages for a given OS.
-
-If using one the installers, make sure you install the Python bindings to your site-packages directory (this is the
-default directory for most packages). You can find your site-packages directory with:
-
-```bash
-python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib());"
-```
-
-These binaries refer to the last release version. If you need a more recent version of pareto, you can download
-the [binary packages from the CI artifacts](https://github.com/alandefreitas/pareto/actions?query=workflow%3APareto+event%3Apush)
-or build the library [from the source files](#build-from-source).
-
-Once the package is installed, you can use the Python library with
-
-```
-import pareto
-```
-
-or link your C++ program to the library and include the directories where you installed pareto.
-
-Unless you changed the default options, the C++ library is likely to be in `/usr/local/` (Linux / Mac OS)
-or `C:/Program Files/` (Windows). The installer will try to find the directory where you usually keep your libraries but
-that's not always perfect.
-
-CMake should be able to locate the `ParetoConfig.cmake` script automatically if you installed the library
-under `/usr/local/` (Linux / Mac OS). 
-
-!!! warning "find_package on windows"
-    There is no easy default directory for `find_package` on windows. You have to [set it](https://stackoverflow.com/questions/21314893/what-is-the-default-search-path-for-find-package-in-windows-using-cmake) yourself.
-
-### Building
-
-#### Dependencies
-
-**C++**
-
-Update your C++ compiler to at least C++17:
-
-=== "Ubuntu"
-
-    ```bash
-    # install GCC10
-    sudo apt install build-essential
-    sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-    sudo apt-get update
-    sudo apt install gcc-10
-    sudo apt install g++-10
-    sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 10
-    sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 10
-    # Choose gcc-10 there as the default compiler
-    update-alternatives --config g++
-    ```
-
-=== "Mac OS"
-
-    ```bash
-    # Download clang
-    curl --output clang.tar.xz -L https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.0/clang+llvm-11.0.0-x86_64-apple-darwin.tar.xz
-    mkdir clang
-    tar -xvJf clang.tar.xz -C clang
-    # Copy the files to use/local
-    cd clang/clang+llvm-11.0.0-x86_64-apple-darwin
-    sudo cp -R * /usr/local/
-    # Make it your default compiler
-    export CXX=/usr/local/bin/clang++
-    ```
-
-=== "Windows"
-
-    Update your [Visual Studio Compiler](https://visualstudio.microsoft.com/).
-
-**CMake**
-
-Update your CMake to at least CMake 3.16+. You can check your CMake version with:
-
-```bash
-cmake --version
-```
-
-If you need to update it, then
-
-=== "Ubuntu + apt"
-
-    ```bash
-    sudo apt upgrade cmake
-    ```
-
-=== "Mac OS + Homebrew"
-
-    ```bash
-    sudo brew upgrade cmake
-    ```
-
-=== "Website"
-
-    Download CMake from [https://cmake.org/download/](https://cmake.org/download/) and install it
-
-**Python**
-
-Make sure you have Python 3.6.9+ installed:
-
-```bash
-python3 --version
-```
-
-If you need to update, then
-
-=== "Ubuntu"
-    
-    Use `apt-get` or download it from https://www.python.org/downloads/.
-
-=== "Mac OS"
-
-    ```bash
-    sudo brew upgrade python3
-    ```
-
-    or download the latest release version from https://www.python.org/downloads/
-
-=== "Windows"
-
-    Download Python from [https://www.python.org/downloads/](https://www.python.org/downloads/) and install it
-
-If using a Python installer, make sure you add the application directory to your PATH environment variable.
-
-#### Building
-
-After installing or updating the dependencies, clone the project with
-
-```bash
-git clone https://github.com/alandefreitas/pareto.git
-cd pareto
-```
-
-and then build it with
-
-=== "Ubuntu"
-
-    ```bash
-    mkdir build
-    cd build
-    cmake -version
-    cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-O2"
-    cmake --build . -j 2 --config Release
-    # The next command for installing
-    sudo cmake --install .
-    # The next command for building the packages / installers
-    sudo cpack .
-    ```
-
-=== "Mac OS"
-
-    ```bash
-    mkdir build
-    cd build
-    cmake -version
-    cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-O2"
-    cmake --build . -j 2 --config Release
-    # The next command for installing
-    cmake --install .
-    # The next command for building the packages / installers
-    cpack .
-    ```
-
-=== "Windows"
-
-    ```bash
-    mkdir build
-    cd build
-    cmake -version
-    cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="/O2"
-    cmake --build . -j 2 --config Release
-    # The next command for installing
-    cmake --install .
-    # The next command for building the packages / installers
-    cpack .
     ```
 
 ## Benchmarks
