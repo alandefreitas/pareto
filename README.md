@@ -420,14 +420,10 @@ storing thousands of objects. This happens mainly because data structures based 
 per node.
 
 !!! info "Setting the Number of Dimensions"
-    The first strategy we use to mitigate this problem is to allow the number of dimensions to be set at compile-time or
-runtime. This reduces the number of memory allocations because setting the dimension at runtime require one extra memory
-allocation per node.
+    The first strategy we use to mitigate this problem is to allow the number of dimensions to be set at compile-time or runtime. This reduces the number of memory allocations because setting the dimension at runtime require one extra memory allocation per node.
 
 !!! info "Memory Allocation"
-    However, to make these associative containers fully competitive with linear lists in all scenarios, we need memory
-allocators. To avoid one dynamic allocation per node, pool allocators, like linear lists, pre-allocate fixed-size chucks
-of memory for tree nodes.
+    However, to make these associative containers fully competitive with linear lists in all scenarios, we need memory allocators. To avoid one dynamic allocation per node, pool allocators, like linear lists, pre-allocate fixed-size chucks of memory for tree nodes.
 
     All containers implement the [AllocatorAwareContainer](https://en.cppreference.com/w/cpp/named_req/AllocatorAwareContainer) concept, that includes constructors that can receive custom allocators. All memory allocations happen through these custom allocators. If no allocator is provided, the build script will try to infer a proper allocator for each data structure.
 
