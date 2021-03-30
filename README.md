@@ -420,12 +420,12 @@ storing thousands of objects. This happens mainly because data structures based 
 per node.
 
 !!! info "Setting the Number of Dimensions"
-The first strategy we use to mitigate this problem is to allow the number of dimensions to be set at compile-time or
+    The first strategy we use to mitigate this problem is to allow the number of dimensions to be set at compile-time or
 runtime. This reduces the number of memory allocations because setting the dimension at runtime require one extra memory
 allocation per node.
 
 !!! info "Memory Allocation"
-However, to make these associative containers fully competitive with linear lists in all scenarios, we need memory
+    However, to make these associative containers fully competitive with linear lists in all scenarios, we need memory
 allocators. To avoid one dynamic allocation per node, pool allocators, like linear lists, pre-allocate fixed-size chucks
 of memory for tree nodes.
 
