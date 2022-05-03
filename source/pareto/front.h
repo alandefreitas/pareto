@@ -894,12 +894,35 @@ namespace pareto {
         /// \return Hypervolume of this front
         dimension_type hypervolume() const { return hypervolume(nadir()); }
 
-        /// \brief Get exact hypervolume
+        /// \brief Get exact hypervolume of the pareto frontier within the cuboid
+        /// with minimum coordinate given by reference_point and maximum coordinate
+        /// given by max_point
         /// \note Use the other hypervolume function if this takes
         /// too long (m is too large).
-        /// \param reference_point Reference point
+        /// \param reference_point Reference point (minimum coordinate of cuboid)
+        /// \param max_point Maximum coordinate of cuboid.  If not give, the 
+        /// total hypervolume wiht respect to reference point will be returned.
+        /// E.g. this is equivalent to setting max_point to contain all infinite
+        /// values
         /// \return Hypervolume of this front
-        dimension_type hypervolume(point_type reference_point) const {
+        dimension_type hypervolume(point_type reference_point, 
+                                   std::optional<point_type> max_point = std::nullopt) const {
+
+            size_t hard_coded_dimensions = 3; // fix
+            point<double, point_type::compile_dimensions,
+                  typename point_type::coordinate_system_t>
+                max_point_objective_adjusted(hard_coded_dimensions);
+
+            if(max_point.has_value()){
+                for (size_t i = 0; i < dimensions(); ++i) {
+                    if (is_minimization(i)) {
+                        max_point_objective_adjusted[i] = (*max_point)[i];
+                    } else {
+                        max_point_objective_adjusted[i] = -(*max_point)[i];
+                    }
+                }
+            }
+
             // reshape points
             std::vector<double> data;
             data.reserve(size() * dimensions());
@@ -913,6 +936,9 @@ namespace pareto {
                     } else {
                         inv[i] = -k[i];
                     }
+                    if(max_point.has_value() && inv[i] < max_point_objective_adjusted[i]){
+                        inv[i] = max_point_objective_adjusted[i];
+                    }                    
                 }
                 data.insert(data.end(), inv.begin(), inv.end());
             }
