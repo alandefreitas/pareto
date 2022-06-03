@@ -4979,6 +4979,13 @@ use [cppcheck](http://cppcheck.sourceforge.net), and [clang-format](https://clan
             <br />
             <sub><b>Actions-user</b></sub>
         </a>
+    </td>
+    <td align="center">
+        <a href="https://github.com/jkuck">
+            <img src="https://avatars.githubusercontent.com/u/13138384?v=4" width="100;" alt="jkuck"/>
+            <br />
+            <sub><b>Jonathan Kuck</b></sub>
+        </a>
     </td></tr>
 </table>
 <!-- readme: collaborators,contributors -end -->
