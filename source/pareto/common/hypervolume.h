@@ -817,7 +817,7 @@ namespace pareto {
 
         /* Clean up. */
         free_cdllist(list);
-        free(tree); /* The nodes are freed by free_cdllist ().  */
+        delete tree; /* The nodes are freed by free_cdllist ().  */
 
         return hyperv;
     }
