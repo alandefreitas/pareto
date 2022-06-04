@@ -67,6 +67,7 @@ namespace pareto {
         using mapped_type = typename container_type::mapped_type;
         using key_compare = typename container_type::key_compare;
         using value_compare = typename container_type::value_compare;
+        mapped_type placeholder;
 
       public /* AllocatorAwareContainer Concept */:
         using allocator_type = typename container_type::allocator_type;
@@ -452,7 +453,6 @@ namespace pareto {
                     // just to avoid throwing an error
                     // nothing was included in the containers because
                     // the element is dominated
-                    static mapped_type placeholder;
                     return placeholder;
                 }
             }
@@ -479,7 +479,6 @@ namespace pareto {
                     // just to avoid throwing an error
                     // nothing was included in the containers because
                     // the element is dominated
-                    static mapped_type placeholder;
                     return placeholder;
                 }
             }
